@@ -523,25 +523,28 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 
   <div class="wf-panel active" id="wfp-today">
     <div class="today-stats">
-      <div class="ts-card"><div class="ts-label">전체 업무</div><div class="ts-val" id="ts-total">0</div></div>
+      <div class="ts-card"><div class="ts-label">전체</div><div class="ts-val" id="ts-total">0</div></div>
       <div class="ts-card"><div class="ts-label">완료</div><div class="ts-val" id="ts-done">0</div></div>
       <div class="ts-card"><div class="ts-label">진행 중</div><div class="ts-val" id="ts-prog">0</div></div>
       <div class="ts-card"><div class="ts-label">오늘 마감</div><div class="ts-val" id="ts-due">0</div></div>
     </div>
     <div class="sec-header">
-      <div class="view-toggle">
-        <button class="view-btn active" id="vbtn-list" onclick="setTodayView('list')">목록</button>
-        <button class="view-btn" id="vbtn-tt" onclick="setTodayView('tt')">타임테이블</button>
-      </div>
+      <span class="sec-title" id="today-date-label"></span>
       <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ 업무 추가</button>
     </div>
-    <div id="today-list-view"></div>
-    <div id="today-tt-view" style="display:none">
-      <div class="timetable-wrap" id="tt-wrap" style="position:relative"></div>
+    <!-- 시간 지정 업무 (타임라인) -->
+    <div id="today-timed-wrap" style="display:none;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px">⏰ 시간별 업무</div>
+      <div id="today-timed-list"></div>
+    </div>
+    <!-- 시간 미지정 업무 -->
+    <div id="today-untimed-wrap">
+      <div id="today-untimed-label" style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px;display:none">📋 업무 목록</div>
+      <div id="today-untimed-list"></div>
     </div>
     <div id="today-empty" class="empty" style="display:none">
-      <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
-      <p>오늘 업무가 없습니다.</p>
+      <div class="empty-icon">☀️</div>
+      <p>오늘 업무가 없습니다.<br>업무를 추가해 보세요.</p>
     </div>
   </div>
 
@@ -1130,7 +1133,7 @@ function applyAppRole(){
   loadAll();
 }
 const TODAY=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const DOW=new Date().getDay();
+const TT_START=10, TT_END=22;
 let routineDoneToday=JSON.parse(localStorage.getItem('hub_rdt_'+TODAY())||'[]');
 let selectedDestColor='#D6EAD8';
 
@@ -1279,8 +1282,6 @@ function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Numbe
 
 function renderAll(){renderToday();renderProjects();renderCalendar();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
 
-const TT_START=10, TT_END=22;
-let todayViewMode='list';
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
 function timeOptions(){
@@ -1313,162 +1314,104 @@ function ddayBadge(due){
   if(diff<=3)return{label:`D-${diff}`,cls:'dday-soon'};
   return{label:`D-${diff}`,cls:'dday-ok'};
 }
-function setTodayView(v){
-  todayViewMode=v;
-  document.getElementById('vbtn-list').classList.toggle('active',v==='list');
-  document.getElementById('vbtn-tt').classList.toggle('active',v==='tt');
-  document.getElementById('today-list-view').style.display=v==='list'?'':'none';
-  document.getElementById('today-tt-view').style.display=v==='tt'?'':'none';
-  document.getElementById('today-empty').style.display='none';
-  if(v==='tt')renderTimetable();
-}
+
+
+function getTodayDOW(){return new Date().getDay();}
 
 function renderToday(){
   const td=TODAY();
-  // 반복 업무: wfTasks에서 repeat:true인 것 + 기존 wfRoutines (호환)
-  const todayRoutines=[
-    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(DOW))),
-    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW))
+  const dow=getTodayDOW();
+
+  // 날짜 레이블
+  const dowNames=['일','월','화','수','목','금','토'];
+  const dateLabel=document.getElementById('today-date-label');
+  if(dateLabel){
+    const [y,m,d]=td.split('-');
+    dateLabel.textContent=`${parseInt(m)}월 ${parseInt(d)}일 (${dowNames[dow]})`;
+  }
+
+  // 오늘 표시할 업무 수집
+  // 일회성: due가 오늘이거나 due 없음 (repeat:false)
+  // 반복: repeat:true이고 days가 비었거나 오늘 요일 포함
+  const todayTasks=[
+    ...wfTasks.filter(t=>!t.repeat&&(t.due===td||!t.due)),
+    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
+    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
   ];
 
-  const allTodayTasks=wfTasks.filter(t=>!t.repeat&&(t.due===td||!t.due));
+  // 완료 판별 (반복/루틴은 당일 완료 체크)
+  const isDone=t=>t.repeat||t._isRoutine?routineDoneToday.includes(t.id):t.done;
 
-  const orderedTasks=[...allTodayTasks].sort((a,b)=>{
-    if(a.done&&!b.done)return 1;if(!a.done&&b.done)return -1;
-    const ai=wfTaskOrder.indexOf(a.id),bi=wfTaskOrder.indexOf(b.id);
-    if(ai===-1&&bi===-1)return 0;if(ai===-1)return 1;if(bi===-1)return -1;return ai-bi;
-  });
-  const todayTasks=orderedTasks;
-  const all=[...todayTasks,...todayRoutines];
-  const doneCount=todayTasks.filter(t=>t.done).length+routineDoneToday.length;
-  const activeCount=all.length;
-  document.getElementById('ts-total').textContent=all.length;
+  // 통계
+  const doneCount=todayTasks.filter(t=>isDone(t)).length;
+  document.getElementById('ts-total').textContent=todayTasks.length;
   document.getElementById('ts-done').textContent=doneCount;
-  document.getElementById('ts-prog').textContent=all.length-doneCount;
-  document.getElementById('ts-due').textContent=wfTasks.filter(t=>t.due===td&&!t.done).length;
-  document.getElementById('today-empty').style.display=all.length?'none':'';
-  const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+  document.getElementById('ts-prog').textContent=todayTasks.length-doneCount;
+  document.getElementById('ts-due').textContent=wfTasks.filter(t=>!t.repeat&&t.due===td&&!t.done).length;
+  document.getElementById('today-empty').style.display=todayTasks.length?'none':'';
+
   const ICO_CHK='<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-  const ICO_DRAG='<svg width="14" height="20" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="7" y2="4"/><line x1="3" y1="8" x2="7" y2="8"/><line x1="3" y1="12" x2="7" y2="12"/></svg>';
-  document.getElementById('today-list-view').innerHTML=[
-    ...todayTasks.map((t,idx)=>{
-      const dd=ddayBadge(t.due);
-      return`<div class="task-item${t.done?' done-item':''}" draggable="true" data-id="${t.id}" data-idx="${idx}"
-        ondragstart="onDragStart(event,'${t.id}')"
-        ondragover="onDragOver(event)"
-        ondragleave="onDragLeave(event)"
-        ondrop="onDrop(event,'${t.id}')"
-        ondragend="onDragEnd(event)">
-        <div class="drag-handle" title="드래그하여 순서 변경">${ICO_DRAG}</div>
-        <div class="priority-dot p-${t.priority||'mid'}"></div>
-        <div class="task-check${t.done?' checked':''}" onclick="toggleTask('${t.id}')">${t.done?ICO_CHK:''}</div>
-        <div style="flex:1;min-width:0">
-          <div class="task-title">${t.name}${t.repeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:4px;font-weight:600">반복</span>':''}</div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
-            ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
-            ${t.members&&t.members.length?t.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
-            ${dd&&!t.done?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
-          </div>
+  const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
+
+  function taskCard(t,isRoutineObj){
+    const isRepeat=t.repeat||isRoutineObj;
+    const done=isRepeat?routineDoneToday.includes(t.id):t.done;
+    const pri=t.priority||'mid';
+    const dd=(!isRepeat&&t.due&&!done)?ddayBadge(t.due):null;
+    const toggleFn=isRepeat?`toggleRoutineDone('${t.id}')`:`toggleTask('${t.id}')`;
+    const editFn=isRoutineObj?`editRoutine('${t.id}')`:`editTask('${t.id}')`;
+    const delFn=isRoutineObj?`deleteRoutine('${t.id}')`:`deleteTask('${t.id}')`;
+    const repeatDays=isRepeat&&t.days&&t.days.length?
+      `<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>t.days.includes(i)).join('·')}</span>`:'';
+    return`<div class="task-item${done?' done-item':''}">
+      <div class="priority-dot p-${isRepeat?'low':pri}"></div>
+      <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
+      <div style="flex:1;min-width:0">
+        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">반복</span>':''}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
+          ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
+          ${t.members&&t.members.length?t.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
+          ${repeatDays}
+          ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
         </div>
-        ${t.done?`<button class="btn-undo" onclick="toggleTask('${t.id}')" title="완료 취소">취소</button>`:''}
-        ${!t.done?`<button class="btn-icon" onclick="editTask('${t.id}')" title="수정">${ICO_EDIT}</button>`:''}
-        <button class="btn-icon" onclick="deleteTask('${t.id}')">${ICO_DEL}</button>
-      </div>`;
-    }),
-    ...todayRoutines.map(r=>{
-      const done=routineDoneToday.includes(r.id);
-      const isNewRepeat=!!r.repeat; // wfTasks의 반복 업무
-      return`<div class="task-item${done?' done-item':''}">
-        <div class="priority-dot" style="background:var(--sage-m)"></div>
-        <div class="task-check${done?' checked':''}" onclick="toggleRoutineDone('${r.id}')">${done?ICO_CHK:''}</div>
-        <div style="flex:1">
-          <div class="task-title${done?' done-txt':''}">${r.name}</div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
-            ${r.start_time?`<span class="task-meta">${r.start_time}${r.end_time?' ~ '+r.end_time:''}</span>`:''}
-            ${r.members&&r.members.length?r.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
-            <span class="task-meta" style="color:var(--sage-d)">🔄 반복</span>
-            ${r.days&&r.days.length?`<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>r.days.includes(i)).join('·')}요일</span>`:''}
-          </div>
-        </div>
-        ${appRole==='admin'?`<button class="btn-icon" onclick="${isNewRepeat?`editTask('${r.id}')`:`editRoutine('${r.id}')`}" title="수정">${ICO_EDIT}</button>`:''}
-        ${appRole==='admin'?`<button class="btn-icon" onclick="${isNewRepeat?`deleteTask('${r.id}')`:`deleteRoutine('${r.id}')`}">${ICO_DEL}</button>`:''}
-      </div>`;
-    })
-  ].join('');
-  if(todayViewMode==='tt')renderTimetable();
-
-  if(todayViewMode==='list')setTimeout(initTouchDrag,0);
-}
-
-function renderTimetable(){
-  const td=TODAY();
-  // 반복 업무: wfTasks에서 repeat:true인 것 + 기존 wfRoutines (호환)
-  const todayRoutines=[
-    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(DOW))),
-    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW))
-  ];
-  const todayTasks=wfTasks.filter(t=>t.due===td||!t.due);
-  const SLOTS=(TT_END-TT_START)*2;
-  const slotItems=Array.from({length:SLOTS},()=>[]);
-  todayRoutines.forEach(r=>{
-    const s=timeToSlot(r.start_time);
-    if(s==null)return;
-    const e=r.end_time?timeToSlot(r.end_time):s+2;
-    slotItems[s].push({type:'routine',item:r,span:Math.max(1,e-s)});
-  });
-  todayTasks.forEach(t=>{
-    const s=timeToSlot(t.start_time);
-    if(s==null)return;
-    const e=t.end_time?timeToSlot(t.end_time):s+2;
-    slotItems[s].push({type:'task',item:t,span:Math.max(1,e-s)});
-  });
-  const now=new Date();
-  const nowSlot=(now.getHours()-TT_START)*2+(now.getMinutes()>=30?1:0);
-  const nowPct=((now.getMinutes()%30)/30)*100;
-  let html='';
-  for(let i=0;i<SLOTS;i++){
-    const h=TT_START+Math.floor(i/2),m=i%2===0?'00':'30';
-    const timeLabel=m==='00'?`${String(h).padStart(2,'0')}:00`:'';
-    const items=slotItems[i];
-    const nowLine=(i===nowSlot&&now.getHours()>=TT_START&&now.getHours()<TT_END)?
-      `<div style="position:absolute;top:${nowPct}%;left:0;right:0;height:2px;background:var(--danger);z-index:5;pointer-events:none"><div style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)"></div></div>`:'';
-    html+=`<div class="tt-row ${m==='00'?'tt-hour':'tt-half'}" style="position:relative">
-      <div class="tt-time">${timeLabel}</div>
-      <div class="tt-slot">${nowLine}${items.map(({type,item,span})=>{
-        const done=type==='task'?item.done:routineDoneToday.includes(item.id);
-        const pri=type==='task'?(item.priority||'mid'):'';
-        const cls=type==='routine'?'tt-routine':`tt-task ${pri}`;
-        const nm=item.members&&item.members.length?`<span class="tt-block-members">${item.members.join(', ')}</span>`:'';
-        const ts=item.start_time?(item.end_time?`${item.start_time}~${item.end_time}`:item.start_time):'';
-        return`<div class="tt-block ${cls}${done?' tt-done':''}" style="min-height:${span*36-6}px" onclick="${type==='task'?`toggleTask('${item.id}')`:`toggleRoutineDone('${item.id}')`}">
-          <span class="tt-block-name">${item.name}</span>${nm}<span class="tt-block-time">${ts}</span>
-        </div>`;
-      }).join('')}</div>
-    </div>`;
-  }
-
-  const unscheduled=[
-    ...todayTasks.filter(t=>!t.start_time),
-    ...todayRoutines.filter(r=>!r.start_time)
-  ];
-  let unscheduledHtml='';
-  if(unscheduled.length){
-    unscheduledHtml=`<div style="border-bottom:2px solid var(--bd);padding:10px 12px 12px;background:var(--sage-l)">
-      <div style="font-size:11px;color:var(--sage-d);font-weight:700;margin-bottom:8px;letter-spacing:.03em">시간 미지정</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${unscheduled.map(item=>{
-          const isTask=!!item.priority;
-          const done=isTask?item.done:routineDoneToday.includes(item.id);
-          const cls=isTask?`tt-task ${item.priority||'mid'}`:'tt-routine';
-          return`<div class="tt-block ${cls}${done?' tt-done':''}" style="min-height:auto;padding:4px 10px;width:auto" onclick="${isTask?`toggleTask('${item.id}')`:`toggleRoutineDone('${item.id}')`}">
-            <span class="tt-block-name" style="white-space:normal">${item.name}</span>
-          </div>`;
-        }).join('')}
       </div>
+      ${done&&!isRepeat?`<button class="btn-undo" onclick="${toggleFn}">취소</button>`:''}
+      ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="${editFn}">${ICO_EDIT}</button>`:''}
+      ${appRole==='admin'?`<button class="btn-icon" onclick="${delFn}">${ICO_DEL}</button>`:''}
     </div>`;
   }
-  document.getElementById('tt-wrap').innerHTML=unscheduledHtml+html;
+
+  // 시간 있는 업무: 시간순 정렬
+  const timed=todayTasks.filter(t=>t.start_time).sort((a,b)=>a.start_time>b.start_time?1:-1);
+  // 시간 없는 업무: 완료된 것 뒤로
+  const untimed=todayTasks.filter(t=>!t.start_time).sort((a,b)=>{
+    const da=isDone(a),db=isDone(b);
+    if(da&&!db)return 1;if(!da&&db)return -1;return 0;
+  });
+
+  const timedWrap=document.getElementById('today-timed-wrap');
+  const timedList=document.getElementById('today-timed-list');
+  const untimedList=document.getElementById('today-untimed-list');
+  const untimedLabel=document.getElementById('today-untimed-label');
+
+  if(timed.length){
+    timedWrap.style.display='';
+    timedList.innerHTML=timed.map(t=>{
+      const isRoutineObj=wfRoutines.some(r=>r.id===t.id);
+      return taskCard(t,isRoutineObj);
+    }).join('');
+  } else {
+    timedWrap.style.display='none';
+  }
+
+  untimedLabel.style.display=(timed.length&&untimed.length)?'':'none';
+  untimedList.innerHTML=untimed.map(t=>{
+    const isRoutineObj=wfRoutines.some(r=>r.id===t.id);
+    return taskCard(t,isRoutineObj);
+  }).join('');
+
+  setTimeout(initTouchDrag,0);
 }
 
 let _dragId=null;
@@ -1511,7 +1454,7 @@ function onDragEnd(e){
 
 let _touchDragId=null,_touchClone=null,_touchOffY=0;
 function initTouchDrag(){
-  document.getElementById('today-list-view').addEventListener('touchstart',e=>{
+  document.getElementById('today-untimed-list').addEventListener('touchstart',e=>{
     const handle=e.target.closest('.drag-handle');
     if(!handle)return;
     const item=handle.closest('.task-item');
@@ -1524,7 +1467,7 @@ function initTouchDrag(){
     document.body.appendChild(_touchClone);
     item.style.opacity='.3';
   },{passive:true});
-  document.getElementById('today-list-view').addEventListener('touchmove',e=>{
+  document.getElementById('today-untimed-list').addEventListener('touchmove',e=>{
     if(!_touchDragId||!_touchClone)return;
     e.preventDefault();
     const y=e.touches[0].clientY;
@@ -1535,7 +1478,7 @@ function initTouchDrag(){
     const target=el?.closest('.task-item[data-id]');
     if(target&&target.dataset.id!==_touchDragId)target.classList.add('drag-over');
   },{passive:false});
-  document.getElementById('today-list-view').addEventListener('touchend',e=>{
+  document.getElementById('today-untimed-list').addEventListener('touchend',e=>{
     if(!_touchDragId)return;
     const y=e.changedTouches[0].clientY;
     const el=document.elementFromPoint(e.changedTouches[0].clientX,y);
