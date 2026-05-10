@@ -1602,6 +1602,8 @@ async function saveTask(){
     priority:document.getElementById('tm-priority').value,
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false};
+  if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
+  else{wfTasks.push(row);}
   persistLocal();
   setSyncStatus('local');closeTaskModal();renderToday();renderCalendar();showToast('저장됐습니다.');
 }
@@ -1729,6 +1731,8 @@ async function saveProj(){
   const name=document.getElementById('pm-name').value.trim();
   if(!name){showToast('프로젝트명을 입력해주세요.');return;}
   const row={id:editIds.proj||uid(),name,start_date:document.getElementById('pm-start').value,due:document.getElementById('pm-due').value,members:document.getElementById('pm-members').value.split(',').map(s=>s.trim()).filter(Boolean),memo:document.getElementById('pm-memo').value.trim(),stages:projStagesArr.filter(s=>s.name.trim()),done:false};
+  if(editIds.proj){Object.assign(wfProjects.find(x=>x.id===editIds.proj)||{},row);}
+  else{wfProjects.push(row);}
   persistLocal();
   setSyncStatus('local');closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
 }
@@ -2682,7 +2686,12 @@ async function saveRecipe(){
   const memo=document.getElementById('ri-memo').value.trim();
   const ingredients=ingRows.filter(r=>r.costId&&r.amount);
   const stps=steps.filter(s=>s.trim());
-  editIds.recipe?Object.assign(recipes.find(x=>x.id===editIds.recipe),data):recipes.push(row);persistLocal();renderRecipeDev();renderRecipeDone();
+  const existing=editIds.recipe?recipes.find(x=>x.id===editIds.recipe):null;
+  const data={name,category,yield_qty,yield_unit,sale_price,memo,ingredients,steps:stps};
+  const row={id:editIds.recipe||uid(),...data,done:existing?.done||false};
+  if(editIds.recipe){Object.assign(recipes.find(x=>x.id===editIds.recipe)||{},data);}
+  else{recipes.push(row);}
+  persistLocal();renderRecipeDev();renderRecipeDone();
   setSyncStatus('local');closeRecipeModal();showToast(editIds.recipe?'수정됐습니다.':'추가됐습니다.');
 }
 async function deleteRecipe(id){
