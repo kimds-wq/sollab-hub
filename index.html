@@ -273,6 +273,8 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 .prod-order-card.has-qty .prod-order-qty{background:var(--sf)}
 /* 지점 다중 선택 */
 .dest-btn-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.day-toggle-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .15s}
+.day-toggle-btn.selected{background:var(--sage);color:#fff;border-color:var(--sage)}
 /* 지점 현황 카드 */
 .dest-cards-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
 .dest-stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;transition:box-shadow .15s}
@@ -525,7 +527,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
     <button class="wf-tab active" onclick="goWfTab('today')">오늘</button>
     <button class="wf-tab" onclick="goWfTab('calendar')">캘린더</button>
     <button class="wf-tab" onclick="goWfTab('projects')">프로젝트</button>
-    <button class="wf-tab" onclick="goWfTab('routine')">고정 업무</button>
+    <button class="wf-tab" onclick="goWfTab('routine')" style="display:none">고정 업무</button>
     <button class="wf-tab" onclick="goWfTab('archive')">아카이브</button>
   </div>
 
@@ -786,6 +788,28 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
   <div class="modal-header"><span class="modal-title" id="task-modal-title">업무 추가</span><button class="btn-icon" onclick="closeTaskModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">업무명 *</label><input class="form-input" id="tm-name" placeholder="업무명 입력"></div>
+    <!-- 반복 토글 -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--sage-l);border-radius:8px;margin-bottom:14px;cursor:pointer" onclick="toggleTaskRepeat()">
+      <div style="position:relative;width:36px;height:20px;flex-shrink:0">
+        <div id="tm-repeat-track" style="width:36px;height:20px;border-radius:10px;background:var(--bd);transition:background .2s"></div>
+        <div id="tm-repeat-thumb" style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+      </div>
+      <span style="font-size:13px;font-weight:600;color:var(--tx)">반복 업무</span>
+      <span style="font-size:12px;color:var(--tx2);margin-left:2px" id="tm-repeat-label">OFF — 일회성 업무</span>
+    </div>
+    <!-- 반복 요일 선택 (반복 ON일 때만 표시) -->
+    <div id="tm-repeat-days-wrap" style="display:none;margin-bottom:14px">
+      <div class="form-label" style="margin-bottom:8px">반복 요일 <span style="font-weight:400;color:var(--tx2)">(미선택 시 매일)</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="tm-days-group">
+        <button class="day-toggle-btn" data-day="1" onclick="toggleDay(this)">월</button>
+        <button class="day-toggle-btn" data-day="2" onclick="toggleDay(this)">화</button>
+        <button class="day-toggle-btn" data-day="3" onclick="toggleDay(this)">수</button>
+        <button class="day-toggle-btn" data-day="4" onclick="toggleDay(this)">목</button>
+        <button class="day-toggle-btn" data-day="5" onclick="toggleDay(this)">금</button>
+        <button class="day-toggle-btn" data-day="6" onclick="toggleDay(this)">토</button>
+        <button class="day-toggle-btn" data-day="0" onclick="toggleDay(this)">일</button>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">시작 시간</label>
         <select class="form-input" id="tm-start-time"><option value="">-</option></select>
@@ -794,7 +818,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
         <select class="form-input" id="tm-end-time"><option value="">-</option></select>
       </div>
     </div>
-    <div class="form-row">
+    <div class="form-row" id="tm-due-row">
       <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
       <div class="form-group"><label class="form-label">우선순위</label>
         <select class="form-input" id="tm-priority"><option value="mid">— 중간</option><option value="high">↑ 높음</option><option value="low">↓ 낮음</option></select>
@@ -1106,8 +1130,9 @@ function setPending(table){
 }
 async function reloadTable(t){
   if(!_sb)return;
-  const ord=t==='orders'?{ascending:false}:{};
-  const{data}=await _sb.from(t).select('*').order(t==='orders'||t==='costs'||t==='recipes'?'created_at':'created_at',ord.ascending!==undefined?ord:{});
+  const orderOpt=t==='orders'?{ascending:false}:{};
+  const orderCol=(t==='costs'||t==='recipes')?'name':'created_at';
+  const{data}=await _sb.from(t).select('*').order(orderCol,orderOpt);
   if(t==='wf_tasks'){wfTasks=data||[];renderToday();renderArchive();}
   else if(t==='wf_projects'){wfProjects=data||[];renderProjects();renderToday();}
   else if(t==='wf_routines'){wfRoutines=data||[];renderRoutine();}
@@ -1179,8 +1204,9 @@ function applyAppRole(){
   wfTabs.forEach(btn=>{
     const t=btn.getAttribute('onclick')?.match(/goWfTab\('(\w+)'\)/)?.[1];
     if(!t)return;
+    if(t==='routine'){btn.style.display='none';return;} // 고정 업무 탭 항상 숨김
     if(isAdmin){btn.style.display='';}
-    else{btn.style.display=t==='calendar'?'':'none';}
+    else{btn.style.display=(t==='today'||t==='calendar')?'':'none';}
   });
   if(!isAdmin){
 
@@ -1286,13 +1312,6 @@ function switchChartTab(tab){
     const btn=document.getElementById('ctab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
-
-  document.getElementById('chart-by-prod').style.display=tab==='prod'?'':'none';
-  document.getElementById('chart-dest-prod').style.display=tab==='dest-prod'?'':'none';
-  document.getElementById('chart-prod-dest').style.display=tab==='prod-dest'?'':'none';
-  document.getElementById('ctab-prod').classList.toggle('active',tab==='prod');
-  document.getElementById('ctab-dest-prod').classList.toggle('active',tab==='dest-prod');
-  document.getElementById('ctab-prod-dest').classList.toggle('active',tab==='prod-dest');
 }
 
 function setBottomNav(s){
@@ -1307,6 +1326,69 @@ function applyMobileLayout(){
 }
 applyMobileLayout();
 window.addEventListener('resize', applyMobileLayout);
+
+// ── 반복 업무 토글
+let _taskRepeat=false;
+let _taskDays=[];
+
+function toggleTaskRepeat(){
+  _taskRepeat=!_taskRepeat;
+  const track=document.getElementById('tm-repeat-track');
+  const thumb=document.getElementById('tm-repeat-thumb');
+  const label=document.getElementById('tm-repeat-label');
+  const daysWrap=document.getElementById('tm-repeat-days-wrap');
+  const dueRow=document.getElementById('tm-due-row');
+  if(_taskRepeat){
+    track.style.background='var(--sage)';
+    thumb.style.left='18px';
+    label.textContent='ON — 반복 업무';
+    daysWrap.style.display='';
+    dueRow.style.display='none';
+  } else {
+    track.style.background='var(--bd)';
+    thumb.style.left='2px';
+    label.textContent='OFF — 일회성 업무';
+    daysWrap.style.display='none';
+    dueRow.style.display='';
+    _taskDays=[];
+    document.querySelectorAll('.day-toggle-btn').forEach(b=>b.classList.remove('selected'));
+  }
+}
+
+function toggleDay(btn){
+  const day=parseInt(btn.dataset.day);
+  btn.classList.toggle('selected');
+  if(btn.classList.contains('selected')){
+    if(!_taskDays.includes(day))_taskDays.push(day);
+  } else {
+    _taskDays=_taskDays.filter(d=>d!==day);
+  }
+}
+
+function initRepeatState(repeat,days){
+  _taskRepeat=false;_taskDays=[];
+  // 초기화
+  const track=document.getElementById('tm-repeat-track');
+  const thumb=document.getElementById('tm-repeat-thumb');
+  const label=document.getElementById('tm-repeat-label');
+  const daysWrap=document.getElementById('tm-repeat-days-wrap');
+  const dueRow=document.getElementById('tm-due-row');
+  document.querySelectorAll('.day-toggle-btn').forEach(b=>b.classList.remove('selected'));
+  if(repeat){
+    _taskRepeat=true;_taskDays=days||[];
+    track.style.background='var(--sage)';thumb.style.left='18px';
+    label.textContent='ON — 반복 업무';
+    daysWrap.style.display='';dueRow.style.display='none';
+    _taskDays.forEach(d=>{
+      const btn=document.querySelector(`.day-toggle-btn[data-day="${d}"]`);
+      if(btn)btn.classList.add('selected');
+    });
+  } else {
+    track.style.background='var(--bd)';thumb.style.left='2px';
+    label.textContent='OFF — 일회성 업무';
+    daysWrap.style.display='none';dueRow.style.display='';
+  }
+}
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
 
 function renderAll(){renderToday();renderProjects();renderCalendar();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
@@ -1357,9 +1439,13 @@ function setTodayView(v){
 
 function renderToday(){
   const td=TODAY();
-  const todayRoutines=wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW));
+  // 반복 업무: wfTasks에서 repeat:true인 것 + 기존 wfRoutines (호환)
+  const todayRoutines=[
+    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(DOW))),
+    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW))
+  ];
 
-  const allTodayTasks=wfTasks.filter(t=>t.due===td||!t.due);
+  const allTodayTasks=wfTasks.filter(t=>!t.repeat&&(t.due===td||!t.due));
 
   const orderedTasks=[...allTodayTasks].sort((a,b)=>{
     if(a.done&&!b.done)return 1;if(!a.done&&b.done)return -1;
@@ -1392,7 +1478,7 @@ function renderToday(){
         <div class="priority-dot p-${t.priority||'mid'}"></div>
         <div class="task-check${t.done?' checked':''}" onclick="toggleTask('${t.id}')">${t.done?ICO_CHK:''}</div>
         <div style="flex:1;min-width:0">
-          <div class="task-title">${t.name}</div>
+          <div class="task-title">${t.name}${t.repeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:4px;font-weight:600">반복</span>':''}</div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
             ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
             ${t.members&&t.members.length?t.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
@@ -1406,6 +1492,7 @@ function renderToday(){
     }),
     ...todayRoutines.map(r=>{
       const done=routineDoneToday.includes(r.id);
+      const isNewRepeat=!!r.repeat; // wfTasks의 반복 업무
       return`<div class="task-item${done?' done-item':''}">
         <div class="priority-dot" style="background:var(--sage-m)"></div>
         <div class="task-check${done?' checked':''}" onclick="toggleRoutineDone('${r.id}')">${done?ICO_CHK:''}</div>
@@ -1414,9 +1501,12 @@ function renderToday(){
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
             ${r.start_time?`<span class="task-meta">${r.start_time}${r.end_time?' ~ '+r.end_time:''}</span>`:''}
             ${r.members&&r.members.length?r.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
-            <span class="task-meta">반복 업무</span>
+            <span class="task-meta" style="color:var(--sage-d)">🔄 반복</span>
+            ${r.days&&r.days.length?`<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>r.days.includes(i)).join('·')}요일</span>`:''}
           </div>
         </div>
+        ${appRole==='admin'?`<button class="btn-icon" onclick="${isNewRepeat?`editTask('${r.id}')`:`editRoutine('${r.id}')`}" title="수정">${ICO_EDIT}</button>`:''}
+        ${appRole==='admin'?`<button class="btn-icon" onclick="${isNewRepeat?`deleteTask('${r.id}')`:`deleteRoutine('${r.id}')`}">${ICO_DEL}</button>`:''}
       </div>`;
     })
   ].join('');
@@ -1427,7 +1517,11 @@ function renderToday(){
 
 function renderTimetable(){
   const td=TODAY();
-  const todayRoutines=wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW));
+  // 반복 업무: wfTasks에서 repeat:true인 것 + 기존 wfRoutines (호환)
+  const todayRoutines=[
+    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(DOW))),
+    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(DOW))
+  ];
   const todayTasks=wfTasks.filter(t=>t.due===td||!t.due);
   const SLOTS=(TT_END-TT_START)*2;
   const slotItems=Array.from({length:SLOTS},()=>[]);
@@ -1613,6 +1707,7 @@ function openTaskModal(id){
   document.getElementById('tm-priority').value=t?.priority||'mid';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   document.getElementById('tm-memo').value=t?.memo||'';
+  initRepeatState(t?.repeat||false,t?.days||[]);
   document.getElementById('task-modal').classList.add('open');
 }
 function editTask(id){openTaskModal(id);}
@@ -1623,9 +1718,11 @@ async function saveTask(){
   const _st=document.getElementById('tm-start-time').value,_et=document.getElementById('tm-end-time').value;
   if(_st&&_et&&_et<=_st){showToast('종료 시간은 시작 시간보다 늦어야 합니다.');return;}
   const row={id:editIds.task||uid(),name,
+    repeat:_taskRepeat,
+    days:_taskRepeat?[..._taskDays]:[],
     start_time:document.getElementById('tm-start-time').value,
     end_time:document.getElementById('tm-end-time').value,
-    due:document.getElementById('tm-due').value,
+    due:_taskRepeat?'':document.getElementById('tm-due').value,
     priority:document.getElementById('tm-priority').value,
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false};
@@ -1950,7 +2047,7 @@ function closeRoutineModal(){document.getElementById('routine-modal').classList.
 async function saveRoutine(){
   const name=document.getElementById('rm-name').value.trim();
   if(!name){showToast('업무명을 입력해주세요.');return;}
-  const _st=document.getElementById('tm-start-time').value,_et=document.getElementById('tm-end-time').value;
+  const _st=document.getElementById('rm-start-time').value,_et=document.getElementById('rm-end-time').value;
   if(_st&&_et&&_et<=_st){showToast('종료 시간은 시작 시간보다 늦어야 합니다.');return;}
   const days=[...document.querySelectorAll('#rm-days input:checked')].map(cb=>parseInt(cb.value));
   const row={id:editIds.routine||uid(),name,
@@ -2656,6 +2753,7 @@ async function saveCost(){
     const{error}=editIds.cost?await _sb.from('costs').update(data).eq('id',editIds.cost):await _sb.from('costs').insert(row);
     _pendingTable=null;
     if(error){costs=prevCosts;renderCosts();showToast('저장 실패: '+error.message);return;}
+    renderCosts();
   } else {editIds.cost?Object.assign(costs.find(x=>x.id===editIds.cost),data):costs.push(row);persistLocal();renderCosts();}
   setSyncStatus(_sb?'ok':'local');closeCostModal();showToast(editIds.cost?'수정됐습니다.':'추가됐습니다.');
 }
