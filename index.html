@@ -118,7 +118,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 
 /* ── WORKFLOW COMMON ── */
 .task-meta{font-size:12px;color:var(--tx2)}
-.member-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;background:var(--accent-l);color:var(--accent);margin:2px}
+.member-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;margin:2px}
 .priority-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .p-high{background:#D05050}.p-mid{background:#C8845A}.p-low{background:var(--sage)}
 
@@ -1194,6 +1194,35 @@ function closeModal(id){document.getElementById(id).classList.remove('open');doc
 document.body.style.opacity='1';
 function sortKo(arr){return[...arr].sort((a,b)=>a.name.localeCompare(b.name,'ko'));}
 
+// ── 팀원 색상 팔레트 (등록 순서 고정)
+const MEMBER_COLORS=[
+  {bg:'#E8F0FF',color:'#2C5CC5',border:'#9BB3F0'},
+  {bg:'#FFF0E8',color:'#C55A2C',border:'#F0B39B'},
+  {bg:'#E8F5EE',color:'#2C8C5C',border:'#9BD4B3'},
+  {bg:'#F5E8FF',color:'#7C2CC5',border:'#C99BF0'},
+  {bg:'#FFECEC',color:'#C52C2C',border:'#F09B9B'},
+  {bg:'#FFFBE8',color:'#A07C00',border:'#E0D080'},
+  {bg:'#E8FAFA',color:'#1A8080',border:'#80CCCC'},
+  {bg:'#FFE8F5',color:'#C52C8C',border:'#F09BD4'},
+];
+function getMemberStyle(name){
+  const idx=teamMembers.indexOf(name);
+  const c=MEMBER_COLORS[(idx>=0?idx:Math.abs(name.split('').reduce((a,b)=>a+b.charCodeAt(0),0)))%MEMBER_COLORS.length];
+  return`background:${c.bg};color:${c.color};border:1px solid ${c.border}`;
+}
+function memberTag(name){
+  return`<span class="member-tag" style="${getMemberStyle(name)}">${name}</span>`;
+}
+// 담당자 배열을 teamMembers 등록 순서대로 정렬
+function sortMembers(members){
+  if(!members||!members.length)return members;
+  return [...members].sort((a,b)=>{
+    const ai=teamMembers.indexOf(a), bi=teamMembers.indexOf(b);
+    if(ai===-1&&bi===-1)return a.localeCompare(b,'ko');
+    if(ai===-1)return 1; if(bi===-1)return -1;
+    return ai-bi;
+  });
+}
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
 function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
@@ -1442,6 +1471,8 @@ function renderToday(){
   const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
 
+  const ICO_DRAG='<svg width="12" height="18" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="7" y2="4"/><line x1="3" y1="8" x2="7" y2="8"/><line x1="3" y1="12" x2="7" y2="12"/></svg>';
+
   function taskCard(t,isRoutineObj){
     const isRepeat=t.repeat||isRoutineObj;
     const done=isRepeat?routineDoneToday.includes(t.id):t.done;
@@ -1452,14 +1483,17 @@ function renderToday(){
     const delFn=isRoutineObj?`deleteRoutine('${t.id}')`:`deleteTask('${t.id}')`;
     const repeatDays=isRepeat&&t.days&&t.days.length?
       `<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>t.days.includes(i)).join('·')}</span>`:'';
-    return`<div class="task-item${done?' done-item':''}">
+    const sortedMembers=sortMembers(t.members||[]);
+    const draggable=!isRepeat&&appRole==='admin';
+    return`<div class="task-item${done?' done-item':''}" ${draggable?`draggable="true" data-id="${t.id}" ondragstart="onDragStart(event,'${t.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${t.id}')" ondragend="onDragEnd(event)"`:''}> 
+      ${draggable?`<div class="drag-handle" title="드래그하여 순서 변경">${ICO_DRAG}</div>`:''}
       <div class="priority-dot p-${isRepeat?'low':pri}"></div>
       <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
       <div style="flex:1;min-width:0">
         <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">루틴</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
           ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
-          ${t.members&&t.members.length?t.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
+          ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
           ${repeatDays}
           ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
         </div>
@@ -1473,10 +1507,13 @@ function renderToday(){
 
   // 시간 있는 업무: 시간순 정렬
   const timed=todayTasks.filter(t=>t.start_time).sort((a,b)=>a.start_time>b.start_time?1:-1);
-  // 시간 없는 업무: 완료된 것 뒤로
+  // 시간 없는 업무: wfTaskOrder 순서 적용, 완료된 것 뒤로
   const untimed=todayTasks.filter(t=>!t.start_time).sort((a,b)=>{
     const da=isDone(a),db=isDone(b);
-    if(da&&!db)return 1;if(!da&&db)return -1;return 0;
+    if(da&&!db)return 1;if(!da&&db)return -1;
+    const ai=wfTaskOrder.indexOf(a.id),bi=wfTaskOrder.indexOf(b.id);
+    if(ai===-1&&bi===-1)return 0;if(ai===-1)return 1;if(bi===-1)return -1;
+    return ai-bi;
   });
 
   const timedWrap=document.getElementById('today-timed-wrap');
@@ -1521,7 +1558,10 @@ function onDrop(e,targetId){
   if(!_dragId||_dragId===targetId)return;
 
   const td=TODAY();
-  const todayIds=wfTasks.filter(t=>t.due===td||!t.due).map(t=>t.id);
+  const dow=new Date().getDay();
+  const todayIds=wfTasks.filter(t=>
+    !t.repeat&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))
+  ).map(t=>t.id);
 
   let order=wfTaskOrder.filter(id=>todayIds.includes(id));
   todayIds.forEach(id=>{if(!order.includes(id))order.push(id);});
