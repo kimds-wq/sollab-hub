@@ -530,7 +530,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
     </div>
     <div class="sec-header">
       <span class="sec-title" id="today-date-label"></span>
-      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ 업무 추가</button>
+      <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
     </div>
     <!-- 시간 지정 업무 (타임라인) -->
     <div id="today-timed-wrap" style="display:none;margin-bottom:16px">
@@ -1099,9 +1099,11 @@ function applyAppRole(){
     else{btn.style.display=(t==='today'||t==='calendar')?'':'none';}
   });
   if(!isAdmin){
-
-    goWfTab('calendar');
+    goWfTab('today');
   }
+  // 업무 추가 버튼 권한
+  const todayAddBtn=document.getElementById('today-add-btn');
+  if(todayAddBtn)todayAddBtn.style.display=isAdmin?'':'none';
 
   const otabs=document.querySelectorAll('.order-tab');
   otabs.forEach(btn=>{
