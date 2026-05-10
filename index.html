@@ -15,7 +15,7 @@
   --warn-bg:#FDF6EC;--warn-bd:#E8A020;--warn-tx:#7A4500;
   --r:10px;--sh:0 1px 4px rgba(50,80,60,.08);
 }
-body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','Noto Sans KR',sans-serif;background:var(--cream);color:var(--tx);min-height:100vh;font-size:14px}
+body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕','Noto Sans KR',sans-serif;background:var(--cream);color:var(--tx);min-height:100vh;font-size:14px;opacity:0;transition:opacity .15s}
 
 /* ── CONFIG BANNER ── */
 
@@ -94,8 +94,19 @@ select.form-input{-webkit-appearance:auto;appearance:auto;cursor:pointer;padding
 textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 
 /* ── TOAST ── */
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.toast.show{opacity:1;pointer-events:auto}
+.toast-undo{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:5px;padding:3px 9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0}
+.toast-undo:hover{background:rgba(255,255,255,.15)}
+/* ── 팀원 선택 칩 ── */
+.member-chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.member-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx2);transition:all .15s;font-family:inherit}
+.member-chip.selected{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage-m)}
+/* ── 업무 메모 펼치기 ── */
+.task-memo{font-size:12px;color:var(--tx2);margin-top:6px;padding:6px 10px;background:var(--cream);border-radius:6px;line-height:1.6;display:none}
+.task-memo.open{display:block}
+.task-memo-toggle{font-size:11px;color:var(--tx2);cursor:pointer;padding:2px 0;display:inline-flex;align-items:center;gap:3px;margin-top:3px;user-select:none}
+.task-memo-toggle:hover{color:var(--sage-d)}
 
 /* ══════════════════════════════
    SECTION 1: WORKFLOW
@@ -275,8 +286,9 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 .dest-cards-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
 .dest-stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;transition:box-shadow .15s}
 .dest-stat-card:hover{box-shadow:var(--sh)}
-.dest-stat-card.alert{border-color:var(--danger);background:var(--danger-l)}
-.dest-stat-card.warn{border-color:var(--warn-bd);background:var(--warn-bg)}
+.dest-stat-card.alert{border-color:var(--danger);background:var(--danger-l);border-width:2px}
+.dest-stat-card.alert .dest-stat-name{color:var(--danger)}
+.dest-stat-card.warn{border-color:var(--warn-bd);background:var(--warn-bg);border-width:2px}
 .dest-stat-name{font-size:12px;color:var(--tx2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dest-stat-qty{font-size:20px;font-weight:700;color:var(--sage-d);line-height:1.2;margin-bottom:2px}
 .dest-stat-qty.zero{color:var(--tx2);font-size:16px}
@@ -469,13 +481,14 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 }
 /* ── 모바일 하단 탭바 */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:1px solid var(--bd);z-index:99;padding-bottom:env(safe-area-inset-bottom,0px)}
-.bottom-nav-inner{display:flex;align-items:stretch;height:56px}
-.bottom-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;font-size:10px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:inherit;transition:color .15s;padding:0}
+.bottom-nav-inner{display:flex;align-items:stretch;height:64px}
+.bottom-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:none;background:none;font-size:10px;font-weight:500;color:var(--tx2);cursor:pointer;font-family:inherit;transition:color .15s;padding:0;min-width:44px;min-height:44px}
 .bottom-nav-btn.active{color:var(--sage-d)}
-.bottom-nav-btn svg{width:20px;height:20px;flex-shrink:0}
+.bottom-nav-btn svg{width:22px;height:22px;flex-shrink:0}
 .mobile-mode .bottom-nav{display:block}
 .mobile-mode .top-nav .nav-tabs{display:none}
-.mobile-mode .section{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+.mobile-mode .section{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+body.modal-open{overflow:hidden;position:fixed;width:100%}
 </style>
 </head>
 <body>
@@ -508,6 +521,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
         <span class="sync-label" id="sync-label">로컬 저장</span>
       </div>
       <button class="btn btn-ghost btn-sm" id="nav-export-btn" onclick="exportOrders()" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 내보내기</button>
+      <button class="btn-icon" id="settings-btn" onclick="openSettingsModal()" style="display:none" title="설정"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
   </div>
 </div>
@@ -697,7 +711,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
           <tbody id="order-tbody"></tbody>
         </table>
       </div>
-      <div id="order-empty" class="empty" style="display:none"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 0 2-2h2a2 2 0 0 0 2 2"/></svg></div><p>납품 내역이 없습니다.</p></div>
+      <div id="order-empty" class="empty" style="display:none"><div class="empty-icon">📦</div><p>납품 내역이 없습니다.<br><span style="font-size:12px;color:var(--tx2)">납품 입력 탭에서 지점과 수량을 선택해 저장하세요.</span></p></div>
     </div>
 
     <div class="order-panel" id="opanel-products">
@@ -753,7 +767,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
         <tbody id="cost-tbody"></tbody>
       </table>
     </div>
-    <div id="cost-empty" class="empty" style="display:none"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><path d="M2 22c1.25-1.25 2.5-2.5 3.75-3.75"/><path d="M12 2s0 10-5 15c2.5 0 5-2.5 7.5-5S22 7 22 2c-5 0-8 2-10 3z"/></svg></div><p>등록된 재료가 없습니다.</p></div>
+    <div id="cost-empty" class="empty" style="display:none"><div class="empty-icon">🧂</div><p>등록된 재료가 없습니다.<br><span style="font-size:12px;color:var(--tx2)">+ 재료 추가로 원가 계산에 사용할 재료를 등록하세요.</span></p></div>
   </div>
 
   <div class="recipe-panel" id="rpanel-dev">
@@ -765,7 +779,7 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
       </div>
     </div>
     <div id="recipe-dev-list"></div>
-    <div id="recipe-dev-empty" class="empty" style="display:none"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><p>개발 중인 레시피가 없습니다.</p></div>
+    <div id="recipe-dev-empty" class="empty" style="display:none"><div class="empty-icon">📝</div><p>개발 중인 레시피가 없습니다.<br><span style="font-size:12px;color:var(--tx2)">재료를 먼저 등록한 후 레시피를 추가하면 원가가 자동 계산돼요.</span></p></div>
   </div>
 
   <div class="recipe-panel" id="rpanel-done">
@@ -818,7 +832,11 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
         <select class="form-input" id="tm-priority"><option value="mid">— 중간</option><option value="high">↑ 높음</option><option value="low">↓ 낮음</option></select>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="tm-members" placeholder="예: 김솔, 이준"></div>
+    <div class="form-group">
+      <label class="form-label">담당자</label>
+      <div class="member-chip-wrap" id="tm-member-chips"></div>
+      <input class="form-input" id="tm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:8px">
+    </div>
     <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="tm-memo" rows="2" placeholder="메모"></textarea></div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeTaskModal()">취소</button><button class="btn btn-primary" onclick="saveTask()">저장</button></div>
@@ -1009,7 +1027,21 @@ textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
 
 
 
-<div class="toast" id="toast"></div>
+<div class="overlay" id="settings-modal"><div class="modal">
+  <div class="modal-header"><span class="modal-title">설정</span><button class="btn-icon" onclick="closeModal('settings-modal')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="modal-body">
+    <div class="form-group">
+      <label class="form-label">팀원 등록 <span style="font-weight:400;color:var(--tx2)">(쉼표 구분)</span></label>
+      <input class="form-input" id="settings-members" placeholder="예: 김솔, 이준, 재호, 다솔">
+      <p style="font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5">등록한 팀원은 업무 추가 시 버튼으로 빠르게 선택할 수 있어요.</p>
+    </div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">취소</button><button class="btn btn-primary" onclick="saveSettings()">저장</button></div>
+</div></div>
+
+
+
+<div class="toast" id="toast"><span class="toast-msg"></span><button class="toast-undo" id="toast-undo-btn" onclick="doToastUndo()" style="display:none">되돌리기</button></div>
 
 <script>
 
@@ -1088,6 +1120,8 @@ function applyAppRole(){
   badge.className='role-badge '+(isAdmin?'role-admin':'role-viewer');
   badge.style.display='';
   document.getElementById('app-logout-btn').style.display='';
+  const settingsBtn=document.getElementById('settings-btn');
+  if(settingsBtn)settingsBtn.style.display=isAdmin?'':'none';
 
   const wfTabs=document.querySelectorAll('.wf-tab');
 
@@ -1142,8 +1176,59 @@ let selectedDestColor='#D6EAD8';
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const fmt=n=>Math.round(n).toLocaleString('ko-KR');
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+let _undoFn=null,_toastTimer=null;
+function showToast(msg,undoFn){
+  const t=document.getElementById('toast');
+  const btn=document.getElementById('toast-undo-btn');
+  t.querySelector('.toast-msg').textContent=msg;
+  _undoFn=undoFn||null;
+  if(btn)btn.style.display=undoFn?'':'none';
+  t.classList.add('show');
+  if(_toastTimer)clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{t.classList.remove('show');_undoFn=null;},undoFn?4000:2400);
+}
+function doToastUndo(){if(_undoFn){_undoFn();_undoFn=null;document.getElementById('toast').classList.remove('show');}}
+function openModal(id){document.getElementById(id).classList.add('open');document.body.classList.add('modal-open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.classList.remove('modal-open');}
+// 초기 로딩 깜빡임 방지
+document.body.style.opacity='1';
 function sortKo(arr){return[...arr].sort((a,b)=>a.name.localeCompare(b.name,'ko'));}
+
+// ── 팀원 등록
+let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
+function saveSettings(){
+  const val=document.getElementById('settings-members').value;
+  teamMembers=val.split(',').map(s=>s.trim()).filter(Boolean);
+  saveTeamMembers();
+  closeModal('settings-modal');
+  showToast('설정이 저장됐습니다.');
+}
+function openSettingsModal(){
+  document.getElementById('settings-members').value=teamMembers.join(', ');
+  openModal('settings-modal');
+}
+function renderMemberChips(wrapId,inputId){
+  const wrap=document.getElementById(wrapId);if(!wrap)return;
+  if(!teamMembers.length){wrap.style.display='none';return;}
+  wrap.style.display='';
+  const curVals=(document.getElementById(inputId)?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  wrap.innerHTML=teamMembers.map(m=>`<button type="button" class="member-chip${curVals.includes(m)?' selected':''}" onclick="toggleMemberChip('${m}','${inputId}','${wrapId}')">${m}</button>`).join('');
+}
+function toggleMemberChip(name,inputId,wrapId){
+  const inp=document.getElementById(inputId);if(!inp)return;
+  let cur=inp.value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(cur.includes(name))cur=cur.filter(x=>x!==name);else cur.push(name);
+  inp.value=cur.join(', ');
+  renderMemberChips(wrapId,inputId);
+}
+
+// ── 메모 펼치기
+function toggleTaskMemo(el){
+  const memo=el.nextElementSibling;
+  if(!memo)return;
+  memo.classList.toggle('open');
+  el.textContent=memo.classList.contains('open')?'▾ 메모':'▸ 메모';
+}
 
 function goSection(s){
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));setBottomNav(s);
@@ -1333,11 +1418,10 @@ function renderToday(){
     dateLabel.textContent=`${parseInt(m)}월 ${parseInt(d)}일 (${dowNames[dow]})`;
   }
 
-  // 오늘 표시할 업무 수집
-  // 일회성: due가 오늘이거나 due 없음 (repeat:false)
+  // 일회성: due가 오늘이거나, (due 없고 created_date가 오늘인 것)
   // 반복: repeat:true이고 days가 비었거나 오늘 요일 포함
   const todayTasks=[
-    ...wfTasks.filter(t=>!t.repeat&&(t.due===td||!t.due)),
+    ...wfTasks.filter(t=>!t.repeat&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))),
     ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
     ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
   ];
@@ -1371,13 +1455,14 @@ function renderToday(){
       <div class="priority-dot p-${isRepeat?'low':pri}"></div>
       <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
       <div style="flex:1;min-width:0">
-        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">반복</span>':''}</div>
+        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">루틴</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
           ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
           ${t.members&&t.members.length?t.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
           ${repeatDays}
           ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
         </div>
+        ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
       </div>
       ${done&&!isRepeat?`<button class="btn-undo" onclick="${toggleFn}">취소</button>`:''}
       ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="${editFn}">${ICO_EDIT}</button>`:''}
@@ -1511,11 +1596,11 @@ function toggleRoutineDone(id){
 }
 async function deleteTask(id){
   if(!confirm('삭제할까요?'))return;
-
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(x=>x.id!==id);
   renderToday();renderRoutine();
   persistLocal();
+  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();});
 }
 function openTaskModal(id){
   editIds.task=id||null;
@@ -1528,12 +1613,13 @@ function openTaskModal(id){
   document.getElementById('tm-due').value=t?.due||'';
   document.getElementById('tm-priority').value=t?.priority||'mid';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
+  renderMemberChips('tm-member-chips','tm-members');
   document.getElementById('tm-memo').value=t?.memo||'';
   initRepeatState(t?.repeat||false,t?.days||[]);
-  document.getElementById('task-modal').classList.add('open');
+  openModal('task-modal');
 }
 function editTask(id){openTaskModal(id);}
-function closeTaskModal(){document.getElementById('task-modal').classList.remove('open');}
+function closeTaskModal(){closeModal('task-modal');}
 async function saveTask(){
   const name=document.getElementById('tm-name').value.trim();
   if(!name){showToast('업무명을 입력해주세요.');return;}
@@ -1547,7 +1633,9 @@ async function saveTask(){
     due:_taskRepeat?'':document.getElementById('tm-due').value,
     priority:document.getElementById('tm-priority').value,
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
-    memo:document.getElementById('tm-memo').value.trim(),done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false};
+    memo:document.getElementById('tm-memo').value.trim(),
+    done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false,
+    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):TODAY()};
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
   persistLocal();
@@ -1657,9 +1745,9 @@ function openProjModal(id){
   document.getElementById('pm-members').value=(p?.members||[]).join(', ');
   document.getElementById('pm-memo').value=p?.memo||'';
   projStagesArr=p?[...(p.stages||[]).map(s=>({...s}))]:[]; renderProjStages();
-  document.getElementById('proj-modal').classList.add('open');
+  openModal('proj-modal');
 }
-function closeProjModal(){document.getElementById('proj-modal').classList.remove('open');}
+function closeProjModal(){closeModal('proj-modal');}
 function editProj(id){openProjModal(id);}
 function renderProjStages(){
   document.getElementById('pm-stages').innerHTML=projStagesArr.map((s,i)=>`
@@ -1867,10 +1955,10 @@ function openRoutineModal(id){
   document.getElementById('rm-members').value=(r?.members||[]).join(', ');
   document.getElementById('rm-memo').value=r?.memo||'';
   initRoutineRepeat(r?.days||[]);
-  document.getElementById('routine-modal').classList.add('open');
+  openModal('routine-modal');
 }
 function editRoutine(id){openRoutineModal(id);}
-function closeRoutineModal(){document.getElementById('routine-modal').classList.remove('open');}
+function closeRoutineModal(){closeModal('routine-modal');}
 
 let _routineRepeat=false;
 function _applyRoutineRepeatUI(){
@@ -2070,6 +2158,8 @@ async function submitOrder(){
   }).join('')+list.innerHTML;
 
   orderQtyMap={};
+  selectedDests.clear();
+  renderDestButtons();
   renderProductCards();
   renderOrderHistory();
   showToast(`${newItems.length}건 납품이 저장됐습니다.`);
@@ -2410,10 +2500,10 @@ function openProductModal(id){
   document.getElementById('prod-modal-title').textContent=p?'상품 수정':'상품 추가';
   document.getElementById('prod-name').value=p?.name||'';
   document.getElementById('prod-unit').value=p?.unit||'';
-  document.getElementById('product-modal').classList.add('open');
+  openModal('product-modal');
 }
 function editProduct(id){openProductModal(id);}
-function closeProductModal(){document.getElementById('product-modal').classList.remove('open');}
+function closeProductModal(){closeModal('product-modal');}
 async function saveProduct(){
   const name=document.getElementById('prod-name').value.trim();if(!name){showToast('상품명을 입력해주세요.');return;}
   const unit=document.getElementById('prod-unit').value.trim();
@@ -2460,10 +2550,10 @@ function openDestModal(id){
   document.querySelectorAll('.dest-color-btn').forEach(b=>{
     b.style.outline=b.dataset.color===selectedDestColor?'3px solid var(--sage)':'none';
   });
-  document.getElementById('dest-modal').classList.add('open');
+  openModal('dest-modal');
 }
 function editDest(id){openDestModal(id);}
-function closeDestModal(){document.getElementById('dest-modal').classList.remove('open');}
+function closeDestModal(){closeModal('dest-modal');}
 function selectDestColor(c,btn){selectedDestColor=c;document.querySelectorAll('.dest-color-btn').forEach(b=>b.style.outline='none');btn.style.outline='3px solid var(--sage)';}
 async function saveDest(){
   const name=document.getElementById('dest-name').value.trim();if(!name){showToast('지점명을 입력해주세요.');return;}
@@ -2538,9 +2628,9 @@ function openCostModal(id){
   document.getElementById('ci-unit').value=c?.unit||'g';
   document.getElementById('ci-price').value=c?.price||'';
   document.getElementById('ci-note').value=c?.note||'';
-  updateUnitPreview();document.getElementById('cost-modal').classList.add('open');
+  updateUnitPreview();openModal('cost-modal');
 }
-function closeCostModal(){document.getElementById('cost-modal').classList.remove('open');}
+function closeCostModal(){closeModal('cost-modal');}
 function editCost(id){openCostModal(id);}
 function updateUnitPreview(){const v=parseFloat(document.getElementById('ci-volume').value),p=parseFloat(document.getElementById('ci-price').value),u=document.getElementById('ci-unit')?.value||'g',el=document.getElementById('ci-unit-preview');if(v>0&&p>0){document.getElementById('ci-unit-val').textContent=fmt(p/v);document.getElementById('ci-unit-label').textContent=u;el.style.display='';}else el.style.display='none';}
 document.getElementById('ci-volume').addEventListener('input',updateUnitPreview);
@@ -2562,8 +2652,8 @@ async function deleteCost(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...costs];
   costs=costs.filter(c=>c.id!==id);renderCosts();
-  showToast('삭제됐습니다.');
   persistLocal();
+  showToast('재료를 삭제했습니다.',()=>{costs=prev;renderCosts();persistLocal();});
 }
 function calcCost(ings){return(ings||[]).reduce((s,i)=>{const m=costs.find(c=>c.id===i.costId);return s+(m&&i.amount?m.price/m.volume*i.amount:0);},0);}
 function buildRecipeCard(r,isDone){
@@ -2648,9 +2738,9 @@ function openRecipeModal(id){
   document.getElementById('ri-price').value=r?.sale_price||'';
   document.getElementById('ri-memo').value=r?.memo||'';
   ingRows=r?r.ingredients.map(i=>({...i})):[];steps=r?[...r.steps]:[];
-  renderIngRows();renderSteps();document.getElementById('recipe-modal').classList.add('open');
+  renderIngRows();renderSteps();openModal('recipe-modal');
 }
-function closeRecipeModal(){document.getElementById('recipe-modal').classList.remove('open');}
+function closeRecipeModal(){closeModal('recipe-modal');}
 function editRecipe(id){openRecipeModal(id);}
 async function saveRecipe(){
   const name=document.getElementById('ri-name').value.trim();
@@ -2674,8 +2764,8 @@ async function deleteRecipe(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...recipes];
   recipes=recipes.filter(r=>r.id!==id);renderRecipeDev();renderRecipeDone();
-  showToast('삭제됐습니다.');
   persistLocal();
+  showToast('레시피를 삭제했습니다.',()=>{recipes=prev;renderRecipeDev();renderRecipeDone();persistLocal();});
 }
 async function markRecipeDone(id){
   const r=recipes.find(x=>x.id===id);if(!r)return;
