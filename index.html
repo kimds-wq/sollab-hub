@@ -1196,6 +1196,7 @@ function sortKo(arr){return[...arr].sort((a,b)=>a.name.localeCompare(b.name,'ko'
 
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
+function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
 function saveSettings(){
   const val=document.getElementById('settings-members').value;
   teamMembers=val.split(',').map(s=>s.trim()).filter(Boolean);
@@ -1734,6 +1735,7 @@ async function deleteProj(id){
   wfProjects=wfProjects.filter(x=>x.id!==id);
   renderProjects();renderCalendar();
   persistLocal();
+  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();renderCalendar();persistLocal();});
 }
 let projStagesArr=[];
 function openProjModal(id){
@@ -2009,6 +2011,7 @@ async function deleteRoutine(id){
   wfRoutines=wfRoutines.filter(x=>x.id!==id);
   renderRoutine();renderToday();
   persistLocal();
+  showToast('루틴을 삭제했습니다.',()=>{wfRoutines=prev;renderRoutine();renderToday();persistLocal();});
 }
 
 function applyOrderRole(){
