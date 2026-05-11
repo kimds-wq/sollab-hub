@@ -27,7 +27,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 
 /* ── TOP NAV ── */
 .top-nav{background:var(--sf);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:100}
-.top-nav-inner{max-width:1000px;margin:0 auto;display:flex;align-items:center;gap:0;height:54px;padding:0 20px}
+.top-nav-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:0;height:54px;padding:0 20px}
 .logo{font-size:15px;font-weight:700;color:var(--sage-d);display:flex;align-items:center;gap:7px;flex-shrink:0;margin-right:20px}
 .logo-dot{width:8px;height:8px;background:var(--sage);border-radius:50%}
 .nav-tabs{display:flex;gap:2px;flex:1}
@@ -42,7 +42,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 /* ── SECTIONS ── */
-.section{display:none;max-width:1000px;margin:0 auto;padding:24px 20px}
+.section{display:none;max-width:860px;margin:0 auto;padding:24px 20px}
 .section.active{display:block}
 
 /* ── COMMON ── */
@@ -63,7 +63,7 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 .card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
 .card+.card{margin-top:10px}
 .divider{border:none;border-top:1px solid var(--bd);margin:14px 0}
-.empty{text-align:center;padding:48px 24px;color:var(--tx2)}
+.empty{text-align:center;padding:32px 24px 24px;color:var(--tx2)}
 .empty-icon{font-size:32px;margin-bottom:12px}
 .empty p{font-size:14px;line-height:1.6}
 .data-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -111,6 +111,8 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .member-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--bd);background:var(--sf);color:var(--tx2);transition:all .15s;font-family:inherit}
 .member-chip.selected{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage-m)}
 /* ── 업무 메모 펼치기 ── */
+.task-item.carry-over{border-color:var(--danger);border-width:1.5px;background:var(--danger-l)}
+.carry-badge{display:inline-block;font-size:9px;font-weight:700;background:var(--danger);color:#fff;border-radius:6px;padding:1px 5px;margin-left:5px;vertical-align:middle}
 .task-memo{font-size:12px;color:var(--tx2);margin-top:6px;padding:6px 10px;background:var(--cream);border-radius:6px;line-height:1.6;display:none}
 .task-memo.open{display:block}
 .task-memo-toggle{font-size:11px;color:var(--tx2);cursor:pointer;padding:2px 0;display:inline-flex;align-items:center;gap:3px;margin-top:3px;user-select:none}
@@ -553,10 +555,19 @@ body.modal-open{overflow:hidden}
     </div>
     <div class="sec-header">
       <span class="sec-title" id="today-date-label"></span>
-      <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm" id="clear-done-btn" onclick="clearDoneTasks()" style="display:none;font-size:12px">✓ 완료 정리</button>
+        <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
+      </div>
     </div>
-    <!-- 시간 지정 업무 (타임라인) -->
-    <div id="today-timed-wrap" style="display:none;margin-bottom:16px">
+    <!-- 이월 업무 (미완료 이월) -->
+    <div id="today-carry-wrap" style="display:none;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-left:2px">
+        <span style="font-size:11px;font-weight:700;color:var(--danger);letter-spacing:.04em">⚠ 미완료 이월</span>
+        <span id="today-carry-count" style="font-size:10px;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-weight:700"></span>
+      </div>
+      <div id="today-carry-list"></div>
+    </div>
       <div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px">⏰ 시간별 업무</div>
       <div id="today-timed-list"></div>
     </div>
@@ -846,11 +857,20 @@ body.modal-open{overflow:hidden}
       </div>
     </div>
     <div class="form-row" id="tm-due-row">
-      <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
+      <div class="form-group">
+        <label class="form-label">날짜</label>
+        <select class="form-input" id="tm-task-date" onchange="onTaskDateChange()">
+          <option value="today">오늘</option>
+          <option value="tomorrow">내일</option>
+          <option value="custom">직접 입력</option>
+        </select>
+        <input class="form-input" type="date" id="tm-task-date-custom" style="display:none;margin-top:6px">
+      </div>
       <div class="form-group"><label class="form-label">우선순위</label>
         <select class="form-input" id="tm-priority"><option value="mid">— 중간</option><option value="high">↑ 높음</option><option value="low">↓ 낮음</option></select>
       </div>
     </div>
+    <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
     <div class="form-group">
       <label class="form-label">담당자</label>
       <div class="member-chip-wrap" id="tm-member-chips"></div>
@@ -1102,7 +1122,7 @@ async function loadAll(){
   if(!_sb){loadLocal();setSyncStatus('local');renderAll();return;}
   try{
     const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
-      _sb.from('wf_tasks').select('*').order('sort_order').order('created_at'),
+      _sb.from('wf_tasks').select('*').order('sort_order',{nullsFirst:false}).order('created_at'),
       _sb.from('wf_projects').select('*').order('created_at'),
       _sb.from('wf_routines').select('*').order('created_at'),
       _sb.from('order_products').select('*').order('name'),
@@ -1117,6 +1137,7 @@ async function loadAll(){
     persistLocal();
     setSyncStatus('ok');
     renderAll();
+    autoCleanDone();
     subscribeRt();
   }catch(e){
     console.error('loadAll error:',e);
@@ -1344,6 +1365,45 @@ function sortMembers(members){
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
 function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
+
+function getTaskDate(){
+  const sel=document.getElementById('tm-task-date').value;
+  if(sel==='today')return TODAY();
+  if(sel==='tomorrow'){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);}
+  return document.getElementById('tm-task-date-custom').value||TODAY();
+}
+function onTaskDateChange(){
+  const sel=document.getElementById('tm-task-date').value;
+  const custom=document.getElementById('tm-task-date-custom');
+  if(sel==='custom'){
+    custom.style.display='';
+    if(!custom.value){const d=new Date();d.setDate(d.getDate()+1);custom.value=d.toISOString().slice(0,10);}
+  } else {
+    custom.style.display='none';
+  }
+}
+async function clearDoneTasks(){
+  if(!confirm('완료된 업무를 모두 삭제할까요?'))return;
+  const td=TODAY();
+  const toDelete=wfTasks.filter(t=>!t.repeat&&t.done&&(t.created_date===td||(!t.created_date)));
+  if(!toDelete.length){showToast('삭제할 완료 업무가 없습니다.');return;}
+  const prev=[...wfTasks];
+  wfTasks=wfTasks.filter(t=>!toDelete.find(d=>d.id===t.id));
+  renderToday();persistLocal();
+  toDelete.forEach(t=>sbDelete('wf_tasks',t.id));
+  showToast(`완료 업무 ${toDelete.length}건을 삭제했습니다.`,
+    ()=>{wfTasks=prev;renderToday();persistLocal();toDelete.forEach(t=>sbUpsert('wf_tasks',t));});
+}
+function autoCleanDone(){
+  // 자정 기준: 전날 완료된 일회성 업무 자동 삭제
+  const td=TODAY();
+  const toDelete=wfTasks.filter(t=>!t.repeat&&t.done&&t.created_date&&t.created_date<td);
+  if(!toDelete.length)return;
+  wfTasks=wfTasks.filter(t=>!toDelete.find(d=>d.id===t.id));
+  persistLocal();
+  toDelete.forEach(t=>sbDelete('wf_tasks',t.id));
+  renderToday();
+}
 function saveSettings(){
   const val=document.getElementById('settings-members').value;
   teamMembers=val.split(',').map(s=>s.trim()).filter(Boolean);
@@ -1378,23 +1438,33 @@ function toggleTaskMemo(el){
   el.textContent=memo.classList.contains('open')?'▾ 메모':'▸ 메모';
 }
 
+let _dragId=null;
+let _touchDragId=null,_touchClone=null,_touchOffY=0,_touchOffX=0;
+let _touchStartY=0,_touchStartX=0,_touchConfirmed=false;
+const DRAG_THRESHOLD=8;
+
 function goSection(s){
-  // 드래그 잔상 강제 정리
-  if(_touchClone){_touchClone.remove();_touchClone=null;}
-  _touchDragId=null;_dragId=null;
-  document.querySelectorAll('.task-item').forEach(el=>{
-    el.style.opacity='';el.classList.remove('drag-over','dragging');
-  });
-  document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));setBottomNav(s);
+  // 드래그 잔상 강제 정리 (오류나도 전환은 계속)
+  try{
+    if(_touchClone){_touchClone.remove();_touchClone=null;}
+    _touchDragId=null;_dragId=null;
+    document.querySelectorAll('.task-item').forEach(el=>{
+      el.style.opacity='';el.classList.remove('drag-over','dragging');
+    });
+  }catch(e){}
+  document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));
+  setBottomNav(s);
   document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
   document.getElementById('sec-'+s).classList.add('active');
 }
 function goWfTab(t){
-  if(_touchClone){_touchClone.remove();_touchClone=null;}
-  _touchDragId=null;_dragId=null;
-  document.querySelectorAll('.task-item').forEach(el=>{
-    el.style.opacity='';el.classList.remove('drag-over','dragging');
-  });
+  try{
+    if(_touchClone){_touchClone.remove();_touchClone=null;}
+    _touchDragId=null;_dragId=null;
+    document.querySelectorAll('.task-item').forEach(el=>{
+      el.style.opacity='';el.classList.remove('drag-over','dragging');
+    });
+  }catch(e){}
   document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','calendar','projects','routine','archive'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('wfp-'+t).classList.add('active');
@@ -1577,30 +1647,68 @@ function renderToday(){
     dateLabel.textContent=`${parseInt(m)}월 ${parseInt(d)}일 (${dowNames[dow]})`;
   }
 
-  // 일회성: due가 오늘이거나, (due 없고 created_date가 오늘인 것)
-  // 반복: repeat:true이고 days가 비었거나 오늘 요일 포함
+  // 일회성: created_date가 오늘이거나 이전 미완료(이월), due가 오늘인 것
+  const carryTasks=wfTasks.filter(t=>
+    !t.repeat&&!t.done&&
+    t.created_date&&t.created_date<td&&
+    (!t.due||t.due>=td)
+  );
   const todayTasks=[
     ...wfTasks.filter(t=>!t.repeat&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))),
     ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
     ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
   ];
 
-  // 완료 판별 (반복/루틴은 당일 완료 체크)
+  // 완료 판별
   const isDone=t=>t.repeat||t._isRoutine?routineDoneToday.includes(t.id):t.done;
 
-  // 통계
-  const doneCount=todayTasks.filter(t=>isDone(t)).length;
-  document.getElementById('ts-total').textContent=todayTasks.length;
+  // 통계 (이월 포함)
+  const allForStat=[...carryTasks,...todayTasks];
+  const doneCount=allForStat.filter(t=>isDone(t)).length;
+  document.getElementById('ts-total').textContent=allForStat.length;
   document.getElementById('ts-done').textContent=doneCount;
-  document.getElementById('ts-prog').textContent=todayTasks.length-doneCount;
+  document.getElementById('ts-prog').textContent=allForStat.length-doneCount;
   document.getElementById('ts-due').textContent=wfTasks.filter(t=>!t.repeat&&t.due===td&&!t.done).length;
-  document.getElementById('today-empty').style.display=todayTasks.length?'none':'';
+  document.getElementById('today-empty').style.display=(allForStat.length)?'none':'';
+
+  // 완료 정리 버튼 표시
+  const clearBtn=document.getElementById('clear-done-btn');
+  if(clearBtn)clearBtn.style.display=todayTasks.some(t=>isDone(t))?'':'none';
 
   const ICO_CHK='<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
-
   const ICO_DRAG='<svg width="12" height="18" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="7" y2="4"/><line x1="3" y1="8" x2="7" y2="8"/><line x1="3" y1="12" x2="7" y2="12"/></svg>';
+
+  // ── 이월 업무 렌더
+  const carryWrap=document.getElementById('today-carry-wrap');
+  const carryList=document.getElementById('today-carry-list');
+  const carryCount=document.getElementById('today-carry-count');
+  if(carryTasks.length){
+    carryWrap.style.display='';
+    carryCount.textContent=carryTasks.length+'건';
+    carryList.innerHTML=carryTasks.map(t=>{
+      const sortedMembers=sortMembers(t.members||[]);
+      const daysAgo=Math.floor((new Date(td)-new Date(t.created_date))/(1000*60*60*24));
+      return`<div class="task-item carry-over" draggable="false">
+        <div class="priority-dot p-high"></div>
+        <div class="task-check" onclick="toggleTask('${t.id}')"></div>
+        <div style="flex:1;min-width:0">
+          <div class="task-title">${t.name}<span class="carry-badge">${daysAgo}일 전</span></div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
+            ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
+            ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
+          </div>
+          ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
+        </div>
+        ${appRole==='admin'?`<button class="btn-icon" onclick="editTask('${t.id}')">${ICO_EDIT}</button>`:''}
+        ${appRole==='admin'?`<button class="btn-icon" onclick="deleteTask('${t.id}')">${ICO_DEL}</button>`:''}
+      </div>`;
+    }).join('');
+  } else {
+    carryWrap.style.display='none';
+  }
+
 
   function taskCard(t,isRoutineObj){
     const isRepeat=t.repeat||isRoutineObj;
@@ -1668,7 +1776,6 @@ function renderToday(){
   setTimeout(initTouchDrag,0);
 }
 
-let _dragId=null;
 function onDragStart(e,id){
   _dragId=id;
   e.dataTransfer.effectAllowed='move';
@@ -1715,10 +1822,6 @@ function onDragEnd(e){
   _dragId=null;
   document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('dragging','drag-over'));
 }
-
-let _touchDragId=null,_touchClone=null,_touchOffY=0,_touchOffX=0;
-let _touchStartY=0,_touchStartX=0,_touchConfirmed=false;
-const DRAG_THRESHOLD=8; // px 이상 이동해야 드래그로 확정
 
 function _cleanTouchDrag(){
   if(_touchClone){_touchClone.remove();_touchClone=null;}
@@ -1827,6 +1930,18 @@ function openTaskModal(id){
   document.getElementById('tm-priority').value=t?.priority||'mid';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   renderMemberChips('tm-member-chips','tm-members');
+  // 날짜 초기화
+  if(t){
+    const cd=t.created_date||TODAY();
+    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+    const tmrStr=tomorrow.toISOString().slice(0,10);
+    if(cd===TODAY()){document.getElementById('tm-task-date').value='today';}
+    else if(cd===tmrStr){document.getElementById('tm-task-date').value='tomorrow';}
+    else{document.getElementById('tm-task-date').value='custom';document.getElementById('tm-task-date-custom').value=cd;document.getElementById('tm-task-date-custom').style.display='';}
+  } else {
+    document.getElementById('tm-task-date').value='today';
+    document.getElementById('tm-task-date-custom').style.display='none';
+  }
   document.getElementById('tm-memo').value=t?.memo||'';
   initRepeatState(t?.repeat||false,t?.days||[]);
   openModal('task-modal');
@@ -1848,7 +1963,7 @@ async function saveTask(){
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
     done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false,
-    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):TODAY(),
+    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):getTaskDate(),
     sort_order:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.sort_order??9999):(Math.max(0,...wfTasks.map(t=>t.sort_order||0))+1)};
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
