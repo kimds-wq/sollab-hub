@@ -286,17 +286,18 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .day-toggle-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .15s}
 .day-toggle-btn.selected{background:var(--sage);color:#fff;border-color:var(--sage)}
 /* 지점 현황 카드 */
-.dest-cards-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px}
-.dest-stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;transition:box-shadow .15s}
+.dest-cards-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+@media(min-width:480px){.dest-cards-row{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+.dest-stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;transition:box-shadow .15s}
 .dest-stat-card:hover{box-shadow:var(--sh)}
 .dest-stat-card.alert{border-color:var(--danger);background:var(--danger-l);border-width:2px}
 .dest-stat-card.alert .dest-stat-name{color:var(--danger)}
 .dest-stat-card.warn{border-color:var(--warn-bd);background:var(--warn-bg);border-width:2px}
-.dest-stat-name{font-size:12px;color:var(--tx2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dest-stat-qty{font-size:20px;font-weight:700;color:var(--sage-d);line-height:1.2;margin-bottom:2px}
-.dest-stat-qty.zero{color:var(--tx2);font-size:16px}
-.dest-stat-meta{font-size:11px;color:var(--tx2);line-height:1.4}
-.dest-stat-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin-top:6px}
+.dest-stat-name{font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dest-stat-qty{font-size:18px;font-weight:700;color:var(--sage-d);line-height:1.2;margin-bottom:2px}
+.dest-stat-qty.zero{color:var(--tx2);font-size:14px}
+.dest-stat-meta{font-size:10px;color:var(--tx2);line-height:1.4}
+.dest-stat-badge{display:inline-block;padding:2px 6px;border-radius:10px;font-size:10px;font-weight:700;margin-top:4px}
 .dest-stat-badge.ok{background:var(--sage-l);color:var(--sage-d)}
 .dest-stat-badge.warn{background:var(--warn-bg);color:var(--warn-tx)}
 .dest-stat-badge.alert{background:var(--danger-l);color:var(--danger)}
@@ -667,7 +668,7 @@ body.modal-open{overflow:hidden}
     <div class="order-panel" id="opanel-history">
 
       <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.02em">이번 달 지점 현황</div>
-      <div id="dest-cards-row"></div>
+      <div class="dest-cards-row" id="dest-cards-row"></div>
 
       <div style="height:20px"></div>
 
@@ -685,9 +686,17 @@ body.modal-open{overflow:hidden}
       </div>
       
       <div class="card" style="padding:16px;margin-bottom:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px">월별 납품 추이</div>
-        <div style="font-size:11px;color:var(--tx2);margin-bottom:10px">지점별 색상 누적 막대 — 데이터가 쌓일수록 의미 있어져요</div>
-        <div id="chart-monthly"></div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">납품 분석</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.03em">월별 납품 추이</div>
+            <div id="chart-monthly"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.03em">이번 달 지점 비중</div>
+            <div id="chart-dest-pie"></div>
+          </div>
+        </div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
@@ -2386,7 +2395,7 @@ function renderOrderHistory(){
     </div>`;
 
   if(!data.length){
-    ['chart-by-prod','chart-monthly','chart-dest-prod','chart-prod-dest'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
+    ['chart-by-prod','chart-monthly','chart-dest-prod','chart-prod-dest','chart-dest-pie'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
     document.getElementById('order-empty').style.display='';
     document.getElementById('order-tbody').innerHTML='';
     return;
@@ -2508,43 +2517,80 @@ function renderOrderHistory(){
     }
   }
 
+  // ── 꺾은선 그래프: 월별 총 납품량
   const monthlyEl=document.getElementById('chart-monthly');
   if(monthlyEl){
-    const mMonths=[...new Set(data.map(o=>o.order_date?.slice(0,7)).filter(Boolean))].sort().slice(-12);
+    const mMonths=[...new Set(data.map(o=>o.order_date?.slice(0,7)).filter(Boolean))].sort().slice(-8);
     if(!mMonths.length){monthlyEl.innerHTML=EMPTY;}
     else{
-      const mDests=sortKo(orderDests).filter(d=>data.some(o=>o.dest_id===d.id));
-
-      const mMatrix={};
-      data.forEach(o=>{
-        const m=o.order_date?.slice(0,7);if(!m)return;
-        if(!mMatrix[m])mMatrix[m]={};
-        mMatrix[m][o.dest_id]=(mMatrix[m][o.dest_id]||0)+o.qty;
-      });
-      const mTotals=mMonths.map(m=>Object.values(mMatrix[m]||{}).reduce((s,v)=>s+v,0));
+      const mTotals=mMonths.map(m=>data.filter(o=>o.order_date?.startsWith(m)).reduce((s,o)=>s+o.qty,0));
       const maxM=Math.max(...mTotals,1);
-      const W=440,H=90,BW=Math.max(24,Math.floor(W/mMonths.length)-4);
-
-      const legend=mDests.map(d=>{const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];return`<span style="display:inline-flex;align-items:center;gap:3px;margin-right:10px;font-size:10px;color:var(--tx2)"><span style="width:8px;height:8px;border-radius:2px;background:${c?c.border:'var(--sage)'}"></span>${d.name}</span>`;}).join('');
-      let bars='';
-      mMonths.forEach((m,i)=>{
-        const x=i*(W/mMonths.length)+2;
-        const isThis=m===thisMonth;
-        let y=H;
-        const total=mTotals[i];
-        const bh=maxM>0?Math.round(total/maxM*H):0;
-
-        mDests.forEach(d=>{
-          const v=mMatrix[m]?.[d.id]||0;if(!v)return;
-          const dh=Math.round(v/maxM*H);
-          y-=dh;
-          const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];
-          bars+=`<rect x="${x}" y="${y}" width="${BW}" height="${dh}" fill="${c?c.border:'var(--sage)'}"/>`;
-        });
-        bars+=`<text x="${x+BW/2}" y="${H+13}" text-anchor="middle" font-size="9" fill="${isThis?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${isThis?'700':'400'}">${m.slice(5)}</text>`;
-        if(bh>14)bars+=`<text x="${x+BW/2}" y="${H-bh+11}" text-anchor="middle" font-size="9" fill="#fff" font-family="inherit">${fmt(total)}</text>`;
+      const W=200,H=80,PAD=16;
+      const ptX=(i)=>PAD+i*(W-PAD*2)/(Math.max(mMonths.length-1,1));
+      const ptY=(v)=>H-4-Math.round(v/maxM*(H-12));
+      const points=mTotals.map((v,i)=>`${ptX(i)},${ptY(v)}`).join(' ');
+      const areaPoints=`${ptX(0)},${H} ${points} ${ptX(mMonths.length-1)},${H}`;
+      let dots='';
+      mTotals.forEach((v,i)=>{
+        const cx=ptX(i),cy=ptY(v);
+        const isThis=mMonths[i]===thisMonth;
+        dots+=`<circle cx="${cx}" cy="${cy}" r="${isThis?4:3}" fill="${isThis?'var(--sage-d)':'var(--sage)'}"/>`;
+        if(isThis||i===mTotals.length-1)
+          dots+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="8" fill="var(--sage-d)" font-family="inherit" font-weight="700">${fmt(v)}</text>`;
       });
-      monthlyEl.innerHTML=`<div style="margin-bottom:6px">${legend}</div><svg viewBox="0 0 ${W} ${H+20}" style="width:100%">${bars}</svg>`;
+      const xLabels=mMonths.map((m,i)=>`<text x="${ptX(i)}" y="${H+10}" text-anchor="middle" font-size="8" fill="${mMonths[i]===thisMonth?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${mMonths[i]===thisMonth?'700':'400'}">${m.slice(5)}</text>`).join('');
+      monthlyEl.innerHTML=`<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;overflow:visible">
+        <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--sage)" stop-opacity=".25"/><stop offset="100%" stop-color="var(--sage)" stop-opacity="0"/></linearGradient></defs>
+        <polygon points="${areaPoints}" fill="url(#lineGrad)"/>
+        <polyline points="${points}" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}${xLabels}
+      </svg>`;
+    }
+  }
+
+  // ── 도넛 그래프: 이번 달 지점 비중
+  const pieEl=document.getElementById('chart-dest-pie');
+  if(pieEl){
+    const thisMonthOrders=data.filter(o=>o.order_date?.startsWith(thisMonth));
+    const destTotals=sortKo(orderDests).map(d=>({
+      d, total:thisMonthOrders.filter(o=>o.dest_id===d.id).reduce((s,o)=>s+o.qty,0)
+    })).filter(x=>x.total>0);
+
+    if(!destTotals.length){pieEl.innerHTML=`<div style="font-size:12px;color:var(--tx2);text-align:center;padding:20px 0">이번 달 납품 없음</div>`;}
+    else{
+      const total=destTotals.reduce((s,x)=>s+x.total,0);
+      const R=42,CX=60,CY=52,IR=26;
+      let slices='', startAngle=-Math.PI/2;
+      destTotals.forEach(({d,total:v})=>{
+        const angle=v/total*Math.PI*2;
+        const x1=CX+R*Math.cos(startAngle), y1=CY+R*Math.sin(startAngle);
+        const x2=CX+R*Math.cos(startAngle+angle), y2=CY+R*Math.sin(startAngle+angle);
+        const ix1=CX+IR*Math.cos(startAngle), iy1=CY+IR*Math.sin(startAngle);
+        const ix2=CX+IR*Math.cos(startAngle+angle), iy2=CY+IR*Math.sin(startAngle+angle);
+        const large=angle>Math.PI?1:0;
+        const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];
+        const fill=c?c.border:(d.color||'var(--sage)');
+        slices+=`<path d="M${ix1},${iy1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${IR},${IR} 0 ${large},0 ${ix1},${iy1} Z" fill="${fill}" opacity=".9"/>`;
+        startAngle+=angle;
+      });
+      // 중앙 텍스트
+      slices+=`<text x="${CX}" y="${CY-4}" text-anchor="middle" font-size="10" fill="var(--tx2)" font-family="inherit">합계</text>`;
+      slices+=`<text x="${CX}" y="${CY+9}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--tx)" font-family="inherit">${fmt(total)}</text>`;
+      // 범례
+      const legend=destTotals.map(({d,total:v})=>{
+        const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];
+        const fill=c?c.border:(d.color||'var(--sage)');
+        const pct=Math.round(v/total*100);
+        return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
+          <div style="width:8px;height:8px;border-radius:2px;background:${fill};flex-shrink:0"></div>
+          <span style="font-size:10px;color:var(--tx2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</span>
+          <span style="font-size:10px;font-weight:600;color:var(--tx)">${pct}%</span>
+        </div>`;
+      }).join('');
+      pieEl.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 120 104" style="width:100px;flex-shrink:0">${slices}</svg>
+        <div style="flex:1;min-width:0">${legend}</div>
+      </div>`;
     }
   }
 
