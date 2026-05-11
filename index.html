@@ -42,11 +42,11 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
 /* ── SECTIONS ── */
-.section{display:none;max-width:860px;margin:0 auto;padding:24px 20px}
+.section{display:none;max-width:860px;margin:0 auto;padding:16px 20px}
 .section.active{display:block}
 
 /* ── COMMON ── */
-.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
 .sec-title{font-size:16px;font-weight:600}
 .btn{padding:8px 16px;border-radius:var(--r);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--sage);color:#fff}.btn-primary:hover{background:var(--sage-d)}
@@ -121,7 +121,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 /* ══════════════════════════════
    SECTION 1: WORKFLOW
 ══════════════════════════════ */
-.wf-tabs{display:flex;gap:2px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:18px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.wf-tabs{display:flex;gap:2px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .wf-tab{padding:6px 14px;border:none;background:none;border-radius:6px;font-size:13px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
 .wf-tab.active{background:var(--sf);color:var(--sage-d);box-shadow:var(--sh)}
 .wf-panel{display:none}.wf-panel.active{display:block}
@@ -129,11 +129,10 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 /* ── WORKFLOW COMMON ── */
 .task-meta{font-size:12px;color:var(--tx2)}
 .member-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;margin:2px}
-.priority-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.p-high{background:#D05050}.p-mid{background:#C8845A}.p-low{background:var(--sage)}
+.priority-dot{width:7px;height:7px;border-radius:50%;background:var(--sage-m);flex-shrink:0}
 
 /* ── TODAY STATS ── */
-.today-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.today-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
 .ts-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px}
 .ts-label{font-size:12px;color:var(--tx2);margin-bottom:4px}
 .ts-val{font-size:22px;font-weight:700;color:var(--sage-d)}
@@ -568,6 +567,8 @@ body.modal-open{overflow:hidden}
       </div>
       <div id="today-carry-list"></div>
     </div>
+    <!-- 시간 지정 업무 -->
+    <div id="today-timed-wrap" style="display:none;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px">⏰ 시간별 업무</div>
       <div id="today-timed-list"></div>
     </div>
@@ -848,7 +849,7 @@ body.modal-open{overflow:hidden}
         <button class="day-toggle-btn" data-day="0" onclick="toggleDay(this)">일</button>
       </div>
     </div>
-    <div class="form-row">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group"><label class="form-label">시작 시간</label>
         <select class="form-input" id="tm-start-time"><option value="">-</option></select>
       </div>
@@ -856,19 +857,14 @@ body.modal-open{overflow:hidden}
         <select class="form-input" id="tm-end-time"><option value="">-</option></select>
       </div>
     </div>
-    <div class="form-row" id="tm-due-row">
-      <div class="form-group">
-        <label class="form-label">날짜</label>
-        <select class="form-input" id="tm-task-date" onchange="onTaskDateChange()">
-          <option value="today">오늘</option>
-          <option value="tomorrow">내일</option>
-          <option value="custom">직접 입력</option>
-        </select>
-        <input class="form-input" type="date" id="tm-task-date-custom" style="display:none;margin-top:6px">
-      </div>
-      <div class="form-group"><label class="form-label">우선순위</label>
-        <select class="form-input" id="tm-priority"><option value="mid">— 중간</option><option value="high">↑ 높음</option><option value="low">↓ 낮음</option></select>
-      </div>
+    <div class="form-group" id="tm-due-row">
+      <label class="form-label">날짜</label>
+      <select class="form-input" id="tm-task-date" onchange="onTaskDateChange()">
+        <option value="today">오늘</option>
+        <option value="tomorrow">내일</option>
+        <option value="custom">직접 입력</option>
+      </select>
+      <input class="form-input" type="date" id="tm-task-date-custom" style="display:none;margin-top:6px">
     </div>
     <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
     <div class="form-group">
@@ -1724,7 +1720,7 @@ function renderToday(){
     const draggable=!isRepeat&&appRole==='admin';
     return`<div class="task-item${done?' done-item':''}" ${draggable?`draggable="true" data-id="${t.id}" ondragstart="onDragStart(event,'${t.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${t.id}')" ondragend="onDragEnd(event)"`:''}> 
       ${draggable?`<div class="drag-handle" title="드래그하여 순서 변경">${ICO_DRAG}</div>`:''}
-      <div class="priority-dot p-${isRepeat?'low':pri}"></div>
+      <div class="priority-dot"></div>
       <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
       <div style="flex:1;min-width:0">
         <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">루틴</span>':''}</div>
@@ -1927,7 +1923,6 @@ function openTaskModal(id){
   document.getElementById('tm-start-time').value=t?.start_time||'';
   document.getElementById('tm-end-time').value=t?.end_time||'';
   document.getElementById('tm-due').value=t?.due||'';
-  document.getElementById('tm-priority').value=t?.priority||'mid';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   renderMemberChips('tm-member-chips','tm-members');
   // 날짜 초기화
@@ -1959,7 +1954,6 @@ async function saveTask(){
     start_time:document.getElementById('tm-start-time').value,
     end_time:document.getElementById('tm-end-time').value,
     due:_taskRepeat?'':document.getElementById('tm-due').value,
-    priority:document.getElementById('tm-priority').value,
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
     done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false,
