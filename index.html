@@ -209,7 +209,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--tx2);padding:6px 0}
 .cal-dow.sun,.cal-dow.sat{color:var(--danger)}
-.cal-day{background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:6px;height:72px;cursor:default;overflow:hidden;display:flex;flex-direction:column}
+.cal-day{background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:4px 2px;min-height:60px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
 .cal-day.other-month{opacity:.22;pointer-events:none}
 .cal-day.today-cell{border-color:var(--sage);border-width:2px}
 .cal-day-num{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:4px}
@@ -413,7 +413,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
   .proj-body{padding:12px}
 
   /* 캘린더 — 셀 높이·폰트 축소 */
-  .cal-day{height:60px;padding:4px}
+  .cal-day{min-height:52px;padding:3px 2px}
   .cal-day-num{font-size:11px;margin-bottom:2px}
   .cal-event{font-size:9px;padding:1px 3px}
   .cal-dow{font-size:10px;padding:4px 0}
@@ -885,7 +885,11 @@ body.modal-open{overflow:hidden}
       <div class="form-group"><label class="form-label">시작일</label><input class="form-input" type="date" id="pm-start"></div>
       <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="pm-due"></div>
     </div>
-    <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="pm-members" placeholder="홍길동, 김철수"></div>
+    <div class="form-group">
+      <label class="form-label">담당자</label>
+      <div class="member-chip-wrap" id="pm-member-chips"></div>
+      <input class="form-input" id="pm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:6px;font-size:13px">
+    </div>
     <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="pm-memo" rows="1"></textarea></div>
     <hr class="divider">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -927,7 +931,11 @@ body.modal-open{overflow:hidden}
         <button type="button" class="day-toggle-btn" data-rday="6" onclick="toggleRDay(this)">토</button>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="rm-members" placeholder="예: 김솔, 이준" style="font-size:13px"></div>
+    <div class="form-group">
+      <label class="form-label">담당자</label>
+      <div class="member-chip-wrap" id="rm-member-chips"></div>
+      <input class="form-input" id="rm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:6px;font-size:13px">
+    </div>
     <div class="form-group"><label class="form-label">메모</label><input class="form-input" id="rm-memo" placeholder="메모" style="font-size:13px"></div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeRoutineModal()">취소</button><button class="btn btn-primary" onclick="saveRoutine()">저장</button></div>
@@ -2067,6 +2075,7 @@ function openProjModal(id){
   document.getElementById('pm-start').value=p?.start_date||'';
   document.getElementById('pm-due').value=p?.due||'';
   document.getElementById('pm-members').value=(p?.members||[]).join(', ');
+  renderMemberChips('pm-member-chips','pm-members');
   document.getElementById('pm-memo').value=p?.memo||'';
   projStagesArr=p?[...(p.stages||[]).map(s=>({...s}))]:[]; renderProjStages();
   openModal('proj-modal');
@@ -2096,6 +2105,14 @@ async function saveProj(){
 }
 
 function calMove(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+// 프로젝트 색상 팔레트
+const PROJ_COLORS=[
+  {bg:'#2D6A4F',text:'#fff'},{bg:'#1565C0',text:'#fff'},{bg:'#6A1B4D',text:'#fff'},
+  {bg:'#C04A00',text:'#fff'},{bg:'#1A6B6B',text:'#fff'},{bg:'#5D3A00',text:'#fff'},
+  {bg:'#3A3A8C',text:'#fff'},{bg:'#7A2020',text:'#fff'},
+];
+function getProjColor(idx){return PROJ_COLORS[idx%PROJ_COLORS.length];}
+
 function renderCalendar(){
   const calEl=document.getElementById('cal-grid');if(!calEl)return;
   document.getElementById('cal-title').textContent=`${calYear}년 ${calMonth+1}월`;
@@ -2111,45 +2128,61 @@ function renderCalendar(){
     '06-06':'현충일','08-15':'광복절','10-03':'개천절',
     '10-09':'한글날','12-25':'크리스마스',
   };
-
   if(calYear>=2026) fixedHolidays['07-17']='제헌절';
-
-  const pad2=n=>String(n).padStart(2,'0');
   const fh={};
-  Object.entries(fixedHolidays).forEach(([md,name])=>{ fh[`${calYear}-${md}`]=name; });
-
+  Object.entries(fixedHolidays).forEach(([md,name])=>{fh[`${calYear}-${md}`]=name;});
   const specialDays={
-
-    '2025-01-27':'설날 임시공휴일','2025-01-28':'설날 전날','2025-01-29':'설날','2025-01-30':'설날 다음날',
-    '2025-03-03':'대체공휴일(삼일절)',
-    '2025-05-06':'대체공휴일(부처님오신날)',
+    '2025-01-28':'설날 전날','2025-01-29':'설날','2025-01-30':'설날 다음날',
+    '2025-03-03':'대체공휴일(삼일절)','2025-05-06':'대체공휴일(부처님오신날)',
     '2025-05-05':'어린이날·부처님오신날',
     '2025-10-05':'추석 전날','2025-10-06':'추석','2025-10-07':'추석 다음날',
     '2025-10-08':'대체공휴일(추석)',
-
     '2026-02-16':'설날 전날','2026-02-17':'설날','2026-02-18':'설날 다음날',
-    '2026-03-02':'대체공휴일(삼일절)',
-    '2026-05-24':'부처님오신날',
-    '2026-05-25':'대체공휴일(부처님오신날)',
-    '2026-06-03':'지방선거 임시공휴일',
+    '2026-03-02':'대체공휴일(삼일절)','2026-05-24':'부처님오신날',
+    '2026-05-25':'대체공휴일(부처님오신날)','2026-06-03':'지방선거 임시공휴일',
     '2026-08-17':'대체공휴일(광복절)',
     '2026-09-24':'추석 전날','2026-09-25':'추석','2026-09-26':'추석 다음날',
     '2026-10-05':'대체공휴일(개천절)',
-
     '2027-02-06':'설날 전날','2027-02-07':'설날','2027-02-08':'설날 다음날',
     '2027-05-13':'부처님오신날',
     '2027-09-14':'추석 전날','2027-09-15':'추석','2027-09-16':'추석 다음날',
   };
-
   const allHolidays={...fh,...specialDays};
 
+  // 프로젝트 색상 매핑 (전체 프로젝트 순서 기준)
+  const allProjs=wfProjects.filter(p=>!p.done);
+  const projColorMap={};
+  allProjs.forEach((p,i)=>{projColorMap[p.id]=getProjColor(i);});
+
+  // 날짜별 이벤트
   const evByDate={};
   const addEv=(date,ev)=>{if(!evByDate[date])evByDate[date]=[];evByDate[date].push(ev);};
-  wfProjects.filter(p=>!p.done&&p.due).forEach(p=>{
-    const dd=ddayBadge(p.due);
-    addEv(p.due,{label:p.name,cls:dd&&dd.cls==='dday-over'?'ev-over':'ev-proj'});
+
+  // 프로젝트: 기간 내 모든 날짜에 추가
+  allProjs.filter(p=>p.due).forEach(p=>{
+    const color=projColorMap[p.id];
+    const start=p.start_date||p.due;
+    const end=p.due;
+    let cur=new Date(start);
+    const endDate=new Date(end);
+    while(cur<=endDate){
+      const dateStr=cur.toISOString().slice(0,10);
+      const isFirst=dateStr===start;
+      const isLast=dateStr===end;
+      addEv(dateStr,{
+        label:p.name,type:'proj',id:p.id,
+        color,isFirst,isLast,
+        isStart:isFirst,isEnd:isLast,
+        isContinue:!isFirst,
+      });
+      cur.setDate(cur.getDate()+1);
+    }
   });
-  wfTasks.filter(t=>!t.done&&t.due).forEach(t=>{addEv(t.due,{label:t.name,cls:'ev-task',dot:true});});
+
+  // 업무 마감일
+  wfTasks.filter(t=>!t.done&&t.due).forEach(t=>{
+    addEv(t.due,{label:t.name,type:'task',dot:true});
+  });
 
   const dows=['일','월','화','수','목','금','토'];
   let html=dows.map((d,i)=>`<div class="cal-dow${i===0?' sun':i===6?' sat':''}">${d}</div>`).join('');
@@ -2165,14 +2198,75 @@ function renderCalendar(){
     const holidayName=isHoliday?allHolidays[dateStr]:'';
     const isRed=dow===0||dow===6||isHoliday;
     const evs=dateStr?evByDate[dateStr]||[]:[];
-    const blocks=evs.filter(e=>!e.dot), dots=evs.filter(e=>e.dot);
-    html+=`<div class="cal-day${cur?'':' other-month'}${isToday?' today-cell':''}" title="${holidayName}">
-      <div class="cal-day-num${isRed?' red':''}">${d}${isHoliday?`<span style="font-size:8px;margin-left:2px;opacity:.75;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${holidayName}</span>`:''}</div>
-      ${blocks.slice(0,1).map(e=>`<div class="cal-event ${e.cls}" title="${e.label}">${e.label}</div>`).join('')}
-      ${dots.length?`<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:2px">${dots.slice(0,4).map(e=>`<div class="cal-dot" style="background:var(--accent)" title="${e.label}"></div>`).join('')}</div>`:''}
+    const projEvs=evs.filter(e=>e.type==='proj');
+    const dots=evs.filter(e=>e.dot);
+
+    // 프로젝트 기간 막대
+    const projBars=projEvs.map(e=>{
+      const c=e.color;
+      const radius=e.isStart&&e.isEnd?'4px':e.isStart?'4px 0 0 4px':e.isEnd?'0 4px 4px 0':'0';
+      const label=e.isEnd?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;font-size:10px;font-weight:600;padding:0 4px">${e.label}</span>`:'';
+      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:16px;margin:1px -2px;display:flex;align-items:center;overflow:hidden;cursor:pointer;min-width:0" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
+    }).join('');
+
+    html+=`<div class="cal-day${cur?'':' other-month'}${isToday?' today-cell':''}" data-date="${dateStr}" onclick="showCalPopup('${dateStr}',event)">
+      <div class="cal-day-num${isRed?' red':''}">${d}${isHoliday?`<span style="font-size:8px;margin-left:2px;opacity:.75;font-weight:500">${holidayName}</span>`:''}</div>
+      ${projBars}
+      ${dots.length?`<div style="display:flex;gap:2px;flex-wrap:wrap;margin-top:2px">${dots.slice(0,4).map(e=>`<div class="cal-dot" title="${e.label}"></div>`).join('')}</div>`:''}
     </div>`;
   });
   calEl.innerHTML=html;
+}
+
+// 날짜 클릭 팝업
+function showCalPopup(dateStr,e){
+  if(!dateStr)return;
+  e&&e.stopPropagation();
+  const existing=document.getElementById('cal-popup');
+  if(existing&&existing.dataset.date===dateStr){existing.remove();return;}
+  if(existing)existing.remove();
+
+  const allProjs=wfProjects.filter(p=>!p.done);
+  const projColorMap={};
+  allProjs.forEach((p,i)=>{projColorMap[p.id]=getProjColor(i);});
+
+  const projs=allProjs.filter(p=>{
+    if(!p.due)return false;
+    const start=p.start_date||p.due;
+    return dateStr>=start&&dateStr<=p.due;
+  });
+  const tasks=wfTasks.filter(t=>t.due===dateStr&&!t.done);
+
+  if(!projs.length&&!tasks.length)return;
+
+  const [y,m,d]=dateStr.split('-');
+  const popup=document.createElement('div');
+  popup.id='cal-popup';
+  popup.dataset.date=dateStr;
+  popup.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:2px solid var(--bd);border-radius:16px 16px 0 0;padding:16px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,.15);max-height:50vh;overflow-y:auto';
+  popup.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <span style="font-weight:600;font-size:14px">${parseInt(m)}월 ${parseInt(d)}일</span>
+      <button onclick="document.getElementById('cal-popup').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2);line-height:1">×</button>
+    </div>
+    ${projs.length?`<div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px;letter-spacing:.04em">📁 진행 중인 프로젝트</div>
+    ${projs.map(p=>{const c=projColorMap[p.id];const stages=p.stages||[];const pct=stages.length?Math.round(stages.filter(s=>s.done).length/stages.length*100):0;return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px">
+      <div style="width:10px;height:10px;border-radius:50%;background:${c.bg};flex-shrink:0"></div>
+      <div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+      ${stages.length?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">진행률 ${pct}% · 마감 ${p.due}</div>`:`<div style="font-size:11px;color:var(--tx2);margin-top:2px">마감 ${p.due}</div>`}</div></div>`;}).join('')}`:''}
+    ${tasks.length?`<div style="font-size:11px;font-weight:700;color:var(--tx2);margin:${projs.length?'10px':0} 0 6px;letter-spacing:.04em">📌 마감 업무</div>
+    ${tasks.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px">
+      <div class="cal-dot" style="flex-shrink:0"></div>
+      <span style="font-size:13px">${t.name}</span></div>`).join('')}`:''}
+  `;
+  document.body.appendChild(popup);
+
+  // 팝업 외부 클릭 시 닫기
+  setTimeout(()=>{
+    document.addEventListener('click',function handler(ev){
+      if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',handler);}
+    });
+  },100);
 }
 
 function renderArchive(){
@@ -2277,6 +2371,7 @@ function openRoutineModal(id){
   document.getElementById('rm-start-time').value=r?.start_time||'';
   document.getElementById('rm-end-time').value=r?.end_time||'';
   document.getElementById('rm-members').value=(r?.members||[]).join(', ');
+  renderMemberChips('rm-member-chips','rm-members');
   document.getElementById('rm-memo').value=r?.memo||'';
   initRoutineRepeat(r?.days||[]);
   openModal('routine-modal');
