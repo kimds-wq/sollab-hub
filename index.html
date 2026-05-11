@@ -77,22 +77,24 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 .total-val{font-size:16px;font-weight:700;color:var(--sage-d)}
 
 /* ── OVERLAY / MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:flex-end;justify-content:center;padding:0}
 .overlay.open{display:flex}
-.modal{background:var(--sf);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+@media(min-width:600px){.overlay{align-items:center;padding:16px}}
+.modal{background:var(--sf);border-radius:16px 16px 0 0;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:0 -4px 40px rgba(0,0,0,.15)}
+@media(min-width:600px){.modal{border-radius:14px;max-height:90vh}}
 .modal-lg{max-width:640px}
-.modal-header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between}
-.modal-title{font-size:16px;font-weight:600}
-.modal-body{padding:20px}
-.modal-footer{padding:0 20px 20px;display:flex;gap:8px;justify-content:flex-end}
-.form-group{margin-bottom:14px}
-.form-label{display:block;font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:5px}
-.form-input{width:100%;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--sf);outline:none;transition:border-color .2s}
+.modal-header{padding:14px 16px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-body{padding:12px 16px}
+.modal-footer{padding:8px 16px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--bd);position:sticky;bottom:0;background:var(--sf);z-index:1}
+.form-group{margin-bottom:10px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.form-input{width:100%;padding:8px 11px;border:1px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tx);background:var(--sf);outline:none;transition:border-color .2s}
 input.form-input{-webkit-appearance:none;appearance:none}
 select.form-input{-webkit-appearance:auto;appearance:auto;cursor:pointer;padding-right:28px}
 .form-input:focus{border-color:var(--sage)}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-textarea.form-input{resize:vertical;min-height:72px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--tx);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:10px}
@@ -798,16 +800,16 @@ body.modal-open{overflow:hidden}
   <div class="modal-body">
     <div class="form-group"><label class="form-label">업무명 *</label><input class="form-input" id="tm-name" placeholder="업무명 입력"></div>
     <!-- 반복 토글 -->
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--sage-l);border-radius:8px;margin-bottom:14px;cursor:pointer" onclick="toggleTaskRepeat()">
-      <div style="position:relative;width:36px;height:20px;flex-shrink:0">
-        <div id="tm-repeat-track" style="width:36px;height:20px;border-radius:10px;background:var(--bd);transition:background .2s"></div>
-        <div id="tm-repeat-thumb" style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--sage-l);border-radius:8px;margin-bottom:10px;cursor:pointer" onclick="toggleTaskRepeat()">
+      <div style="position:relative;width:34px;height:18px;flex-shrink:0">
+        <div id="tm-repeat-track" style="width:34px;height:18px;border-radius:9px;background:var(--bd);transition:background .2s"></div>
+        <div id="tm-repeat-thumb" style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
       </div>
-      <span style="font-size:13px;font-weight:600;color:var(--tx)">루틴</span>
-      <span style="font-size:12px;color:var(--tx2);margin-left:2px" id="tm-repeat-label">OFF — 일회성 업무</span>
+      <span style="font-size:12px;font-weight:600;color:var(--tx)">루틴</span>
+      <span style="font-size:12px;color:var(--tx2)" id="tm-repeat-label">OFF — 일회성 업무</span>
     </div>
     <!-- 반복 요일 선택 (반복 ON일 때만 표시) -->
-    <div id="tm-repeat-days-wrap" style="display:none;margin-bottom:14px">
+    <div id="tm-repeat-days-wrap" style="display:none;margin-bottom:10px">
       <div class="form-label" style="margin-bottom:8px">반복 요일 <span style="font-weight:400;color:var(--tx2)">(미선택 시 매일)</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap" id="tm-days-group">
         <button class="day-toggle-btn" data-day="1" onclick="toggleDay(this)">월</button>
@@ -836,9 +838,9 @@ body.modal-open{overflow:hidden}
     <div class="form-group">
       <label class="form-label">담당자</label>
       <div class="member-chip-wrap" id="tm-member-chips"></div>
-      <input class="form-input" id="tm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:8px">
+      <input class="form-input" id="tm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:6px;font-size:13px">
     </div>
-    <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="tm-memo" rows="2" placeholder="메모"></textarea></div>
+    <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="tm-memo" rows="1" placeholder="메모"></textarea></div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeTaskModal()">취소</button><button class="btn btn-primary" onclick="saveTask()">저장</button></div>
 </div></div>
@@ -852,7 +854,7 @@ body.modal-open{overflow:hidden}
       <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="pm-due"></div>
     </div>
     <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="pm-members" placeholder="홍길동, 김철수"></div>
-    <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="pm-memo" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="pm-memo" rows="1"></textarea></div>
     <hr class="divider">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <span style="font-size:13px;font-weight:600">단계</span>
@@ -893,8 +895,8 @@ body.modal-open{overflow:hidden}
         <button type="button" class="day-toggle-btn" data-rday="6" onclick="toggleRDay(this)">토</button>
       </div>
     </div>
-    <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="rm-members" placeholder="예: 김솔, 이준"></div>
-    <div class="form-group"><label class="form-label">메모</label><input class="form-input" id="rm-memo" placeholder="메모"></div>
+    <div class="form-group"><label class="form-label">담당자 (쉼표 구분)</label><input class="form-input" id="rm-members" placeholder="예: 김솔, 이준" style="font-size:13px"></div>
+    <div class="form-group"><label class="form-label">메모</label><input class="form-input" id="rm-memo" placeholder="메모" style="font-size:13px"></div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeRoutineModal()">취소</button><button class="btn btn-primary" onclick="saveRoutine()">저장</button></div>
 </div></div>
@@ -1020,7 +1022,7 @@ body.modal-open{overflow:hidden}
     <ul class="step-list" id="step-list"></ul>
     <hr class="divider">
     <div class="form-group"><label class="form-label">개발 메모 (버전 히스토리)</label>
-      <textarea class="form-input" id="ri-memo" rows="3" placeholder="예: v1 - 말차 10g → 너무 쓴맛&#10;v2 - 말차 7g + 설탕 5g 증량 → OK"></textarea>
+      <textarea class="form-input" id="ri-memo" rows="2" placeholder="예: v1 - 말차 10g → 너무 쓴맛&#10;v2 - 말차 7g + 설탕 5g 증량 → OK"></textarea>
     </div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeRecipeModal()">취소</button><button class="btn btn-primary" onclick="saveRecipe()">저장</button></div>
