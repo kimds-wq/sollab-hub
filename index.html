@@ -2206,7 +2206,7 @@ function renderCalendar(){
       const c=e.color;
       const radius=e.isStart&&e.isEnd?'4px':e.isStart?'4px 0 0 4px':e.isEnd?'0 4px 4px 0':'0';
       const label=e.isEnd?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;font-size:10px;font-weight:600;padding:0 4px">${e.label}</span>`:'';
-      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:16px;margin:1px -2px;display:flex;align-items:center;overflow:hidden;cursor:pointer;min-width:0" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
+      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:14px;margin:1px 0;display:flex;align-items:center;overflow:hidden;cursor:pointer;min-width:0;width:100%" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
     }).join('');
 
     html+=`<div class="cal-day${cur?'':' other-month'}${isToday?' today-cell':''}" data-date="${dateStr}" onclick="showCalPopup('${dateStr}',event)">
