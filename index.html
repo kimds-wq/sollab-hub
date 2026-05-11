@@ -206,10 +206,12 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 /* ── CALENDAR ── */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .cal-nav-title{font-size:15px;font-weight:600}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0}
 .cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--tx2);padding:6px 0}
 .cal-dow.sun,.cal-dow.sat{color:var(--danger)}
-.cal-day{background:var(--sf);border:1px solid var(--bd);border-radius:7px;padding:4px 2px;min-height:60px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
+.cal-day{background:var(--sf);border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);padding:4px 2px;min-height:60px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column}
+.cal-grid .cal-day:nth-child(7n+8){border-left:1px solid var(--bd)}
+.cal-grid>div:nth-child(-n+7){border-top:1px solid var(--bd)}
 .cal-day.other-month{opacity:.22;pointer-events:none}
 .cal-day.today-cell{border-color:var(--sage);border-width:2px}
 .cal-day-num{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:4px}
@@ -2209,9 +2211,11 @@ function renderCalendar(){
     // 프로젝트 기간 막대
     const projBars=projEvs.map(e=>{
       const c=e.color;
-      const radius=e.isStart&&e.isEnd?'4px':e.isStart?'4px 0 0 4px':e.isEnd?'0 4px 4px 0':'0';
+      const radius=e.isStart&&e.isEnd?'3px':e.isStart?'3px 0 0 3px':e.isEnd?'0 3px 3px 0':'0';
+      const ml=e.isStart?'2px':'0';
+      const mr=e.isEnd?'2px':'0';
       const label=e.isEnd?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;font-size:10px;font-weight:600;padding:0 4px">${e.label}</span>`:'';
-      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:14px;margin:1px 0;display:flex;align-items:center;overflow:hidden;cursor:pointer;min-width:0;width:100%" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
+      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:14px;margin:1px ${mr} 1px ${ml};display:flex;align-items:center;overflow:hidden;cursor:pointer" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
     }).join('');
 
     html+=`<div class="cal-day${cur?'':' other-month'}${isToday?' today-cell':''}" data-date="${dateStr}" onclick="showCalPopup('${dateStr}',event)">
