@@ -1392,13 +1392,17 @@ async function clearDoneTasks(){
   if(!confirm('완료된 업무를 모두 삭제할까요?'))return;
   const td=TODAY();
   const toDelete=wfTasks.filter(t=>!t.repeat&&t.done&&(t.created_date===td||(!t.created_date)));
-  if(!toDelete.length){showToast('삭제할 완료 업무가 없습니다.');return;}
+  // 루틴 당일 완료도 초기화
+  const prevRoutineDone=[...routineDoneToday];
+  routineDoneToday=[];
+  localStorage.setItem('hub_rdt_'+td,JSON.stringify([]));
+  if(!toDelete.length&&!prevRoutineDone.length){showToast('삭제할 완료 업무가 없습니다.');return;}
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(t=>!toDelete.find(d=>d.id===t.id));
   renderToday();persistLocal();
   toDelete.forEach(t=>sbDelete('wf_tasks',t.id));
-  showToast(`완료 업무 ${toDelete.length}건을 삭제했습니다.`,
-    ()=>{wfTasks=prev;renderToday();persistLocal();toDelete.forEach(t=>sbUpsert('wf_tasks',t));});
+  showToast(`완료 업무 ${toDelete.length}건 삭제됐습니다.`,
+    ()=>{wfTasks=prev;routineDoneToday=prevRoutineDone;localStorage.setItem('hub_rdt_'+td,JSON.stringify(prevRoutineDone));renderToday();persistLocal();toDelete.forEach(t=>sbUpsert('wf_tasks',t));});
 }
 function autoCleanDone(){
   // 자정 기준: 전날 완료된 일회성 업무 자동 삭제
@@ -1660,13 +1664,26 @@ function renderToday(){
     (!t.due||t.due>=td)
   );
   const todayTasks=[
-    ...wfTasks.filter(t=>!t.repeat&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))),
+    ...wfTasks.filter(t=>!t.repeat&&(
+      t.due===td ||
+      (!t.due && t.created_date===td) ||
+      (!t.due && !t.created_date) // created_date 없는 구형 데이터 호환
+    )),
     ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
     ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
   ];
 
-  // 완료 판별
-  const isDone=t=>t.repeat||t._isRoutine?routineDoneToday.includes(t.id):t.done;
+  const td2=td;
+  const isDone=t=>{
+    if(t.repeat){
+      // done_dates 배열로 공유되는 새 방식
+      if(t.done_dates&&t.done_dates.includes(td2))return true;
+      // 구형 localStorage 방식 호환
+      return routineDoneToday.includes(t.id);
+    }
+    if(t._isRoutine)return routineDoneToday.includes(t.id);
+    return t.done;
+  };
 
   // 통계 (이월 포함)
   const allForStat=[...carryTasks,...todayTasks];
@@ -1679,7 +1696,22 @@ function renderToday(){
 
   // 완료 정리 버튼 표시
   const clearBtn=document.getElementById('clear-done-btn');
-  if(clearBtn)clearBtn.style.display=todayTasks.some(t=>isDone(t))?'':'none';
+  if(clearBtn)clearBtn.style.display=todayTasks.some(t=>isDone(t))||routineDoneToday.length?'':'none';
+
+  // 마감 임박 프로젝트 배너 (D-3 이내)
+  const urgentProjs=wfProjects.filter(p=>{
+    if(p.done||!p.due)return false;
+    const dd=ddayBadge(p.due);
+    return dd&&(dd.cls==='dday-today'||dd.cls==='dday-soon'||dd.cls==='dday-over');
+  });
+  let projBanner=document.getElementById('today-proj-banner');
+  if(urgentProjs.length){
+    if(!projBanner){projBanner=document.createElement('div');projBanner.id='today-proj-banner';document.getElementById('wfp-today').insertBefore(projBanner,document.getElementById('today-carry-wrap'));}
+    projBanner.innerHTML=`<div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+      <span style="font-size:11px;font-weight:700;color:var(--warn-tx);flex-shrink:0">📋 마감 임박</span>
+      ${urgentProjs.map(p=>{const dd=ddayBadge(p.due);return`<span style="font-size:12px;color:var(--tx);font-weight:500">${p.name} <span class="dday ${dd.cls}">${dd.label}</span></span>`;}).join('')}
+    </div>`;
+  } else if(projBanner){projBanner.remove();}
 
   const ICO_CHK='<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
   const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
@@ -1718,7 +1750,9 @@ function renderToday(){
 
   function taskCard(t,isRoutineObj){
     const isRepeat=t.repeat||isRoutineObj;
-    const done=isRepeat?routineDoneToday.includes(t.id):t.done;
+    const done=isRepeat?(
+      t.done_dates&&t.done_dates.includes(td)||routineDoneToday.includes(t.id)
+    ):t.done;
     const pri=t.priority||'mid';
     const dd=(!isRepeat&&t.due&&!done)?ddayBadge(t.due):null;
     const toggleFn=isRepeat?`toggleRoutineDone('${t.id}')`:`toggleTask('${t.id}')`;
@@ -1911,9 +1945,23 @@ async function toggleTask(id){
   persistLocal();sbUpsert('wf_tasks',t);
 }
 function toggleRoutineDone(id){
+  const td=TODAY();
+  // 루틴 task인 경우 done_dates 배열로 Supabase 공유
+  const task=wfTasks.find(x=>x.id===id);
+  if(task&&task.repeat){
+    const doneDates=task.done_dates||[];
+    if(doneDates.includes(td)){
+      task.done_dates=doneDates.filter(d=>d!==td);
+    } else {
+      task.done_dates=[...doneDates,td];
+    }
+    persistLocal();sbUpsert('wf_tasks',task);
+    renderToday();return;
+  }
+  // 구형 wfRoutines 호환
   if(routineDoneToday.includes(id))routineDoneToday=routineDoneToday.filter(x=>x!==id);
   else routineDoneToday.push(id);
-  localStorage.setItem('hub_rdt_'+TODAY(),JSON.stringify(routineDoneToday));
+  localStorage.setItem('hub_rdt_'+td,JSON.stringify(routineDoneToday));
   renderToday();
 }
 async function deleteTask(id){
@@ -1936,16 +1984,19 @@ function openTaskModal(id){
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   renderMemberChips('tm-member-chips','tm-members');
   // 날짜 초기화
-  if(t){
-    const cd=t.created_date||TODAY();
-    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-    const tmrStr=tomorrow.toISOString().slice(0,10);
-    if(cd===TODAY()){document.getElementById('tm-task-date').value='today';}
-    else if(cd===tmrStr){document.getElementById('tm-task-date').value='tomorrow';}
-    else{document.getElementById('tm-task-date').value='custom';document.getElementById('tm-task-date-custom').value=cd;document.getElementById('tm-task-date-custom').style.display='';}
+  const cd=t?.created_date||TODAY();
+  const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+  const tmrStr=tomorrow.toLocaleDateString('sv-SE');
+  const customEl=document.getElementById('tm-task-date-custom');
+  const dateSelEl=document.getElementById('tm-task-date');
+  if(!t){
+    dateSelEl.value='today';customEl.style.display='none';customEl.value='';
+  } else if(cd===TODAY()){
+    dateSelEl.value='today';customEl.style.display='none';
+  } else if(cd===tmrStr){
+    dateSelEl.value='tomorrow';customEl.style.display='none';
   } else {
-    document.getElementById('tm-task-date').value='today';
-    document.getElementById('tm-task-date-custom').style.display='none';
+    dateSelEl.value='custom';customEl.value=cd;customEl.style.display='';
   }
   document.getElementById('tm-memo').value=t?.memo||'';
   initRepeatState(t?.repeat||false,t?.days||[]);
@@ -2325,10 +2376,10 @@ async function unarchive(id){
 
 function renderRoutine(){
   const DAY_NAMES=['일','월','화','수','목','금','토'];
+  const DAY_ORDER=[1,2,3,4,5,6,0];
   const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
 
-  // wfTasks 반복 업무 + wfRoutines(구형) 통합
   const repeatTasks=wfTasks.filter(t=>t.repeat);
   const allRepeat=[
     ...repeatTasks.map(t=>({...t,_src:'task'})),
@@ -2338,9 +2389,9 @@ function renderRoutine(){
   document.getElementById('routine-empty').style.display=allRepeat.length?'none':'';
 
   function dayChips(days){
-    return DAY_NAMES.map((d,i)=>{
+    return DAY_ORDER.map(i=>{
       const active=!days||days.length===0||days.includes(i);
-      return`<div class="day-chip${active?' active':''}">${d}</div>`;
+      return`<div class="day-chip${active?' active':''}">${DAY_NAMES[i]}</div>`;
     }).join('');
   }
 
