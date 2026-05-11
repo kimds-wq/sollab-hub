@@ -970,12 +970,21 @@ body.modal-open{overflow:hidden}
           <option value="L">L</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label">가격 (원) *</label><input class="form-input" id="ci-price" type="number" placeholder="예: 3500"></div>
     </div>
-    <div id="ci-unit-preview" style="background:var(--sage-l);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--sage-d);display:none;margin-bottom:14px">
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">가격 (원) *</label><input class="form-input" id="ci-price" type="number" placeholder="예: 3500"></div>
+      <div class="form-group"><label class="form-label">비고 (선택)</label><input class="form-input" id="ci-note" placeholder="예: 서울우유, 이마트 구매"></div>
+    </div>
+    <div id="ci-unit-preview" style="background:var(--sage-l);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--sage-d);display:none;margin-bottom:10px">
       단위당 단가: <strong id="ci-unit-val"></strong>원 / <span id="ci-unit-label">단위</span>
     </div>
-    <div class="form-group"><label class="form-label">비고 (선택)</label><input class="form-input" id="ci-note" placeholder="예: 서울우유, 이마트 구매"></div>
+    <div class="form-group">
+      <label class="form-label">링크 (선택)</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input class="form-input" id="ci-link" placeholder="https://..." style="flex:1">
+        <button type="button" class="btn btn-ghost btn-sm" id="ci-link-btn" onclick="openCostLink()" style="display:none;flex-shrink:0;white-space:nowrap">열기</button>
+      </div>
+    </div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeCostModal()">취소</button><button class="btn btn-primary" onclick="saveCost()">저장</button></div>
 </div></div>
@@ -1063,7 +1072,9 @@ let _sb=null, _rt=null;
 
 function initSb(){
   try{
-    _sb=supabase.createClient(_SB_URL,_SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+    _sb=supabase.createClient(_SB_URL,_SB_KEY,{
+      auth:{persistSession:false,autoRefreshToken:false,storageKey:'sollab-hub-auth'}
+    });
     return true;
   }catch(e){console.error('Supabase init error:',e);return false;}
 }
@@ -2789,6 +2800,7 @@ function renderCosts(){
       <td><span class="badge">${unitPer}</span></td>
       <td style="color:var(--tx2);font-size:12px">${c.note||'<span style="color:var(--bd)">—</span>'}</td>
       <td style="display:flex;gap:4px;justify-content:flex-end">
+        ${c.link?`<a href="${c.link}" target="_blank" rel="noopener noreferrer" class="btn-icon" title="링크 열기"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></a>`:''}
         <button class="btn-icon" onclick="editCost('${c.id}')">${ICO_EDIT}</button>
         <button class="btn-icon" onclick="deleteCost('${c.id}')">${ICO_DEL}</button>
       </td></tr>`;}).join('');
@@ -2802,6 +2814,9 @@ function openCostModal(id){
   document.getElementById('ci-unit').value=c?.unit||'g';
   document.getElementById('ci-price').value=c?.price||'';
   document.getElementById('ci-note').value=c?.note||'';
+  const linkVal=c?.link||'';
+  document.getElementById('ci-link').value=linkVal;
+  document.getElementById('ci-link-btn').style.display=linkVal?'':'none';
   updateUnitPreview();openModal('cost-modal');
 }
 function closeCostModal(){closeModal('cost-modal');}
@@ -2809,6 +2824,13 @@ function editCost(id){openCostModal(id);}
 function updateUnitPreview(){const v=parseFloat(document.getElementById('ci-volume').value),p=parseFloat(document.getElementById('ci-price').value),u=document.getElementById('ci-unit')?.value||'g',el=document.getElementById('ci-unit-preview');if(v>0&&p>0){document.getElementById('ci-unit-val').textContent=fmt(p/v);document.getElementById('ci-unit-label').textContent=u;el.style.display='';}else el.style.display='none';}
 document.getElementById('ci-volume').addEventListener('input',updateUnitPreview);
 document.getElementById('ci-price').addEventListener('input',updateUnitPreview);
+document.getElementById('ci-link').addEventListener('input',function(){
+  document.getElementById('ci-link-btn').style.display=this.value.trim()?'':'none';
+});
+function openCostLink(){
+  const url=document.getElementById('ci-link').value.trim();
+  if(url)window.open(url,'_blank','noopener,noreferrer');
+}
 async function saveCost(){
   const name=document.getElementById('ci-name').value.trim();
   const category=document.getElementById('ci-category').value;
@@ -2816,8 +2838,9 @@ async function saveCost(){
   const unit=document.getElementById('ci-unit').value||'g';
   const price=parseFloat(document.getElementById('ci-price').value);
   const note=document.getElementById('ci-note').value.trim();
+  const link=document.getElementById('ci-link').value.trim();
   if(!name||!volume||!price){showToast('재료명, 용량, 가격을 입력해주세요.');return;}
-  const data={name,category,volume,unit,price,note};
+  const data={name,category,volume,unit,price,note,link};
   const row={id:editIds.cost||uid(),...data};
   editIds.cost?Object.assign(costs.find(x=>x.id===editIds.cost),data):costs.push(row);
   persistLocal();sbUpsert('costs',row);renderCosts();
