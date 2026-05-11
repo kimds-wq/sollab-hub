@@ -2159,14 +2159,19 @@ function renderCalendar(){
   const addEv=(date,ev)=>{if(!evByDate[date])evByDate[date]=[];evByDate[date].push(ev);};
 
   // 프로젝트: 기간 내 모든 날짜에 추가
+  // 시작일 없으면 현재 표시 월 1일부터 표시
+  const monthStart=ds(calYear,calMonth,1);
   allProjs.filter(p=>p.due).forEach(p=>{
     const color=projColorMap[p.id];
-    const start=p.start_date||p.due;
+    const start=p.start_date||monthStart;
     const end=p.due;
-    let cur=new Date(start);
-    const endDate=new Date(end);
+    let cur=new Date(start+'T00:00:00');
+    const endDate=new Date(end+'T00:00:00');
     while(cur<=endDate){
-      const dateStr=cur.toISOString().slice(0,10);
+      const y=cur.getFullYear();
+      const m=String(cur.getMonth()+1).padStart(2,'0');
+      const d2=String(cur.getDate()).padStart(2,'0');
+      const dateStr=`${y}-${m}-${d2}`;
       const isFirst=dateStr===start;
       const isLast=dateStr===end;
       addEv(dateStr,{
