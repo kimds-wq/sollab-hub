@@ -1097,10 +1097,12 @@ function setSyncStatus(s){
 
 async function loadAll(){
   setSyncStatus('loading');
+  // 완료 체크는 로컬 우선 로드
+  routineDoneToday=JSON.parse(localStorage.getItem('hub_rdt_'+TODAY())||'[]');
   if(!_sb){loadLocal();setSyncStatus('local');renderAll();return;}
   try{
     const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
-      _sb.from('wf_tasks').select('*').order('created_at'),
+      _sb.from('wf_tasks').select('*').order('sort_order').order('created_at'),
       _sb.from('wf_projects').select('*').order('created_at'),
       _sb.from('wf_routines').select('*').order('created_at'),
       _sb.from('order_products').select('*').order('name'),
@@ -1137,9 +1139,12 @@ function subscribeRt(){
 
 async function reloadTable(t){
   if(!_sb)return;
-  const orderCol=(t==='costs'||t==='recipes'||t==='order_products'||t==='order_dests')?'name':'created_at';
-  const asc=t==='orders'?false:true;
-  const{data}=await _sb.from(t).select('*').order(orderCol,{ascending:asc});
+  let q=_sb.from(t).select('*');
+  if(t==='wf_tasks') q=q.order('sort_order').order('created_at');
+  else if(t==='costs'||t==='recipes'||t==='order_products'||t==='order_dests') q=q.order('name');
+  else if(t==='orders') q=q.order('created_at',{ascending:false});
+  else q=q.order('created_at');
+  const{data}=await q;
   if(!data)return;
   if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderCalendar();renderArchive();renderRoutine();}
   else if(t==='wf_projects'){wfProjects=data;persistLocal();renderProjects();renderCalendar();renderArchive();}
@@ -1176,7 +1181,7 @@ function loadLocal(){
   orderList=JSON.parse(localStorage.getItem('hub_order_list')||'[]');
   costs=JSON.parse(localStorage.getItem('hub_costs')||'[]');
   recipes=JSON.parse(localStorage.getItem('hub_recipes')||'[]');
-  wfTaskOrder=JSON.parse(localStorage.getItem('hub_task_order')||'[]');
+  wfTaskOrder=[];// sort_order로 전환, 하위 호환용 유지
 }
 function persistLocal(){
   localStorage.setItem('hub_wf_tasks',JSON.stringify(wfTasks));
@@ -1631,13 +1636,12 @@ function renderToday(){
 
   // 시간 있는 업무: 시간순 정렬
   const timed=todayTasks.filter(t=>t.start_time).sort((a,b)=>a.start_time>b.start_time?1:-1);
-  // 시간 없는 업무: wfTaskOrder 순서 적용, 완료된 것 뒤로
+  // 시간 없는 업무: sort_order 기준, 완료된 것 뒤로
   const untimed=todayTasks.filter(t=>!t.start_time).sort((a,b)=>{
     const da=isDone(a),db=isDone(b);
     if(da&&!db)return 1;if(!da&&db)return -1;
-    const ai=wfTaskOrder.indexOf(a.id),bi=wfTaskOrder.indexOf(b.id);
-    if(ai===-1&&bi===-1)return 0;if(ai===-1)return 1;if(bi===-1)return -1;
-    return ai-bi;
+    const ao=a.sort_order??9999,bo=b.sort_order??9999;
+    return ao-bo;
   });
 
   const timedWrap=document.getElementById('today-timed-wrap');
@@ -1679,24 +1683,31 @@ function onDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function onDrop(e,targetId,dragId){
   e.preventDefault();
   const fromId=dragId||_dragId;
-  // 모든 드래그 잔상 먼저 제거
   document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','dragging'));
   if(!fromId||fromId===targetId){_dragId=null;return;}
 
   const td=TODAY();
-  const todayIds=wfTasks.filter(t=>
-    !t.repeat&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))
-  ).map(t=>t.id);
+  const todayTasks=wfTasks.filter(t=>
+    !t.repeat&&!t.start_time&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))
+  ).sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
 
-  let order=wfTaskOrder.filter(id=>todayIds.includes(id));
-  todayIds.forEach(id=>{if(!order.includes(id))order.push(id);});
-  const fromIdx=order.indexOf(fromId);
-  const toIdx=order.indexOf(targetId);
+  const fromIdx=todayTasks.findIndex(t=>t.id===fromId);
+  const toIdx=todayTasks.findIndex(t=>t.id===targetId);
   if(fromIdx===-1||toIdx===-1){_dragId=null;return;}
-  order.splice(fromIdx,1);
-  order.splice(toIdx,0,fromId);
-  wfTaskOrder=order;
-  localStorage.setItem('hub_task_order',JSON.stringify(wfTaskOrder));
+
+  // 순서 재배치
+  const reordered=[...todayTasks];
+  const [moved]=reordered.splice(fromIdx,1);
+  reordered.splice(toIdx,0,moved);
+
+  // sort_order 재부여 및 Supabase 동기화
+  reordered.forEach((t,i)=>{
+    const task=wfTasks.find(x=>x.id===t.id);
+    if(task)task.sort_order=i+1;
+  });
+  persistLocal();
+  reordered.forEach((t,i)=>sbUpsert('wf_tasks',wfTasks.find(x=>x.id===t.id)));
+
   _dragId=null;
   renderToday();
 }
@@ -1837,7 +1848,8 @@ async function saveTask(){
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
     done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false,
-    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):TODAY()};
+    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):TODAY(),
+    sort_order:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.sort_order??9999):(Math.max(0,...wfTasks.map(t=>t.sort_order||0))+1)};
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
   persistLocal();sbUpsert('wf_tasks',row);
