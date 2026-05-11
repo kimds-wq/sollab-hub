@@ -1374,11 +1374,22 @@ function toggleTaskMemo(el){
 }
 
 function goSection(s){
+  // 드래그 잔상 강제 정리
+  if(_touchClone){_touchClone.remove();_touchClone=null;}
+  _touchDragId=null;_dragId=null;
+  document.querySelectorAll('.task-item').forEach(el=>{
+    el.style.opacity='';el.classList.remove('drag-over','dragging');
+  });
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));setBottomNav(s);
   document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
   document.getElementById('sec-'+s).classList.add('active');
 }
 function goWfTab(t){
+  if(_touchClone){_touchClone.remove();_touchClone=null;}
+  _touchDragId=null;_dragId=null;
+  document.querySelectorAll('.task-item').forEach(el=>{
+    el.style.opacity='';el.classList.remove('drag-over','dragging');
+  });
   document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','calendar','projects','routine','archive'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('wfp-'+t).classList.add('active');
@@ -1695,6 +1706,17 @@ function onDragEnd(e){
 }
 
 let _touchDragId=null,_touchClone=null,_touchOffY=0,_touchOffX=0;
+let _touchStartY=0,_touchStartX=0,_touchConfirmed=false;
+const DRAG_THRESHOLD=8; // px 이상 이동해야 드래그로 확정
+
+function _cleanTouchDrag(){
+  if(_touchClone){_touchClone.remove();_touchClone=null;}
+  document.querySelectorAll('#today-untimed-list .task-item').forEach(el=>{
+    el.style.opacity='';el.classList.remove('drag-over','dragging');
+  });
+  _touchDragId=null;_touchConfirmed=false;
+}
+
 function initTouchDrag(){
   const list=document.getElementById('today-untimed-list');
   if(!list)return;
@@ -1704,67 +1726,61 @@ function initTouchDrag(){
     if(!handle)return;
     const item=handle.closest('.task-item');
     if(!item||!item.dataset.id)return;
-
-    e.stopPropagation();
+    // 드래그 후보 등록 (클론은 아직 안 만듦)
     _touchDragId=item.dataset.id;
+    _touchConfirmed=false;
+    _touchClone=null;
+    _touchStartY=e.touches[0].clientY;
+    _touchStartX=e.touches[0].clientX;
     const rect=item.getBoundingClientRect();
     _touchOffY=e.touches[0].clientY-rect.top;
     _touchOffX=e.touches[0].clientX-rect.left;
-
-    // 클론 생성
-    _touchClone=item.cloneNode(true);
-    _touchClone.style.cssText=`
-      position:fixed;
-      left:${rect.left}px;top:${rect.top}px;
-      width:${rect.width}px;
-      opacity:.85;pointer-events:none;z-index:9999;
-      border-radius:var(--r);background:var(--sf);
-      box-shadow:0 8px 24px rgba(0,0,0,.25);
-      transition:none;
-    `;
-    document.body.appendChild(_touchClone);
-    item.style.opacity='0.2';
   },{passive:true});
 
   list.addEventListener('touchmove',e=>{
-    if(!_touchDragId||!_touchClone)return;
-    e.preventDefault();
-
+    if(!_touchDragId)return;
     const touch=e.touches[0];
+    const dy=Math.abs(touch.clientY-_touchStartY);
+    const dx=Math.abs(touch.clientX-_touchStartX);
+
+    // 임계값 이상 수직 이동 시 드래그 확정
+    if(!_touchConfirmed){
+      if(dy<DRAG_THRESHOLD)return; // 아직 드래그 아님 — 스크롤 허용
+      if(dx>dy){_cleanTouchDrag();return;} // 수평 스크롤이면 드래그 취소
+      // 드래그 확정
+      _touchConfirmed=true;
+      const item=list.querySelector(`.task-item[data-id="${_touchDragId}"]`);
+      if(!item){_cleanTouchDrag();return;}
+      const rect=item.getBoundingClientRect();
+      _touchClone=item.cloneNode(true);
+      _touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:.85;pointer-events:none;z-index:9999;border-radius:var(--r);background:var(--sf);box-shadow:0 8px 24px rgba(0,0,0,.25);transition:none`;
+      document.body.appendChild(_touchClone);
+      item.style.opacity='0.2';
+    }
+
+    e.preventDefault(); // 드래그 확정 후에만 스크롤 차단
     _touchClone.style.top=(touch.clientY-_touchOffY)+'px';
     _touchClone.style.left=(touch.clientX-_touchOffX)+'px';
-
-    // drag-over 표시
-    _touchClone.style.pointerEvents='none';
     document.querySelectorAll('#today-untimed-list .task-item').forEach(el=>el.classList.remove('drag-over'));
     const el=document.elementFromPoint(touch.clientX,touch.clientY);
-    const target=el?.closest('.task-item[data-id]');
+    const target=el?.closest('#today-untimed-list .task-item[data-id]');
     if(target&&target.dataset.id!==_touchDragId)target.classList.add('drag-over');
   },{passive:false});
 
-  list.addEventListener('touchend',e=>{
-    if(!_touchDragId)return;
-
-    // 1. 클론 즉시 제거
-    if(_touchClone){_touchClone.remove();_touchClone=null;}
-
-    // 2. 모든 스타일 초기화
-    document.querySelectorAll('#today-untimed-list .task-item').forEach(el=>{
-      el.style.opacity='';
-      el.classList.remove('drag-over','dragging');
-    });
-
-    // 3. drop 처리
-    const touch=e.changedTouches[0];
-    const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  const endHandler=e=>{
+    if(!_touchDragId){_cleanTouchDrag();return;}
+    if(!_touchConfirmed){_cleanTouchDrag();return;} // 드래그 확정 전 손 뗌 = 스크롤이었음
+    const touch=(e.changedTouches||e.touches)[0];
+    const el=touch?document.elementFromPoint(touch.clientX,touch.clientY):null;
     const target=el?.closest('#today-untimed-list .task-item[data-id]');
     const prevId=_touchDragId;
-    _touchDragId=null;
-
+    _cleanTouchDrag();
     if(target&&target.dataset.id&&target.dataset.id!==prevId){
       onDrop({preventDefault:()=>{}},target.dataset.id,prevId);
     }
-  },{passive:true});
+  };
+  list.addEventListener('touchend',endHandler,{passive:true});
+  list.addEventListener('touchcancel',()=>_cleanTouchDrag(),{passive:true});
 }
 
 async function toggleTask(id){
