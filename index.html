@@ -2795,7 +2795,7 @@ function renderCosts(){
     return`<tr>
       <td style="font-weight:500">${c.name}</td>
       <td><span class="badge" style="font-size:11px">${c.category||'미분류'}</span></td>
-      <td>${fmt(c.volume)}${unit}</td>
+      <td>${(+c.volume % 1 === 0 ? Math.round(+c.volume).toLocaleString('ko-KR') : (+c.volume).toLocaleString('ko-KR'))}${unit}</td>
       <td>${fmt(c.price)}원</td>
       <td><span class="badge">${unitPer}</span></td>
       <td style="color:var(--tx2);font-size:12px">${c.note||'<span style="color:var(--bd)">—</span>'}</td>
