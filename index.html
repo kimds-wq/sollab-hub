@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>SoL LAB Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.4/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -517,8 +518,8 @@ body.modal-open{overflow:hidden}
       <span class="role-badge" id="app-role-badge" style="display:none"></span>
       <button class="btn btn-ghost btn-sm" id="app-logout-btn" onclick="appLogout()" style="display:none">로그아웃</button>
       <div class="sync-wrap">
-        <div class="sync-dot" id="sync-dot"></div>
-        <span class="sync-label" id="sync-label">로컬 저장</span>
+        <div class="sync-dot loading" id="sync-dot"></div>
+        <span class="sync-label" id="sync-label">연결 중...</span>
       </div>
       <button class="btn btn-ghost btn-sm" id="nav-export-btn" onclick="exportOrders()" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 내보내기</button>
       <button class="btn-icon" id="settings-btn" onclick="openSettingsModal()" style="display:none" title="설정"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -1045,16 +1046,98 @@ body.modal-open{overflow:hidden}
 
 <script>
 
+const _SB_URL='https://jxslxaxfijtfugokmgmg.supabase.co';
+const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4c2x4YXhmaWp0ZnVnb2ttZ21nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyOTc0MjIsImV4cCI6MjA5Mzg3MzQyMn0.iybORWC43Gaj2QZ3i_Nas1Ly3m6lbZYiRx0Nqnd631E';
+let _sb=null, _rt=null;
+
+function initSb(){
+  try{
+    _sb=supabase.createClient(_SB_URL,_SB_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
+    return true;
+  }catch(e){console.error('Supabase init error:',e);return false;}
+}
+
 function setSyncStatus(s){
   const dot=document.getElementById('sync-dot'),lbl=document.getElementById('sync-label');
   dot.className='sync-dot';
-  if(s==='saving'){dot.classList.add('loading');lbl.textContent='저장 중...';}
-  else{lbl.textContent='로컬 저장';}
+  const m={loading:['loading','연결 중...'],ok:['ok','실시간 동기화'],err:['err','연결 실패'],local:['','로컬 저장'],saving:['loading','저장 중...']};
+  const[c,t]=m[s]||['',s];
+  if(c)dot.classList.add(c);
+  lbl.textContent=t;
 }
-function loadAll(){
-  loadLocal();
-  renderAll();
+
+async function loadAll(){
+  setSyncStatus('loading');
+  if(!_sb){loadLocal();setSyncStatus('local');renderAll();return;}
+  try{
+    const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
+      _sb.from('wf_tasks').select('*').order('created_at'),
+      _sb.from('wf_projects').select('*').order('created_at'),
+      _sb.from('wf_routines').select('*').order('created_at'),
+      _sb.from('order_products').select('*').order('name'),
+      _sb.from('order_dests').select('*').order('name'),
+      _sb.from('orders').select('*').order('created_at',{ascending:false}),
+      _sb.from('costs').select('*').order('name'),
+      _sb.from('recipes').select('*').order('name'),
+    ]);
+    wfTasks=tk.data||[]; wfProjects=pj.data||[]; wfRoutines=rt.data||[];
+    orderProducts=op.data||[]; orderDests=od.data||[]; orderList=ol.data||[];
+    costs=co.data||[]; recipes=rc.data||[];
+    persistLocal();
+    setSyncStatus('ok');
+    renderAll();
+    subscribeRt();
+  }catch(e){
+    console.error('loadAll error:',e);
+    loadLocal();setSyncStatus('err');renderAll();
+    showToast('서버 연결 실패 — 로컬 데이터로 표시 중');
+  }
 }
+
+function subscribeRt(){
+  if(!_sb)return;
+  if(_rt)_sb.removeChannel(_rt);
+  _rt=_sb.channel('hub-realtime');
+  const tables=['wf_tasks','wf_projects','wf_routines','order_products','order_dests','orders','costs','recipes'];
+  tables.forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>reloadTable(t)));
+  _rt.subscribe(s=>{
+    if(s==='SUBSCRIBED')setSyncStatus('ok');
+    if(s==='CHANNEL_ERROR')setSyncStatus('err');
+  });
+}
+
+async function reloadTable(t){
+  if(!_sb)return;
+  const orderCol=(t==='costs'||t==='recipes'||t==='order_products'||t==='order_dests')?'name':'created_at';
+  const asc=t==='orders'?false:true;
+  const{data}=await _sb.from(t).select('*').order(orderCol,{ascending:asc});
+  if(!data)return;
+  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderCalendar();renderArchive();renderRoutine();}
+  else if(t==='wf_projects'){wfProjects=data;persistLocal();renderProjects();renderCalendar();renderArchive();}
+  else if(t==='wf_routines'){wfRoutines=data;persistLocal();renderRoutine();renderToday();}
+  else if(t==='order_products'){orderProducts=data;persistLocal();renderOrderProducts();populateOrderSelects();}
+  else if(t==='order_dests'){orderDests=data;persistLocal();renderOrderDests();populateOrderSelects();}
+  else if(t==='orders'){orderList=data;persistLocal();renderOrderHistory();}
+  else if(t==='costs'){costs=data;persistLocal();renderCosts();}
+  else if(t==='recipes'){recipes=data;persistLocal();renderRecipeDev();renderRecipeDone();}
+}
+
+// Supabase 저장 헬퍼 (낙관적 업데이트 후 비동기 동기화)
+async function sbUpsert(table,row){
+  if(!_sb)return;
+  setSyncStatus('saving');
+  const{error}=await _sb.from(table).upsert(row);
+  if(error){console.error('upsert error:',table,error);setSyncStatus('err');}
+  else setSyncStatus('ok');
+}
+async function sbDelete(table,id){
+  if(!_sb)return;
+  setSyncStatus('saving');
+  const{error}=await _sb.from(table).delete().eq('id',id);
+  if(error){console.error('delete error:',table,error);setSyncStatus('err');}
+  else setSyncStatus('ok');
+}
+
 function loadLocal(){
   wfTasks=JSON.parse(localStorage.getItem('hub_wf_tasks')||'[]');
   wfProjects=JSON.parse(localStorage.getItem('hub_wf_projects')||'[]');
@@ -1167,6 +1250,7 @@ function applyAppRole(){
   if(!isAdmin)goRecipeTab('done');
 
   applyOrderRole();
+  initSb();
   loadAll();
 }
 const TODAY=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
@@ -1627,7 +1711,7 @@ async function toggleTask(id){
 
   t.done=!t.done;
   renderToday();
-  persistLocal();
+  persistLocal();sbUpsert('wf_tasks',t);
 }
 function toggleRoutineDone(id){
   if(routineDoneToday.includes(id))routineDoneToday=routineDoneToday.filter(x=>x!==id);
@@ -1640,8 +1724,8 @@ async function deleteTask(id){
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(x=>x.id!==id);
   renderToday();renderRoutine();
-  persistLocal();
-  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();});
+  persistLocal();sbDelete('wf_tasks',id);
+  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
 }
 function openTaskModal(id){
   editIds.task=id||null;
@@ -1679,8 +1763,8 @@ async function saveTask(){
     created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):TODAY()};
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
-  persistLocal();
-  setSyncStatus('local');closeTaskModal();renderToday();renderCalendar();renderRoutine();showToast('저장됐습니다.');
+  persistLocal();sbUpsert('wf_tasks',row);
+  closeTaskModal();renderToday();renderCalendar();renderRoutine();showToast('저장됐습니다.');
 }
 
 function renderProjects(){
@@ -1774,8 +1858,8 @@ async function deleteProj(id){
   const prev=[...wfProjects];
   wfProjects=wfProjects.filter(x=>x.id!==id);
   renderProjects();renderCalendar();
-  persistLocal();
-  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();renderCalendar();persistLocal();});
+  persistLocal();sbDelete('wf_projects',id);
+  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();renderCalendar();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
 }
 let projStagesArr=[];
 function openProjModal(id){
@@ -1809,8 +1893,8 @@ async function saveProj(){
   const row={id:editIds.proj||uid(),name,start_date:document.getElementById('pm-start').value,due:document.getElementById('pm-due').value,members:document.getElementById('pm-members').value.split(',').map(s=>s.trim()).filter(Boolean),memo:document.getElementById('pm-memo').value.trim(),stages:projStagesArr.filter(s=>s.name.trim()),done:false};
   if(editIds.proj){Object.assign(wfProjects.find(x=>x.id===editIds.proj)||{},row);}
   else{wfProjects.push(row);}
-  persistLocal();
-  setSyncStatus('local');closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
+  persistLocal();sbUpsert('wf_projects',row);
+  closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
 }
 
 function calMove(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
@@ -2042,16 +2126,16 @@ async function saveRoutine(){
     end_time:document.getElementById('rm-end-time').value,
     days,members:document.getElementById('rm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('rm-memo').value.trim()};
-  editIds.routine?Object.assign(wfRoutines.find(x=>x.id===editIds.routine),row):wfRoutines.push(row);persistLocal();
-  closeRoutineModal();renderRoutine();renderToday();showToast(editIds.routine?'수정됐습니다.':'고정 업무가 추가됐습니다.');
+  editIds.routine?Object.assign(wfRoutines.find(x=>x.id===editIds.routine),row):wfRoutines.push(row);persistLocal();sbUpsert('wf_routines',row);
+  closeRoutineModal();renderRoutine();renderToday();showToast(editIds.routine?'수정됐습니다.':'루틴이 추가됐습니다.');
 }
 async function deleteRoutine(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...wfRoutines];
   wfRoutines=wfRoutines.filter(x=>x.id!==id);
   renderRoutine();renderToday();
-  persistLocal();
-  showToast('루틴을 삭제했습니다.',()=>{wfRoutines=prev;renderRoutine();renderToday();persistLocal();});
+  persistLocal();sbDelete('wf_routines',id);
+  showToast('루틴을 삭제했습니다.',()=>{wfRoutines=prev;renderRoutine();renderToday();persistLocal();sbUpsert('wf_routines',prev.find(x=>x.id===id));});
 }
 
 function applyOrderRole(){
@@ -2177,10 +2261,10 @@ async function submitOrder(){
       const row={id:uid(),product_id:pid,dest_id:did,qty:parseFloat(qty),memo:'',order_date:dateVal};
       newItems.push(row);
       orderList.unshift(row);
+      sbUpsert('orders',row);
     }
   }
   persistLocal();
-  setSyncStatus('local');
 
   const wrap=document.getElementById('order-preview-wrap');
   const list=document.getElementById('order-preview-list');
@@ -2486,9 +2570,7 @@ async function cancelOrder(id){
   const prev=[...orderList];
   orderList=orderList.filter(x=>x.id!==id);
 
-  persistLocal();
-
-  if(el)el.remove();
+  persistLocal();sbDelete('orders',id);
 
   const list=document.getElementById('order-preview-list');
   if(list&&!list.children.length)document.getElementById('order-preview-wrap').style.display='none';
@@ -2528,7 +2610,7 @@ async function deleteOrder(id){
   const prev=[...orderList];
   orderList=orderList.filter(x=>x.id!==id);
   renderOrderHistory();
-  persistLocal();
+  persistLocal();sbDelete('orders',id);
 }
 function exportOrders(){
   const csv=['날짜,상품,지점,수량,메모',...orderList.map(o=>{const p=orderProducts.find(x=>x.id===o.product_id),d=orderDests.find(x=>x.id===o.dest_id);return`${o.order_date||''},${p?.name||''},${d?.name||''},${o.qty},${o.memo||''}`})].join('\n');
@@ -2554,15 +2636,14 @@ async function saveProduct(){
   if(editIds.prod){
     const prev=orderProducts.find(x=>x.id===editIds.prod);
     if(prev){prev.name=name;prev.unit=unit;}
-    persistLocal();
+    persistLocal();sbUpsert('order_products',{...orderProducts.find(x=>x.id===editIds.prod)});
     closeProductModal();renderOrderProducts();populateOrderSelects();renderProductCards();showToast('수정됐습니다.');
   } else {
     const row={id:uid(),name,unit};
     orderProducts.push(row);
-    persistLocal();
+    persistLocal();sbUpsert('order_products',row);
     closeProductModal();renderOrderProducts();populateOrderSelects();showToast('추가됐습니다.');
   }
-  setSyncStatus('local');
 }
 async function deleteProduct(id){
   const p=orderProducts.find(x=>x.id===id);if(!p)return;
@@ -2580,8 +2661,9 @@ async function deleteProduct(id){
   if(deleteOrders)orderList=orderList.filter(o=>o.product_id!==id);
   renderOrderProducts();populateOrderSelects();renderOrderHistory();
   persistLocal();
+  if(deleteOrders)orderList.filter(o=>o.product_id===id).forEach(o=>sbDelete('orders',o.id));
+  sbDelete('order_products',id);
   showToast(deleteOrders?`상품과 납품 내역 ${related}건을 삭제했습니다.`:'상품을 삭제했습니다.');
-  checkOrphanOrders();
 }
 function openDestModal(id){
   editIds.dest=id||null;
@@ -2605,15 +2687,14 @@ async function saveDest(){
   if(editIds.dest){
     const prev=orderDests.find(x=>x.id===editIds.dest);
     if(prev){prev.name=name;prev.color=color;}
-    persistLocal();
+    persistLocal();sbUpsert('order_dests',{...orderDests.find(x=>x.id===editIds.dest)});
     closeDestModal();renderOrderDests();populateOrderSelects();renderDestButtons();showToast('수정됐습니다.');
   } else {
     const row={id:uid(),name,color};
     orderDests.push(row);
-    persistLocal();
+    persistLocal();sbUpsert('order_dests',row);
     closeDestModal();renderOrderDests();populateOrderSelects();renderDestButtons();showToast('추가됐습니다.');
   }
-  setSyncStatus('local');
 }
 async function deleteDest(id){
   const d=orderDests.find(x=>x.id===id);if(!d)return;
@@ -2631,6 +2712,8 @@ async function deleteDest(id){
   if(deleteOrders)orderList=orderList.filter(o=>o.dest_id!==id);
   renderOrderDests();populateOrderSelects();renderDestButtons();renderOrderHistory();
   persistLocal();
+  if(deleteOrders)orderList.filter(o=>o.dest_id===id).forEach(o=>sbDelete('orders',o.id));
+  sbDelete('order_dests',id);
   showToast(deleteOrders?`지점과 납품 내역 ${related}건을 삭제했습니다.`:'지점을 삭제했습니다.');
   checkOrphanOrders();
 }
@@ -2688,15 +2771,16 @@ async function saveCost(){
   if(!name||!volume||!price){showToast('재료명, 용량, 가격을 입력해주세요.');return;}
   const data={name,category,volume,unit,price,note};
   const row={id:editIds.cost||uid(),...data};
-  editIds.cost?Object.assign(costs.find(x=>x.id===editIds.cost),data):costs.push(row);persistLocal();renderCosts();
-  setSyncStatus('local');closeCostModal();showToast(editIds.cost?'수정됐습니다.':'추가됐습니다.');
+  editIds.cost?Object.assign(costs.find(x=>x.id===editIds.cost),data):costs.push(row);
+  persistLocal();sbUpsert('costs',row);renderCosts();
+  closeCostModal();showToast(editIds.cost?'수정됐습니다.':'추가됐습니다.');
 }
 async function deleteCost(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...costs];
   costs=costs.filter(c=>c.id!==id);renderCosts();
-  persistLocal();
-  showToast('재료를 삭제했습니다.',()=>{costs=prev;renderCosts();persistLocal();});
+  persistLocal();sbDelete('costs',id);
+  showToast('재료를 삭제했습니다.',()=>{costs=prev;renderCosts();persistLocal();sbUpsert('costs',prev.find(x=>x.id===id));});
 }
 function calcCost(ings){return(ings||[]).reduce((s,i)=>{const m=costs.find(c=>c.id===i.costId);return s+(m&&i.amount?m.price/m.volume*i.amount:0);},0);}
 function buildRecipeCard(r,isDone){
@@ -2800,27 +2884,27 @@ async function saveRecipe(){
   const row={id:editIds.recipe||uid(),...data,done:existing?.done||false};
   if(editIds.recipe){Object.assign(recipes.find(x=>x.id===editIds.recipe)||{},data);}
   else{recipes.push(row);}
-  persistLocal();renderRecipeDev();renderRecipeDone();
-  setSyncStatus('local');closeRecipeModal();showToast(editIds.recipe?'수정됐습니다.':'추가됐습니다.');
+  persistLocal();sbUpsert('recipes',row);renderRecipeDev();renderRecipeDone();
+  closeRecipeModal();showToast(editIds.recipe?'수정됐습니다.':'추가됐습니다.');
 }
 async function deleteRecipe(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...recipes];
   recipes=recipes.filter(r=>r.id!==id);renderRecipeDev();renderRecipeDone();
-  persistLocal();
-  showToast('레시피를 삭제했습니다.',()=>{recipes=prev;renderRecipeDev();renderRecipeDone();persistLocal();});
+  persistLocal();sbDelete('recipes',id);
+  showToast('레시피를 삭제했습니다.',()=>{recipes=prev;renderRecipeDev();renderRecipeDone();persistLocal();sbUpsert('recipes',prev.find(x=>x.id===id));});
 }
 async function markRecipeDone(id){
   const r=recipes.find(x=>x.id===id);if(!r)return;
   r.done=true;
   goRecipeTab('done');renderRecipeDev();renderRecipeDone();showToast('완료 처리됐습니다.');
-  persistLocal();
+  persistLocal();sbUpsert('recipes',r);
 }
 async function undoneRecipe(id){
   const r=recipes.find(x=>x.id===id);if(!r)return;
   r.done=false;
   goRecipeTab('dev');renderRecipeDev();renderRecipeDone();showToast('개발 중으로 이동됐습니다.');
-  persistLocal();
+  persistLocal();sbUpsert('recipes',r);
 }
 
 function addIngRow(){ingRows.push({rowId:uid(),costId:'',amount:'',searchText:''});renderIngRows();setTimeout(()=>{const ins=document.querySelectorAll('.ing-search-input');if(ins.length){ins[ins.length-1].focus();ins[ins.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});}},50);}
