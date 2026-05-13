@@ -1370,6 +1370,31 @@ function applyAppRole(){
   applyOrderRole();
   initSb();
   loadAll();
+
+  // 마지막 탭 복원
+  const savedSection=sessionStorage.getItem('hub_section')||'workflow';
+  const savedWfTab=sessionStorage.getItem('hub_wf_tab')||'today';
+  const savedWorkView=sessionStorage.getItem('hub_work_view')||'today';
+  const savedOrderTab=sessionStorage.getItem('hub_order_tab')||'input';
+  const savedRecipeTab=sessionStorage.getItem('hub_recipe_tab')||'costs';
+
+  // 섹션 복원
+  goSection(savedSection);
+
+  // 워크플로우 탭 복원 (팀원은 today만)
+  if(isAdmin){
+    goWfTab(savedWfTab);
+    if(savedWfTab==='today') setWorkView(savedWorkView);
+  } else {
+    goWfTab('today');
+    setWorkView(savedWorkView==='week'?'week':'today');
+  }
+
+  // 오더/레시피 탭 복원
+  if(isAdmin){
+    goOrderTab(savedOrderTab);
+    goRecipeTab(savedRecipeTab);
+  }
 }
 const TODAY=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const TT_START=10, TT_END=22;
@@ -1540,7 +1565,6 @@ let _touchStartY=0,_touchStartX=0,_touchConfirmed=false;
 const DRAG_THRESHOLD=8;
 
 function goSection(s){
-  // 드래그 잔상 강제 정리 (오류나도 전환은 계속)
   try{
     if(_touchClone){_touchClone.remove();_touchClone=null;}
     _touchDragId=null;_dragId=null;
@@ -1548,6 +1572,7 @@ function goSection(s){
       el.style.opacity='';el.classList.remove('drag-over','dragging');
     });
   }catch(e){}
+  sessionStorage.setItem('hub_section',s);
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));
   setBottomNav(s);
   document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
@@ -1561,16 +1586,17 @@ function goWfTab(t){
       el.style.opacity='';el.classList.remove('drag-over','dragging');
     });
   }catch(e){}
+  sessionStorage.setItem('hub_wf_tab',t);
   document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','projects','routine','archive'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('wfp-'+t).classList.add('active');
   if(t==='today'){
-    // 서브탭 상태 유지, 기본은 오늘
     const curView=document.getElementById('work-week-view').style.display==='none'?'today':'week';
     setWorkView(curView);
   }
 }
 function goOrderTab(t){
+  sessionStorage.setItem('hub_order_tab',t);
   if(t==='products')setTimeout(checkOrphanOrders,50);
   document.querySelectorAll('.order-tab').forEach((b,i)=>b.classList.toggle('active',['input','history','products'][i]===t));
   document.querySelectorAll('.order-panel').forEach(p=>p.classList.remove('active'));
@@ -1580,17 +1606,16 @@ function goOrderTab(t){
     if(dateEl){if(!dateEl.value)dateEl.value=TODAY();renderDestButtons();renderProductCards();}
   }
   if(t==='history'){
-
     const fdEl=document.getElementById('order-filter-dest');
     const fpEl=document.getElementById('order-filter-prod');
     if(!fdEl||fdEl.options.length<=1)populateOrderSelects();
-
     if(fdEl&&fdEl.value&&!orderDests.find(d=>d.id===fdEl.value))fdEl.value='';
     if(fpEl&&fpEl.value&&!orderProducts.find(p=>p.id===fpEl.value))fpEl.value='';
     renderOrderHistory();
   }
 }
 function goRecipeTab(t){
+  sessionStorage.setItem('hub_recipe_tab',t);
   document.querySelectorAll('.recipe-tab').forEach((b,i)=>b.classList.toggle('active',['costs','dev','done'][i]===t));
   document.querySelectorAll('.recipe-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('rpanel-'+t).classList.add('active');
@@ -2272,6 +2297,7 @@ let weekStart=null;
 
 function setWorkView(v){
   workView=v;
+  sessionStorage.setItem('hub_work_view',v);
   document.getElementById('sub-tab-today').classList.toggle('active',v==='today');
   document.getElementById('sub-tab-week').classList.toggle('active',v==='week');
   document.getElementById('work-today-view').style.display=v==='today'?'':'none';
