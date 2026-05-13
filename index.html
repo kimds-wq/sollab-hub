@@ -560,14 +560,20 @@ body.modal-open{overflow:hidden}
 
 <div class="section active" id="sec-workflow">
   <div class="wf-tabs">
-    <button class="wf-tab active" onclick="goWfTab('today')">오늘</button>
-    <button class="wf-tab" onclick="goWfTab('calendar')">캘린더</button>
+    <button class="wf-tab active" onclick="goWfTab('today')">업무</button>
     <button class="wf-tab" onclick="goWfTab('projects')">프로젝트</button>
     <button class="wf-tab" onclick="goWfTab('routine')">루틴</button>
     <button class="wf-tab" onclick="goWfTab('archive')">아카이브</button>
   </div>
 
   <div class="wf-panel active" id="wfp-today">
+    <!-- 오늘/주간 서브 토글 -->
+    <div style="display:flex;gap:4px;background:var(--cream);border-radius:8px;padding:3px;margin-bottom:14px;width:fit-content">
+      <button id="sub-tab-today" class="wf-tab active" onclick="setWorkView('today')" style="padding:5px 16px;font-size:12px">오늘</button>
+      <button id="sub-tab-week" class="wf-tab" onclick="setWorkView('week')" style="padding:5px 16px;font-size:12px">주간</button>
+    </div>
+    <!-- 오늘 뷰 -->
+    <div id="work-today-view">
     <div class="today-stats">
       <div class="ts-card"><div class="ts-label">전체</div><div class="ts-val" id="ts-total">0</div></div>
       <div class="ts-card"><div class="ts-label">완료</div><div class="ts-val" id="ts-done">0</div></div>
@@ -603,25 +609,20 @@ body.modal-open{overflow:hidden}
       <div class="empty-icon">☀️</div>
       <p>오늘 업무가 없습니다.<br>업무를 추가해 보세요.</p>
     </div>
-  </div>
-
-  <div class="wf-panel" id="wfp-calendar">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div class="cal-nav">
-        <button class="btn-icon" onclick="calMove(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-        <span class="cal-nav-title" id="cal-title" style="min-width:120px;text-align:center"></span>
-        <button class="btn-icon" onclick="calMove(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+  </div><!-- /work-today-view -->
+  <!-- 주간 뷰 -->
+  <div id="work-week-view" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="btn-icon" onclick="weekMove(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span id="week-title" style="font-size:13px;font-weight:600;min-width:130px;text-align:center"></span>
+        <button class="btn-icon" onclick="weekMove(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
-      <div style="display:flex;gap:4px;background:var(--sage-l);border-radius:8px;padding:3px">
-        <button id="cal-view-week" class="wf-tab active" onclick="setCalView('week')" style="padding:5px 12px;font-size:12px">주간</button>
-        <button id="cal-view-month" class="wf-tab" onclick="setCalView('month')" style="padding:5px 12px;font-size:12px">월간</button>
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="weekMove(0)">이번 주</button>
     </div>
-    <div id="cal-week-view"></div>
-    <div id="cal-month-view" style="display:none">
-      <div class="cal-grid" id="cal-grid"></div>
-    </div>
+    <div id="week-grid-wrap"></div>
   </div>
+</div><!-- /wfp-today -->
 
   <div class="wf-panel" id="wfp-projects">
     <div class="sec-header">
@@ -1253,6 +1254,7 @@ function persistLocal(){
 let wfTasks=[], wfProjects=[], wfRoutines=[];
 let wfTaskOrder=[]; // 오늘 탭 업무 순서 (id 배열)
 let orderProducts=[], orderDests=[], orderList=[];
+let selectedDests=new Set();
 let costs=[], recipes=[];
 let editIds={task:null,proj:null,routine:null,prod:null,dest:null,cost:null,recipe:null};
 let ingRows=[], steps=[], ddHL={};
@@ -1303,7 +1305,7 @@ function applyAppRole(){
     if(!t)return;
     if(t==='routine'){btn.style.display=isAdmin?'':'none';return;}
     if(isAdmin){btn.style.display='';}
-    else{btn.style.display=(t==='today'||t==='calendar')?'':'none';}
+    else{btn.style.display=(t==='today')?'':'none';}
   });
   if(!isAdmin){
     goWfTab('today');
@@ -1533,12 +1535,13 @@ function goWfTab(t){
       el.style.opacity='';el.classList.remove('drag-over','dragging');
     });
   }catch(e){}
-  document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','calendar','projects','routine','archive'][i]===t));
+  document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','projects','routine','archive'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('wfp-'+t).classList.add('active');
-  if(t==='calendar'){
-    if(!calWeekStart)calWeekStart=getWeekStart(new Date());
-    setCalView('week');
+  if(t==='today'){
+    // 서브탭 상태 유지, 기본은 오늘
+    const curView=document.getElementById('work-week-view').style.display==='none'?'today':'week';
+    setWorkView(curView);
   }
 }
 function goOrderTab(t){
@@ -1668,7 +1671,7 @@ function initRepeatState(repeat,days){
 }
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
 
-function renderAll(){renderToday();renderProjects();renderCalendar();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
+function renderAll(){renderToday();renderProjects();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
@@ -2218,7 +2221,102 @@ async function saveProj(){
   closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
 }
 
-let calView='week'; // 'week' | 'month'
+let workView='today'; // 'today' | 'week'
+let weekStart=null;
+
+function setWorkView(v){
+  workView=v;
+  document.getElementById('sub-tab-today').classList.toggle('active',v==='today');
+  document.getElementById('sub-tab-week').classList.toggle('active',v==='week');
+  document.getElementById('work-today-view').style.display=v==='today'?'':'none';
+  document.getElementById('work-week-view').style.display=v==='week'?'':'none';
+  // today-add-btn 위치 조정
+  const addBtn=document.getElementById('today-add-btn');
+  if(addBtn)addBtn.style.display=appRole==='admin'?'':'none';
+  if(v==='week'){renderWeekView();}
+  else{renderToday();}
+}
+
+function weekMove(d){
+  if(!weekStart)weekStart=getWeekStart(new Date());
+  if(d===0){weekStart=getWeekStart(new Date());}
+  else{weekStart=new Date(weekStart);weekStart.setDate(weekStart.getDate()+d*7);}
+  renderWeekView();
+}
+
+function renderWeekView(){
+  if(!weekStart)weekStart=getWeekStart(new Date());
+  const td=TODAY();
+  const dow=['월','화','수','목','금'];
+
+  // 월~금 5일
+  const days=Array.from({length:5},(_,i)=>{
+    const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);
+    return d;
+  });
+
+  const [,m0,d0]=days[0].toLocaleDateString('sv-SE').split('-');
+  const [,m1,d1]=days[4].toLocaleDateString('sv-SE').split('-');
+  const titleEl=document.getElementById('week-title');
+  if(titleEl)titleEl.textContent=`${parseInt(m0)}/${parseInt(d0)} — ${parseInt(m1)}/${parseInt(d1)}`;
+
+  const ICO_CHK='<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+
+  const cols=days.map((date,i)=>{
+    const dateStr=date.toLocaleDateString('sv-SE');
+    const isToday=dateStr===td;
+    const dayNum=date.getDate();
+    const dowIdx=date.getDay(); // 0=일 1=월...
+
+    // 해당 날짜 업무
+    const dayTasks=[
+      ...wfTasks.filter(t=>!t.repeat&&(
+        t.due===dateStr||(t.created_date===dateStr&&!t.due)
+      )),
+      ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
+    ].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+
+    // 이월 (오늘 열에만)
+    const carry=isToday?wfTasks.filter(t=>
+      !t.repeat&&!t.done&&t.created_date&&t.created_date<td&&(!t.due||t.due>=td)
+    ):[];
+
+    const allTasks=[...carry,...dayTasks];
+
+    const cards=allTasks.map(t=>{
+      const isRepeat=t.repeat;
+      const isCarry=carry.includes(t);
+      const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)||routineDoneToday.includes(t.id)):t.done;
+      const toggleFn=isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}')`:`toggleTask('${t.id}')`;
+      const members=sortMembers(t.members||[]);
+      return`<div class="week-task${done?' done-task':''}${isCarry?' carry-task':''}" onclick="${toggleFn}">
+        <div style="display:flex;align-items:flex-start;gap:4px">
+          <div style="width:13px;height:13px;min-width:13px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;margin-top:1px">${done?ICO_CHK:''}</div>
+          <div style="flex:1;min-width:0">
+            <div class="week-task-name${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:8px;background:var(--sage-l);color:var(--sage-d);border-radius:3px;padding:0 3px;margin-left:2px">루틴</span>':''}</div>
+            ${t.start_time?`<div class="week-task-meta">${t.start_time}</div>`:''}
+            ${members.length?`<div class="week-task-meta">${members.map(m=>`<span style="background:${getMemberStyle(m).match(/background:([^;]+)/)?.[1]||'var(--sage-l)'};color:${getMemberStyle(m).match(/color:([^;]+)/)?.[1]||'var(--sage-d)'};border-radius:6px;padding:0 3px;font-size:9px">${m}</span>`).join('')}</div>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return`<div class="week-col">
+      <div class="week-col-header${isToday?' today-col':''}">
+        <div class="week-dow">${dow[i]}</div>
+        <div class="week-date-num${isToday?' today-num':''}">${dayNum}</div>
+        ${allTasks.length?`<div style="font-size:9px;color:${isToday?'var(--sage-d)':'var(--tx2)'};">${allTasks.filter(t=>t.done||(t.repeat&&(t.done_dates?.includes(dateStr)||routineDoneToday.includes(t.id)))).length}/${allTasks.length}</div>`:''}
+      </div>
+      <div class="week-col-body" id="week-col-${dateStr}">
+        ${cards}
+        ${appRole==='admin'?`<button class="week-add-btn" onclick="openTaskModalForDate('${dateStr}')">+</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('week-grid-wrap').innerHTML=`<div class="week-grid" style="grid-template-columns:repeat(5,1fr)">${cols}</div>`;
+}
+
 let calWeekStart=null; // 주간 뷰 시작일 (월요일)
 
 function getWeekStart(date){
@@ -2471,10 +2569,6 @@ function showCalPopup(dateStr,e){
   },100);
 }
 
-  const [y,m,d]=dateStr.split('-');
-  const popup=document.createElement('div');
-  popup.id='cal-popup';
-  popup.dataset.date=dateStr;
 function renderArchive(){
   const done=wfProjects.filter(p=>p.done);
   document.getElementById('archive-empty').style.display=done.length?'none':'';
@@ -2661,7 +2755,6 @@ function populateOrderSelects(){
   renderDestButtons();
 }
 
-let selectedDests=new Set();
 function renderDestButtons(){
   const el=document.getElementById('dest-btn-group');if(!el)return;
   if(!orderDests.length){el.innerHTML='<span style="font-size:13px;color:var(--tx2)">등록된 지점이 없습니다.</span>';return;}
