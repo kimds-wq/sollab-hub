@@ -568,7 +568,7 @@ body.modal-open{overflow:hidden}
 
   <div class="wf-panel active" id="wfp-today">
     <!-- 오늘/주간 서브 토글 -->
-    <div style="display:flex;gap:4px;background:var(--cream);border-radius:8px;padding:3px;margin-bottom:14px;width:fit-content">
+    <div style="display:flex;gap:4px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:14px;width:fit-content">
       <button id="sub-tab-today" class="wf-tab active" onclick="setWorkView('today')" style="padding:5px 16px;font-size:12px">오늘</button>
       <button id="sub-tab-week" class="wf-tab" onclick="setWorkView('week')" style="padding:5px 16px;font-size:12px">주간</button>
     </div>
@@ -1770,7 +1770,17 @@ function renderToday(){
   });
   let projBanner=document.getElementById('today-proj-banner');
   if(urgentProjs.length){
-    if(!projBanner){projBanner=document.createElement('div');projBanner.id='today-proj-banner';document.getElementById('wfp-today').insertBefore(projBanner,document.getElementById('today-carry-wrap'));}
+    const container=document.getElementById('work-today-view')||document.getElementById('wfp-today');
+    const insertRef=document.getElementById('today-carry-wrap');
+    if(!projBanner){
+      projBanner=document.createElement('div');
+      projBanner.id='today-proj-banner';
+      if(insertRef&&insertRef.parentNode===container){
+        container.insertBefore(projBanner,insertRef);
+      } else {
+        container.prepend(projBanner);
+      }
+    }
     projBanner.innerHTML=`<div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
       <span style="font-size:11px;font-weight:700;color:var(--warn-tx);flex-shrink:0">📋 마감 임박</span>
       ${urgentProjs.map(p=>{const dd=ddayBadge(p.due);return`<span style="font-size:12px;color:var(--tx);font-weight:500">${p.name} <span class="dday ${dd.cls}">${dd.label}</span></span>`;}).join('')}
@@ -1792,18 +1802,20 @@ function renderToday(){
     carryList.innerHTML=carryTasks.map(t=>{
       const sortedMembers=sortMembers(t.members||[]);
       const daysAgo=Math.floor((new Date(td)-new Date(t.created_date))/(1000*60*60*24));
-      return`<div class="task-item carry-over" draggable="false">
-        <div class="priority-dot p-high"></div>
-        <div class="task-check" onclick="toggleTask('${t.id}')"></div>
+      const done=t.done;
+      return`<div class="task-item carry-over${done?' done-item':''}">
+        <div class="priority-dot"></div>
+        <div class="task-check${done?' checked':''}" onclick="toggleTask('${t.id}')">${done?ICO_CHK:''}</div>
         <div style="flex:1;min-width:0">
-          <div class="task-title">${t.name}<span class="carry-badge">${daysAgo}일 전</span></div>
+          <div class="task-title${done?' done-txt':''}">${t.name}<span class="carry-badge">${daysAgo}일 전</span></div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
             ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
             ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
           </div>
           ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
         </div>
-        ${appRole==='admin'?`<button class="btn-icon" onclick="editTask('${t.id}')">${ICO_EDIT}</button>`:''}
+        ${done?`<button class="btn-undo" onclick="toggleTask('${t.id}')">취소</button>`:''}
+        ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="editTask('${t.id}')">${ICO_EDIT}</button>`:''}
         ${appRole==='admin'?`<button class="btn-icon" onclick="deleteTask('${t.id}')">${ICO_DEL}</button>`:''}
       </div>`;
     }).join('');
@@ -2006,6 +2018,7 @@ async function toggleTask(id){
 
   t.done=!t.done;
   renderToday();
+  if(workView==='week')renderWeekView();
   persistLocal();sbUpsert('wf_tasks',t);
 }
 function toggleRoutineDone(id){
@@ -2020,13 +2033,16 @@ function toggleRoutineDone(id){
       task.done_dates=[...doneDates,td];
     }
     persistLocal();sbUpsert('wf_tasks',task);
-    renderToday();return;
+    renderToday();
+    if(workView==='week')renderWeekView();
+    return;
   }
   // 구형 wfRoutines 호환
   if(routineDoneToday.includes(id))routineDoneToday=routineDoneToday.filter(x=>x!==id);
   else routineDoneToday.push(id);
   localStorage.setItem('hub_rdt_'+td,JSON.stringify(routineDoneToday));
   renderToday();
+  if(workView==='week')renderWeekView();
 }
 async function deleteTask(id){
   if(!confirm('삭제할까요?'))return;
@@ -2087,7 +2103,9 @@ async function saveTask(){
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
   persistLocal();sbUpsert('wf_tasks',row);
-  closeTaskModal();renderToday();renderCalendar();renderRoutine();showToast('저장됐습니다.');
+  closeTaskModal();renderToday();renderCalendar();renderRoutine();
+  if(workView==='week')renderWeekView();
+  showToast('저장됐습니다.');
 }
 
 function renderProjects(){
@@ -2274,6 +2292,7 @@ function renderWeekView(){
         t.due===dateStr||(t.created_date===dateStr&&!t.due)
       )),
       ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
+      ...wfRoutines.filter(r=>(!r.days||r.days.length===0||r.days.includes(dowIdx))).map(r=>({...r,_isRoutine:true})),
     ].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
 
     // 이월 (오늘 열에만)
@@ -2284,18 +2303,18 @@ function renderWeekView(){
     const allTasks=[...carry,...dayTasks];
 
     const cards=allTasks.map(t=>{
-      const isRepeat=t.repeat;
+      const isRepeat=t.repeat||t._isRoutine;
       const isCarry=carry.includes(t);
       const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)||routineDoneToday.includes(t.id)):t.done;
-      const toggleFn=isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}')`:`toggleTask('${t.id}')`;
+      const toggleFn=t._isRoutine?`toggleRoutineDone('${t.id}')`:(isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}')`:`toggleTask('${t.id}')`);
       const members=sortMembers(t.members||[]);
-      return`<div class="week-task${done?' done-task':''}${isCarry?' carry-task':''}" onclick="${toggleFn}">
+      return`<div class="week-task${done?' done-task':''}${isCarry?' carry-task':''}" onclick="${toggleFn}" title="${t.name}">
         <div style="display:flex;align-items:flex-start;gap:4px">
-          <div style="width:13px;height:13px;min-width:13px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;margin-top:1px">${done?ICO_CHK:''}</div>
-          <div style="flex:1;min-width:0">
-            <div class="week-task-name${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:8px;background:var(--sage-l);color:var(--sage-d);border-radius:3px;padding:0 3px;margin-left:2px">루틴</span>':''}</div>
+          <div style="width:13px;height:13px;min-width:13px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;margin-top:1px;flex-shrink:0">${done?ICO_CHK:''}</div>
+          <div style="flex:1;min-width:0;overflow:hidden">
+            <div class="week-task-name${done?' done-txt':''}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}${isRepeat?'<span style="font-size:8px;background:var(--sage-l);color:var(--sage-d);border-radius:3px;padding:0 3px;margin-left:2px">루틴</span>':''}</div>
             ${t.start_time?`<div class="week-task-meta">${t.start_time}</div>`:''}
-            ${members.length?`<div class="week-task-meta">${members.map(m=>`<span style="background:${getMemberStyle(m).match(/background:([^;]+)/)?.[1]||'var(--sage-l)'};color:${getMemberStyle(m).match(/color:([^;]+)/)?.[1]||'var(--sage-d)'};border-radius:6px;padding:0 3px;font-size:9px">${m}</span>`).join('')}</div>`:''}
+            ${members.length?`<div class="week-task-meta" style="display:flex;flex-wrap:wrap;gap:2px">${members.map(m=>`<span style="background:${getMemberStyle(m).match(/background:([^;]+)/)?.[1]||'var(--sage-l)'};color:${getMemberStyle(m).match(/color:([^;]+)/)?.[1]||'var(--sage-d)'};border-radius:6px;padding:0 3px;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:40px">${m}</span>`).join('')}</div>`:''}
           </div>
         </div>
       </div>`;
@@ -2330,10 +2349,6 @@ function getWeekStart(date){
 
 function setCalView(v){
   calView=v;
-  document.getElementById('cal-view-week').classList.toggle('active',v==='week');
-  document.getElementById('cal-view-month').classList.toggle('active',v==='month');
-  document.getElementById('cal-week-view').style.display=v==='week'?'':'none';
-  document.getElementById('cal-month-view').style.display=v==='month'?'':'none';
   renderCalendar();
 }
 
