@@ -205,6 +205,26 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 
 /* ── CALENDAR ── */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+/* ── 주간 뷰 */
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;border-left:1px solid var(--bd);border-top:1px solid var(--bd);border-radius:8px;overflow:hidden}
+.week-col{border-right:1px solid var(--bd);border-bottom:1px solid var(--bd)}
+.week-col-header{padding:6px 4px;text-align:center;border-bottom:1px solid var(--bd);background:var(--cream)}
+.week-col-header.today-col{background:var(--sage-l)}
+.week-dow{font-size:10px;font-weight:600;color:var(--tx2);letter-spacing:.03em}
+.week-date-num{font-size:15px;font-weight:700;color:var(--tx);line-height:1.3}
+.week-date-num.today-num{color:var(--sage-d);background:var(--sage);color:#fff;border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.week-date-num.red-num{color:var(--danger)}
+.week-col-body{padding:4px 3px;min-height:80px}
+.week-task{background:var(--sf);border:1px solid var(--bd);border-radius:5px;padding:4px 6px;margin-bottom:3px;font-size:11px;line-height:1.4;cursor:pointer}
+.week-task.done-task{opacity:.45}
+.week-task.carry-task{border-color:var(--danger);background:var(--danger-l)}
+.week-task-name{font-weight:500;color:var(--tx);word-break:break-word}
+.week-task-name.done-txt{text-decoration:line-through}
+.week-task-meta{font-size:10px;color:var(--tx2);margin-top:1px}
+.week-add-btn{width:100%;border:1px dashed var(--bd);background:none;color:var(--tx2);font-size:10px;padding:3px;cursor:pointer;border-radius:4px;opacity:0;transition:opacity .15s;font-family:inherit;margin-top:2px}
+.week-col:hover .week-add-btn{opacity:.6}
+.week-add-btn:hover{opacity:1!important;background:var(--sage-l);color:var(--sage-d);border-color:var(--sage)}
+@media(max-width:480px){.week-date-num{font-size:12px}.week-task{font-size:10px;padding:2px 4px}}
 .cal-nav-title{font-size:15px;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0}
 .cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--tx2);padding:6px 0}
@@ -586,12 +606,21 @@ body.modal-open{overflow:hidden}
   </div>
 
   <div class="wf-panel" id="wfp-calendar">
-    <div class="cal-nav">
-      <button class="btn-icon" onclick="calMove(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <span class="cal-nav-title" id="cal-title"></span>
-      <button class="btn-icon" onclick="calMove(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="cal-nav">
+        <button class="btn-icon" onclick="calMove(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="cal-nav-title" id="cal-title" style="min-width:120px;text-align:center"></span>
+        <button class="btn-icon" onclick="calMove(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div style="display:flex;gap:4px;background:var(--sage-l);border-radius:8px;padding:3px">
+        <button id="cal-view-week" class="wf-tab active" onclick="setCalView('week')" style="padding:5px 12px;font-size:12px">주간</button>
+        <button id="cal-view-month" class="wf-tab" onclick="setCalView('month')" style="padding:5px 12px;font-size:12px">월간</button>
+      </div>
     </div>
-    <div class="cal-grid" id="cal-grid"></div>
+    <div id="cal-week-view"></div>
+    <div id="cal-month-view" style="display:none">
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
   </div>
 
   <div class="wf-panel" id="wfp-projects">
@@ -1370,7 +1399,36 @@ function sortMembers(members){
 }
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
+function openTaskModalForDate(dateStr){
+  openTaskModal();
+  // 날짜 선택을 해당 날짜로 설정
+  setTimeout(()=>{
+    const td=TODAY();
+    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
+    const tmrStr=tomorrow.toLocaleDateString('sv-SE');
+    const sel=document.getElementById('tm-task-date');
+    const custom=document.getElementById('tm-task-date-custom');
+    if(dateStr===td){sel.value='today';custom.style.display='none';}
+    else if(dateStr===tmrStr){sel.value='tomorrow';custom.style.display='none';}
+    else{sel.value='custom';custom.value=dateStr;custom.style.display='';}
+  },50);
+}
+
 function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
+
+function toggleRoutineDoneDate(id,dateStr){
+  const task=wfTasks.find(x=>x.id===id);
+  if(!task)return;
+  const doneDates=task.done_dates||[];
+  if(doneDates.includes(dateStr)){
+    task.done_dates=doneDates.filter(d=>d!==dateStr);
+  } else {
+    task.done_dates=[...doneDates,dateStr];
+  }
+  persistLocal();sbUpsert('wf_tasks',task);
+  renderCalendar();
+  if(dateStr===TODAY())renderToday();
+}
 
 function getTaskDate(){
   const sel=document.getElementById('tm-task-date').value;
@@ -1478,7 +1536,10 @@ function goWfTab(t){
   document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','calendar','projects','routine','archive'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('wfp-'+t).classList.add('active');
-  if(t==='calendar')renderCalendar();
+  if(t==='calendar'){
+    if(!calWeekStart)calWeekStart=getWeekStart(new Date());
+    setCalView('week');
+  }
 }
 function goOrderTab(t){
   if(t==='products')setTimeout(checkOrphanOrders,50);
@@ -2157,7 +2218,110 @@ async function saveProj(){
   closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
 }
 
-function calMove(d){calMonth+=d;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+let calView='week'; // 'week' | 'month'
+let calWeekStart=null; // 주간 뷰 시작일 (월요일)
+
+function getWeekStart(date){
+  const d=new Date(date);
+  const day=d.getDay();
+  const diff=day===0?-6:1-day; // 월요일 기준
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function setCalView(v){
+  calView=v;
+  document.getElementById('cal-view-week').classList.toggle('active',v==='week');
+  document.getElementById('cal-view-month').classList.toggle('active',v==='month');
+  document.getElementById('cal-week-view').style.display=v==='week'?'':'none';
+  document.getElementById('cal-month-view').style.display=v==='month'?'':'none';
+  renderCalendar();
+}
+
+function calMove(d){
+  if(calView==='week'){
+    calWeekStart=calWeekStart||getWeekStart(new Date());
+    calWeekStart.setDate(calWeekStart.getDate()+d*7);
+  } else {
+    calMonth+=d;
+    if(calMonth>11){calMonth=0;calYear++;}
+    if(calMonth<0){calMonth=11;calYear--;}
+  }
+  renderCalendar();
+}
+
+function renderWeek(){
+  const ws=calWeekStart||getWeekStart(new Date());
+  calWeekStart=ws;
+  const td=TODAY();
+  const pad=n=>String(n).padStart(2,'0');
+  const dowNames=['일','월','화','수','목','금','토'];
+  const dowMon=['월','화','수','목','금','토','일'];
+
+  // 주간 날짜 배열 (월~일)
+  const days=Array.from({length:7},(_,i)=>{
+    const d=new Date(ws);d.setDate(ws.getDate()+i);
+    return d;
+  });
+
+  const [y,m,d0]=days[0].toLocaleDateString('sv-SE').split('-');
+  const [ye,me,de]=days[6].toLocaleDateString('sv-SE').split('-');
+  document.getElementById('cal-title').textContent=
+    `${parseInt(m)}월 ${parseInt(d0)}일 — ${parseInt(me)}월 ${parseInt(de)}일`;
+
+  const ICO_CHK='<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+
+  const html=`<div class="week-grid">${days.map((date,i)=>{
+    const dateStr=date.toLocaleDateString('sv-SE');
+    const isToday=dateStr===td;
+    const dow=date.getDay();
+    const isRed=dow===0||dow===6;
+
+    // 해당 날짜 업무 수집
+    const dayTasks=[
+      ...wfTasks.filter(t=>!t.repeat&&(
+        t.due===dateStr||(t.created_date===dateStr&&!t.due)
+      )),
+      ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
+    ].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+
+    // 이월 업무 (해당 날짜가 오늘이면)
+    const carryList=dateStr===td?wfTasks.filter(t=>
+      !t.repeat&&!t.done&&t.created_date&&t.created_date<td&&(!t.due||t.due>=td)
+    ):[];
+
+    const taskCards=[...carryList,...dayTasks].map(t=>{
+      const isRepeat=t.repeat;
+      const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)||routineDoneToday.includes(t.id)):t.done;
+      const isCarry=carryList.includes(t);
+      const toggleFn=isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}')`:`toggleTask('${t.id}')`;
+      const members=sortMembers(t.members||[]);
+      return`<div class="week-task${done?' done-task':''}${isCarry?' carry-task':''}" onclick="${toggleFn}">
+        <div style="display:flex;align-items:flex-start;gap:4px">
+          <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${done?ICO_CHK:''}</div>
+          <div style="flex:1;min-width:0">
+            <div class="week-task-name${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:9px;background:var(--sage-l);color:var(--sage-d);border-radius:4px;padding:0 3px;margin-left:3px">루틴</span>':''}</div>
+            ${t.start_time||members.length?`<div class="week-task-meta">${t.start_time?`<span>${t.start_time}</span>`:''}${members.map(m=>`<span style="background:${getMemberStyle(m).match(/background:([^;]+)/)?.[1]||'var(--sage-l)'};color:${getMemberStyle(m).match(/color:([^;]+)/)?.[1]||'var(--sage-d)'};border-radius:8px;padding:0 4px;font-size:9px">${m}</span>`).join('')}</div>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return`<div class="week-col">
+      <div class="week-col-header${isToday?' today-col':''}">
+        <div class="week-dow${isRed?' red':''}">${dowMon[i]}</div>
+        <div class="week-date-num${isToday?' today-num':isRed?' red-num':''}">${date.getDate()}</div>
+      </div>
+      <div class="week-col-body" id="week-col-${dateStr}">
+        ${taskCards}
+        ${appRole==='admin'?`<button class="week-add-btn" onclick="openTaskModalForDate('${dateStr}')">+ 추가</button>`:''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+
+  document.getElementById('cal-week-view').innerHTML=html;
+}
 // 프로젝트 색상 팔레트
 const PROJ_COLORS=[
   {bg:'#2D6A4F',text:'#fff'},{bg:'#1565C0',text:'#fff'},{bg:'#6A1B4D',text:'#fff'},
@@ -2167,10 +2331,10 @@ const PROJ_COLORS=[
 function getProjColor(idx){return PROJ_COLORS[idx%PROJ_COLORS.length];}
 
 function renderCalendar(){
+  if(calView==='week'){renderWeek();return;}
   const calEl=document.getElementById('cal-grid');if(!calEl)return;
   document.getElementById('cal-title').textContent=`${calYear}년 ${calMonth+1}월`;
   const firstDay=new Date(calYear,calMonth,1).getDay();
-  const lastDate=new Date(calYear,calMonth+1,0).getDate();
   const prevLast=new Date(calYear,calMonth,0).getDate();
   const td=TODAY();
   const pad=n=>String(n).padStart(2,'0');
@@ -2211,35 +2375,20 @@ function renderCalendar(){
   const evByDate={};
   const addEv=(date,ev)=>{if(!evByDate[date])evByDate[date]=[];evByDate[date].push(ev);};
 
-  // 프로젝트: 기간 내 모든 날짜에 추가
-  // 시작일 없으면 현재 표시 월 1일부터 표시
-  const monthStart=ds(calYear,calMonth,1);
-  allProjs.filter(p=>p.due).forEach(p=>{
-    const color=projColorMap[p.id];
-    const start=p.start_date||monthStart;
-    const end=p.due;
-    let cur=new Date(start+'T00:00:00');
-    const endDate=new Date(end+'T00:00:00');
-    while(cur<=endDate){
-      const y=cur.getFullYear();
-      const m=String(cur.getMonth()+1).padStart(2,'0');
-      const d2=String(cur.getDate()).padStart(2,'0');
-      const dateStr=`${y}-${m}-${d2}`;
-      const isFirst=dateStr===start;
-      const isLast=dateStr===end;
-      addEv(dateStr,{
-        label:p.name,type:'proj',id:p.id,
-        color,isFirst,isLast,
-        isStart:isFirst,isEnd:isLast,
-        isContinue:!isFirst,
-      });
-      cur.setDate(cur.getDate()+1);
-    }
+  // 업무: 마감일 또는 created_date 기준으로 표시
+  wfTasks.filter(t=>!t.repeat).forEach(t=>{
+    const date=t.due||(t.created_date)||null;
+    if(date)addEv(date,{label:t.name,type:'task',id:t.id,done:t.done});
   });
-
-  // 업무 마감일
-  wfTasks.filter(t=>!t.done&&t.due).forEach(t=>{
-    addEv(t.due,{label:t.name,type:'task',dot:true});
+  // 루틴: 각 날짜 요일에 맞게 dot 표시
+  wfTasks.filter(t=>t.repeat).forEach(t=>{
+    for(let d=1;d<=lastDate;d++){
+      const dow=(firstDay+d-1)%7;
+      if(!t.days||t.days.length===0||t.days.includes(dow)){
+        const dateStr=ds(calYear,calMonth,d);
+        addEv(dateStr,{label:t.name,type:'routine',id:t.id,dot:true});
+      }
+    }
   });
 
   const dows=['일','월','화','수','목','금','토'];
@@ -2256,29 +2405,22 @@ function renderCalendar(){
     const holidayName=isHoliday?allHolidays[dateStr]:'';
     const isRed=dow===0||dow===6||isHoliday;
     const evs=dateStr?evByDate[dateStr]||[]:[];
-    const projEvs=evs.filter(e=>e.type==='proj');
-    const dots=evs.filter(e=>e.dot);
+    const taskEvs=evs.filter(e=>e.type==='task').slice(0,2);
+    const dots=evs.filter(e=>e.dot).slice(0,3);
+    const more=evs.filter(e=>e.type==='task').length>2?evs.filter(e=>e.type==='task').length-2:0;
 
-    // 프로젝트 기간 막대
-    const projBars=projEvs.map(e=>{
-      const c=e.color;
-      const radius=e.isStart&&e.isEnd?'3px':e.isStart?'3px 0 0 3px':e.isEnd?'0 3px 3px 0':'0';
-      const ml=e.isStart?'2px':'0';
-      const mr=e.isEnd?'2px':'0';
-      const label=e.isEnd?`<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;display:block;font-size:10px;font-weight:600;padding:0 4px">${e.label}</span>`:'';
-      return`<div style="background:${c.bg};color:${c.text};border-radius:${radius};height:14px;margin:1px ${mr} 1px ${ml};display:flex;align-items:center;overflow:hidden;cursor:pointer" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${label}</div>`;
-    }).join('');
+    const taskBars=taskEvs.map(e=>`<div style="font-size:10px;padding:1px 4px;border-radius:3px;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:${e.done?'var(--bd)':'var(--sage-l)'};color:${e.done?'var(--tx2)':'var(--sage-d)'};${e.done?'text-decoration:line-through':''}" onclick="showCalPopup('${dateStr}',event)" title="${e.label}">${e.label}</div>`).join('');
 
     html+=`<div class="cal-day${cur?'':' other-month'}${isToday?' today-cell':''}" data-date="${dateStr}" onclick="showCalPopup('${dateStr}',event)">
       <div class="cal-day-num${isRed?' red':''}">${d}${isHoliday?`<span style="font-size:8px;margin-left:2px;opacity:.75;font-weight:500">${holidayName}</span>`:''}</div>
-      ${projBars}
-      ${dots.length?`<div style="display:flex;gap:2px;flex-wrap:wrap;margin-top:2px">${dots.slice(0,4).map(e=>`<div class="cal-dot" title="${e.label}"></div>`).join('')}</div>`:''}
+      ${taskBars}
+      ${dots.length?`<div style="display:flex;gap:2px;flex-wrap:wrap;margin-top:1px">${dots.map(e=>`<div class="cal-dot" title="${e.label}"></div>`).join('')}</div>`:''}
+      ${more?`<div style="font-size:9px;color:var(--tx2);padding-left:2px">+${more}더</div>`:''}
     </div>`;
   });
   calEl.innerHTML=html;
 }
 
-// 날짜 클릭 팝업
 function showCalPopup(dateStr,e){
   if(!dateStr)return;
   e&&e.stopPropagation();
@@ -2286,42 +2428,42 @@ function showCalPopup(dateStr,e){
   if(existing&&existing.dataset.date===dateStr){existing.remove();return;}
   if(existing)existing.remove();
 
-  const allProjs=wfProjects.filter(p=>!p.done);
-  const projColorMap={};
-  allProjs.forEach((p,i)=>{projColorMap[p.id]=getProjColor(i);});
+  const tasks=wfTasks.filter(t=>!t.repeat&&(t.due===dateStr||t.created_date===dateStr));
+  const routines=wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(new Date(dateStr+'T00:00:00').getDay())));
 
-  const projs=allProjs.filter(p=>{
-    if(!p.due)return false;
-    const start=p.start_date||p.due;
-    return dateStr>=start&&dateStr<=p.due;
-  });
-  const tasks=wfTasks.filter(t=>t.due===dateStr&&!t.done);
-
-  if(!projs.length&&!tasks.length)return;
+  if(!tasks.length&&!routines.length)return;
 
   const [y,m,d]=dateStr.split('-');
   const popup=document.createElement('div');
   popup.id='cal-popup';
   popup.dataset.date=dateStr;
-  popup.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:2px solid var(--bd);border-radius:16px 16px 0 0;padding:16px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,.15);max-height:50vh;overflow-y:auto';
+  popup.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:2px solid var(--bd);border-radius:16px 16px 0 0;padding:16px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,.15);max-height:60vh;overflow-y:auto';
+
+  const ICO_CHK='<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+
+  const taskList=[...tasks,...routines].map(t=>{
+    const isRepeat=t.repeat;
+    const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)):t.done;
+    const toggleFn=isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}');document.getElementById('cal-popup').remove();`:`toggleTask('${t.id}');document.getElementById('cal-popup').remove();`;
+    const members=sortMembers(t.members||[]);
+    return`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px;cursor:pointer" onclick="${toggleFn}">
+      <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${done?ICO_CHK:''}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:500;font-size:13px;${done?'text-decoration:line-through;opacity:.5':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:6px;padding:0 5px;margin-left:4px">루틴</span>':''}</div>
+        ${t.start_time||members.length?`<div style="font-size:11px;color:var(--tx2);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap">${t.start_time?`<span>${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}${members.map(m=>memberTag(m)).join('')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
   popup.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <span style="font-weight:600;font-size:14px">${parseInt(m)}월 ${parseInt(d)}일</span>
-      <button onclick="document.getElementById('cal-popup').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx2);line-height:1">×</button>
+      <button onclick="document.getElementById('cal-popup').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2);line-height:1">×</button>
     </div>
-    ${projs.length?`<div style="font-size:11px;font-weight:700;color:var(--tx2);margin-bottom:6px;letter-spacing:.04em">📁 진행 중인 프로젝트</div>
-    ${projs.map(p=>{const c=projColorMap[p.id];const stages=p.stages||[];const pct=stages.length?Math.round(stages.filter(s=>s.done).length/stages.length*100):0;return`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px">
-      <div style="width:10px;height:10px;border-radius:50%;background:${c.bg};flex-shrink:0"></div>
-      <div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
-      ${stages.length?`<div style="font-size:11px;color:var(--tx2);margin-top:2px">진행률 ${pct}% · 마감 ${p.due}</div>`:`<div style="font-size:11px;color:var(--tx2);margin-top:2px">마감 ${p.due}</div>`}</div></div>`;}).join('')}`:''}
-    ${tasks.length?`<div style="font-size:11px;font-weight:700;color:var(--tx2);margin:${projs.length?'10px':0} 0 6px;letter-spacing:.04em">📌 마감 업무</div>
-    ${tasks.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px">
-      <div class="cal-dot" style="flex-shrink:0"></div>
-      <span style="font-size:13px">${t.name}</span></div>`).join('')}`:''}
+    ${taskList}
+    ${appRole==='admin'?`<button onclick="openTaskModalForDate('${dateStr}');document.getElementById('cal-popup').remove()" style="width:100%;padding:10px;border:1.5px dashed var(--bd);background:none;border-radius:8px;color:var(--tx2);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">+ 업무 추가</button>`:''}
   `;
   document.body.appendChild(popup);
-
-  // 팝업 외부 클릭 시 닫기
   setTimeout(()=>{
     document.addEventListener('click',function handler(ev){
       if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',handler);}
@@ -2329,6 +2471,10 @@ function showCalPopup(dateStr,e){
   },100);
 }
 
+  const [y,m,d]=dateStr.split('-');
+  const popup=document.createElement('div');
+  popup.id='cal-popup';
+  popup.dataset.date=dateStr;
 function renderArchive(){
   const done=wfProjects.filter(p=>p.done);
   document.getElementById('archive-empty').style.display=done.length?'none':'';
