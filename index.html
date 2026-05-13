@@ -3578,10 +3578,16 @@ function buildRecipeCard(r,isDone){
     <span style="font-size:13px;line-height:1.6">${s}</span>
   </div>`).join('');
 
-  const acts=`
-    ${isDone?`<button class="btn btn-ghost btn-sm" onclick="undoneRecipe('${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> 개발 중으로</button>`:`<button class="btn btn-accent btn-sm" onclick="markRecipeDone('${r.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 완료</button>`}
-    <button class="btn btn-ghost btn-sm" onclick="editRecipe('${r.id}')">수정</button>
-    <button class="btn btn-danger btn-sm" onclick="deleteRecipe('${r.id}')">삭제</button>`;
+  let acts='';
+  if(appRole==='admin'){
+    if(isDone){
+      acts+='<button class="btn btn-ghost btn-sm" onclick="undoneRecipe(\''+r.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> 개발 중으로</button>';
+    } else {
+      acts+='<button class="btn btn-accent btn-sm" onclick="markRecipeDone(\''+r.id+'\')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 완료</button>';
+    }
+    acts+='<button class="btn btn-ghost btn-sm" onclick="editRecipe(\''+r.id+'\')">수정</button>';
+    acts+='<button class="btn btn-danger btn-sm" onclick="deleteRecipe(\''+r.id+'\')">삭제</button>';
+  }
 
   const costSummary=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px">
     <span><span style="color:var(--tx2)">기준</span> <strong>${yieldQty}${yieldUnit}</strong></span>
