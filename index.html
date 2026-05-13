@@ -1179,7 +1179,7 @@ async function loadAll(){
   setSyncStatus('loading');
   // 완료 체크는 로컬 우선 로드
   routineDoneToday=JSON.parse(localStorage.getItem('hub_rdt_'+TODAY())||'[]');
-  if(!_sb){loadLocal();setSyncStatus('local');renderAll();return;}
+  if(!_sb){loadLocal();setSyncStatus('local');renderAll();restoreTabState();return;}
   try{
     const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
       _sb.from('wf_tasks').select('*').order('sort_order',{nullsFirst:false}).order('created_at'),
@@ -1199,9 +1199,11 @@ async function loadAll(){
     renderAll();
     autoCleanDone();
     subscribeRt();
+    restoreTabState();
   }catch(e){
     console.error('loadAll error:',e);
     loadLocal();setSyncStatus('err');renderAll();
+    restoreTabState();
     showToast('서버 연결 실패 — 로컬 데이터로 표시 중');
   }
 }
@@ -1369,19 +1371,19 @@ function applyAppRole(){
 
   applyOrderRole();
   initSb();
-  loadAll();
+  loadAll(); // loadAll 완료 후 restoreTabState() 호출됨
+}
 
-  // 마지막 탭 복원
+function restoreTabState(){
+  const isAdmin=appRole==='admin';
   const savedSection=sessionStorage.getItem('hub_section')||'workflow';
   const savedWfTab=sessionStorage.getItem('hub_wf_tab')||'today';
   const savedWorkView=sessionStorage.getItem('hub_work_view')||'today';
   const savedOrderTab=sessionStorage.getItem('hub_order_tab')||'input';
   const savedRecipeTab=sessionStorage.getItem('hub_recipe_tab')||'costs';
 
-  // 섹션 복원
   goSection(savedSection);
 
-  // 워크플로우 탭 복원 (팀원은 today만)
   if(isAdmin){
     goWfTab(savedWfTab);
     if(savedWfTab==='today') setWorkView(savedWorkView);
@@ -1390,7 +1392,6 @@ function applyAppRole(){
     setWorkView(savedWorkView==='week'?'week':'today');
   }
 
-  // 오더/레시피 탭 복원
   if(isAdmin){
     goOrderTab(savedOrderTab);
     goRecipeTab(savedRecipeTab);
@@ -1722,7 +1723,7 @@ function initRepeatState(repeat,days){
 }
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
 
-function renderAll(){renderToday();renderProjects();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
+function renderAll(){renderToday();renderWeekView();renderProjects();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 
@@ -3237,21 +3238,32 @@ function renderOrderHistory(){
     else{
       const mTotals=mMonths.map(m=>data.filter(o=>o.order_date?.startsWith(m)).reduce((s,o)=>s+o.qty,0));
       const maxM=Math.max(...mTotals,1);
-      const W=200,H=80,PAD=16;
+      const W=200,H=90,PAD=20;
+      // 단일 데이터거나 모두 같은 값이면 중간 높이에 표시
       const ptX=(i)=>PAD+i*(W-PAD*2)/(Math.max(mMonths.length-1,1));
-      const ptY=(v)=>H-4-Math.round(v/maxM*(H-12));
-      const points=mTotals.map((v,i)=>`${ptX(i)},${ptY(v)}`).join(' ');
+      const ptY=(v)=>{
+        if(maxM===0)return H/2;
+        const ratio=v/maxM;
+        return 16+Math.round(ratio*(H-32)); // 위 16px, 아래 16px 여백
+      };
+      // y축 반전 (크면 위, 작으면 아래)
+      const ptYInv=(v)=>H-ptY(v);
+      const points=mTotals.map((v,i)=>`${ptX(i)},${ptYInv(v)}`).join(' ');
       const areaPoints=`${ptX(0)},${H} ${points} ${ptX(mMonths.length-1)},${H}`;
       let dots='';
       mTotals.forEach((v,i)=>{
-        const cx=ptX(i),cy=ptY(v);
+        const cx=ptX(i),cy=ptYInv(v);
         const isThis=mMonths[i]===thisMonth;
+        const isLast=i===mTotals.length-1;
         dots+=`<circle cx="${cx}" cy="${cy}" r="${isThis?4:3}" fill="${isThis?'var(--sage-d)':'var(--sage)'}"/>`;
-        if(isThis||i===mTotals.length-1)
-          dots+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="8" fill="var(--sage-d)" font-family="inherit" font-weight="700">${fmt(v)}</text>`;
+        if(isThis||isLast){
+          // 너무 위에 있으면(cy<16) 점 아래에 표시
+          const labelY=cy<16?cy+14:cy-7;
+          dots+=`<text x="${cx}" y="${labelY}" text-anchor="middle" font-size="9" fill="var(--sage-d)" font-family="inherit" font-weight="700">${fmt(v)}</text>`;
+        }
       });
-      const xLabels=mMonths.map((m,i)=>`<text x="${ptX(i)}" y="${H+10}" text-anchor="middle" font-size="8" fill="${mMonths[i]===thisMonth?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${mMonths[i]===thisMonth?'700':'400'}">${m.slice(5)}</text>`).join('');
-      monthlyEl.innerHTML=`<svg viewBox="0 0 ${W} ${H+14}" style="width:100%;overflow:visible">
+      const xLabels=mMonths.map((m,i)=>`<text x="${ptX(i)}" y="${H+12}" text-anchor="middle" font-size="8" fill="${mMonths[i]===thisMonth?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${mMonths[i]===thisMonth?'700':'400'}">${m.slice(5)}</text>`).join('');
+      monthlyEl.innerHTML=`<svg viewBox="0 0 ${W} ${H+16}" style="width:100%;overflow:visible">
         <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--sage)" stop-opacity=".25"/><stop offset="100%" stop-color="var(--sage)" stop-opacity="0"/></linearGradient></defs>
         <polygon points="${areaPoints}" fill="url(#lineGrad)"/>
         <polyline points="${points}" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
