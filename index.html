@@ -215,6 +215,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .week-header-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-width:320px;position:sticky;top:0;z-index:3;background:var(--cream);border-bottom:1px solid var(--bd)}
 .week-col-header{padding:8px 4px 6px;text-align:center;background:var(--cream)}
 .week-col-header.today-col{background:var(--sage-l)}
+.week-col-header.holiday-col{background:var(--danger-l)!important}
 .week-dow{font-size:10px;font-weight:700;color:var(--tx2);letter-spacing:.05em}
 .week-col-header.today-col .week-dow{color:var(--sage-d)}
 .week-date-num{font-size:14px;font-weight:700;color:var(--tx);line-height:1;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;margin-top:2px}
@@ -2310,11 +2311,40 @@ function renderWeekView(){
   const ICO_CHK='<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 
   // 헤더 행과 바디 행 분리
+  // 공휴일 데이터 (주간 뷰용)
+  const wFixedH={'01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'크리스마스'};
+  const wSpecialH={
+    '2025-01-28':'설날연휴','2025-01-29':'설날','2025-01-30':'설날연휴','2025-03-03':'대체(삼일절)',
+    '2025-05-05':'어린이날·부처님오신날','2025-05-06':'대체(부처님오신날)',
+    '2025-10-05':'추석연휴','2025-10-06':'추석','2025-10-07':'추석연휴','2025-10-08':'대체(추석)',
+    '2026-02-16':'설날연휴','2026-02-17':'설날','2026-02-18':'설날연휴','2026-03-02':'대체(삼일절)',
+    '2026-05-24':'부처님오신날','2026-05-25':'대체(부처님오신날)','2026-06-03':'지방선거',
+    '2026-08-17':'대체(광복절)','2026-09-24':'추석연휴','2026-09-25':'추석','2026-09-26':'추석연휴',
+    '2026-10-05':'대체(개천절)','2026-07-17':'제헌절',
+    '2027-02-06':'설날연휴','2027-02-07':'설날','2027-02-08':'설날연휴','2027-02-09':'대체(설날)',
+    '2027-05-13':'부처님오신날','2027-07-17':'제헌절',
+    '2027-09-14':'추석연휴','2027-09-15':'추석','2027-09-16':'추석연휴','2027-09-17':'대체(추석)',
+    '2027-10-04':'대체(개천절)',
+  };
+  function getHolidayName(dateStr){
+    if(wSpecialH[dateStr])return wSpecialH[dateStr];
+    const md=dateStr.slice(5);
+    const y=parseInt(dateStr.slice(0,4));
+    if(wFixedH[md]){
+      if(md==='07-17'&&y<2026)return null;
+      return wFixedH[md];
+    }
+    return null;
+  }
+
   const headers=days.map((date,i)=>{
     const dateStr=date.toLocaleDateString('sv-SE');
     const isToday=dateStr===td;
     const dayNum=date.getDate();
     const dowIdx=date.getDay();
+    const holidayName=getHolidayName(dateStr);
+    const isHoliday=!!holidayName;
+    const isRed=isHoliday;
     const allTasks=[
       ...wfTasks.filter(t=>!t.repeat&&t.due===dateStr),
       ...wfTasks.filter(t=>!t.repeat&&!t.due&&t.created_date===dateStr),
@@ -2328,10 +2358,10 @@ function renderWeekView(){
       if(t.repeat||t._isRoutine)return t.done_dates?.includes(dateStr)||routineDoneToday.includes(t.id);
       return t.done;
     }).length;
-    return`<div class="week-col-header${isToday?' today-col':''}">
-      <div class="week-dow">${dow[i]}</div>
-      <div class="week-date-num${isToday?' today-num':''}">${dayNum}</div>
-      <div class="week-cnt">${total?`${doneCount}/${total}`:''}</div>
+    return`<div class="week-col-header${isToday?' today-col':''}${isRed?' holiday-col':''}">
+      <div class="week-dow${isRed?' red':''}">${dow[i]}</div>
+      <div class="week-date-num${isToday?' today-num':isRed?' red-num':''}">${dayNum}</div>
+      ${isHoliday?`<div style="font-size:8px;color:var(--danger);font-weight:600;line-height:1.1;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${holidayName}</div>`:`<div class="week-cnt">${total?`${doneCount}/${total}`:''}</div>`}
     </div>`;
   }).join('');
 
