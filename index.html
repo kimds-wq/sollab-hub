@@ -212,7 +212,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .week-col{display:flex;flex-direction:column;border-right:1px solid var(--bd)}
 .week-col:last-child{border-right:none}
 /* sticky 헤더 */
-.week-header-row{display:grid;grid-template-columns:repeat(5,110px);min-width:550px;position:sticky;top:0;z-index:3;background:var(--cream);border-bottom:1px solid var(--bd)}
+.week-header-row{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));min-width:550px;position:sticky;top:0;z-index:3;background:var(--cream);border-bottom:1px solid var(--bd)}
 .week-col-header{padding:8px 6px 6px;text-align:center;background:var(--cream);scroll-snap-align:start}
 .week-col-header.today-col{background:var(--sage-l)}
 .week-col-header.holiday-col{background:var(--danger-l)!important}
@@ -223,8 +223,8 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .week-date-num.red-num{color:var(--danger)}
 .week-cnt{font-size:9px;font-weight:600;color:var(--tx2);margin-top:2px;height:12px}
 .week-col-header.today-col .week-cnt{color:var(--sage-d)}
-.week-body-row{display:grid;grid-template-columns:repeat(5,110px);min-width:550px}
-.week-col-body{padding:6px 5px;min-height:200px;border-right:1px solid var(--bd);width:110px;box-sizing:border-box}
+.week-body-row{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));min-width:550px}
+.week-col-body{padding:6px 5px;min-height:200px;border-right:1px solid var(--bd);box-sizing:border-box}
 .week-col-body:last-child{border-right:none}
 .week-task{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:5px 7px;margin-bottom:4px;font-size:12px;line-height:1.5;cursor:pointer;transition:opacity .15s}
 .week-task:active{opacity:.7}
@@ -1227,8 +1227,8 @@ async function reloadTable(t){
   else q=q.order('created_at');
   const{data}=await q;
   if(!data)return;
-  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderCalendar();renderArchive();renderRoutine();}
-  else if(t==='wf_projects'){wfProjects=data;persistLocal();renderProjects();renderCalendar();renderArchive();}
+  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderArchive();renderRoutine();renderWeekView();}
+  else if(t==='wf_projects'){wfProjects=data;persistLocal();renderProjects();renderArchive();}
   else if(t==='wf_routines'){wfRoutines=data;persistLocal();renderRoutine();renderToday();}
   else if(t==='order_products'){orderProducts=data;persistLocal();renderOrderProducts();populateOrderSelects();}
   else if(t==='order_dests'){orderDests=data;persistLocal();renderOrderDests();populateOrderSelects();}
@@ -1454,7 +1454,7 @@ function toggleRoutineDoneDate(id,dateStr){
     task.done_dates=[...doneDates,dateStr];
   }
   persistLocal();sbUpsert('wf_tasks',task);
-  renderCalendar();
+  renderWeekView();
   if(dateStr===TODAY())renderToday();
 }
 
@@ -2074,7 +2074,7 @@ async function deleteTask(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(x=>x.id!==id);
-  renderToday();renderRoutine();
+  renderToday();renderRoutine();renderWeekView();
   persistLocal();sbDelete('wf_tasks',id);
   showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
 }
@@ -2129,8 +2129,10 @@ async function saveTask(){
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
   persistLocal();sbUpsert('wf_tasks',row);
-  closeTaskModal();renderToday();renderCalendar();renderRoutine();
-  if(workView==='week')renderWeekView();
+  closeTaskModal();
+  renderToday();
+  renderRoutine();
+  renderWeekView();
   showToast('저장됐습니다.');
 }
 
@@ -2217,16 +2219,16 @@ async function markProjDone(id){
   const p=wfProjects.find(x=>x.id===id);if(!p)return;
   if(!confirm(`'${p.name}'을 완료 처리하고 아카이브로 이동할까요?`))return;
   p.done=true;
-  renderProjects();renderArchive();renderCalendar();showToast('완료 처리됐습니다.');
+  renderProjects();renderArchive();showToast('완료 처리됐습니다.');
   persistLocal();
 }
 async function deleteProj(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...wfProjects];
   wfProjects=wfProjects.filter(x=>x.id!==id);
-  renderProjects();renderCalendar();
+  renderProjects();
   persistLocal();sbDelete('wf_projects',id);
-  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();renderCalendar();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
+  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
 }
 let projStagesArr=[];
 function openProjModal(id){
@@ -2262,7 +2264,7 @@ async function saveProj(){
   if(editIds.proj){Object.assign(wfProjects.find(x=>x.id===editIds.proj)||{},row);}
   else{wfProjects.push(row);}
   persistLocal();sbUpsert('wf_projects',row);
-  closeProjModal();renderProjects();renderCalendar();showToast('저장됐습니다.');
+  closeProjModal();renderProjects();showToast('저장됐습니다.');
 }
 
 let workView='today'; // 'today' | 'week'
