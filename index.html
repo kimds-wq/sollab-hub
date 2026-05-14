@@ -74,13 +74,14 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 .row-sb-sm{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .td-actions{display:flex;gap:4px;justify-content:flex-end}
 .td-pad{padding:10px;border-bottom:1px solid var(--bd)}
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .sec-title{font-size:16px;font-weight:600}
 .btn{padding:8px 16px;border-radius:var(--r);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:var(--sage);color:#fff}.btn-primary:hover{background:var(--sage-d)}
 .btn-accent{background:var(--accent-l);color:var(--accent)}.btn-accent:hover{background:#EDD8C8}
 .btn-ghost{background:none;border:1px solid var(--bd);color:var(--tx2)}.btn-ghost:hover{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage-m)}
 .btn-danger{background:var(--danger-l);color:var(--danger);border:none}.btn-danger:hover{background:#F5D0D0}
-.btn-sm{padding:5px 10px;font-size:12px}
+.btn-sm{padding:6px 12px;font-size:12px}
 .btn-icon{padding:6px;border-radius:6px;background:none;border:none;cursor:pointer;color:var(--tx2);font-size:15px;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center}
 .btn-icon:hover{background:var(--sage-l);color:var(--sage-d)}
 .search-wrap{position:relative}
@@ -94,8 +95,8 @@ body{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고�
 .empty-icon{font-size:32px;margin-bottom:12px}
 .empty p{font-size:14px;line-height:1.6}
 .data-table{width:100%;border-collapse:collapse;font-size:13px}
-.data-table th{text-align:left;padding:8px 10px;color:var(--tx2);font-weight:500;border-bottom:1px solid var(--bd);font-size:12px}
-.data-table td{padding:10px;border-bottom:1px solid var(--bd);color:var(--tx);vertical-align:middle}
+.data-table th{text-align:left;padding:10px 10px 10px;color:var(--tx2);font-weight:500;border-bottom:2px solid var(--bd);font-size:12px;white-space:nowrap}
+.data-table td{padding:12px 10px;border-bottom:1px solid var(--bd);color:var(--tx);vertical-align:top;word-break:keep-all;line-height:1.5}
 .data-table tr:last-child td{border-bottom:none}
 .data-table tr:hover td{background:var(--cream)}
 .badge{background:var(--sage-l);color:var(--sage-d);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap}
@@ -159,7 +160,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .priority-dot{width:7px;height:7px;border-radius:50%;background:var(--sage-m);flex-shrink:0}
 
 /* ── TODAY STATS ── */
-.today-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.today-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
 .ts-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px}
 .ts-label{font-size:12px;color:var(--tx2);margin-bottom:4px}
 .ts-val{font-size:22px;font-weight:700;color:var(--sage-d)}
@@ -209,7 +210,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 
 /* ── PROJECTS ── */
 .proj-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
-.proj-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+.proj-header{padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
 .proj-header:hover{background:var(--sage-l)}
 .proj-name{font-size:14px;font-weight:600;flex:1}
 .proj-body{border-top:1px solid var(--bd);padding:16px;display:none}
@@ -438,7 +439,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 @media(max-width:640px){
   /* ── 전체 레이아웃 */
   .section{padding:12px}
-  .sec-header{gap:8px}
+  .sec-header{gap:8px;margin-bottom:16px}
   .search-wrap input{width:130px}
 
   /* ── 상단 네비 — 로고+싱크 한 줄, 탭 아래 줄 */
@@ -631,7 +632,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       <div class="ts-card"><div class="ts-label">진행 중</div><div class="ts-val" id="ts-prog">0</div></div>
       <div class="ts-card"><div class="ts-label">오늘 마감</div><div class="ts-val" id="ts-due">0</div></div>
     </div>
-    <div class="sec-header">
+    <div class="sec-header" style="margin-bottom:14px">
       <span class="sec-title" id="today-date-label"></span>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn btn-ghost btn-sm" id="clear-done-btn" onclick="clearDoneTasks()" style="display:none;font-size:12px">✓ 완료 정리</button>
@@ -639,7 +640,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </div>
     </div>
     <!-- 이월 업무 (미완료 이월) -->
-    <div id="today-carry-wrap" style="display:none;margin-bottom:16px">
+    <div id="today-carry-wrap" style="display:none;margin-bottom:20px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-left:2px">
         <span style="font-size:11px;font-weight:700;color:var(--danger);letter-spacing:.04em">⚠ 미완료 이월</span>
         <span id="today-carry-count" style="font-size:10px;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-weight:700"></span>
@@ -835,11 +836,11 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div>
-          <div class="sec-header"><span class="sec-title" style="font-size:14px">상품 목록</span><button class="btn btn-primary btn-sm" onclick="openProductModal()">+ 추가</button></div>
+          <div class="sec-header" style="margin-bottom:12px"><span class="sec-title" style="font-size:14px">상품 목록</span><button class="btn btn-primary btn-sm" onclick="openProductModal()">+ 추가</button></div>
           <div class="card"><table class="data-table"><thead><tr><th>상품명</th><th></th></tr></thead><tbody id="products-tbody"></tbody></table></div>
         </div>
         <div>
-          <div class="sec-header"><span class="sec-title" style="font-size:14px">지점 목록</span><button class="btn btn-primary btn-sm" onclick="openDestModal()">+ 추가</button></div>
+          <div class="sec-header" style="margin-bottom:12px;margin-top:24px"><span class="sec-title" style="font-size:14px">지점 목록</span><button class="btn btn-primary btn-sm" onclick="openDestModal()">+ 추가</button></div>
           <div class="card"><table class="data-table"><thead><tr><th>지점</th><th></th></tr></thead><tbody id="dests-tbody"></tbody></table></div>
         </div>
       </div>
@@ -875,7 +876,11 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </div>
     </div>
     <div class="card" id="cost-table-card" style="overflow-x:auto">
-      <table class="data-table" style="min-width:560px">
+      <table class="data-table" style="min-width:560px;table-layout:fixed">
+        <colgroup>
+          <col style="width:22%"><col style="width:12%"><col style="width:12%">
+          <col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:10%">
+        </colgroup>
         <thead><tr><th>재료명</th><th>카테고리</th><th>용량</th><th>가격</th><th>단위당 단가</th><th>비고</th><th></th></tr></thead>
         <tbody id="cost-tbody"></tbody>
       </table>
@@ -1982,7 +1987,7 @@ function renderToday(){
         container.prepend(projBanner);
       }
     }
-    projBanner.innerHTML=`<div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+    projBanner.innerHTML=`<div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
       <span style="font-size:11px;font-weight:700;color:var(--warn-tx);flex-shrink:0">📋 마감 임박</span>
       ${urgentProjs.map(p=>{const dd=ddayBadge(p.due);return`<span style="font-size:12px;color:var(--tx);font-weight:500">${p.name} <span class="dday ${dd.cls}">${dd.label}</span></span>`;}).join('')}
     </div>`;
@@ -3477,17 +3482,17 @@ function renderCosts(){
     const unit=c.unit||'g';
     const unitPer=fmt(c.price/c.volume)+'원/'+unit;
     return`<tr>
-      <td style="font-weight:500">${c.name}</td>
+      <td style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.name}</td>
       <td><span class="badge" style="font-size:11px">${c.category||'미분류'}</span></td>
-      <td>${(+c.volume % 1 === 0 ? Math.round(+c.volume).toLocaleString('ko-KR') : (+c.volume).toLocaleString('ko-KR'))}${unit}</td>
-      <td>${fmt(c.price)}원</td>
-      <td><span class="badge">${unitPer}</span></td>
-      <td style="color:var(--tx2);font-size:12px">${c.note||'<span style="color:var(--bd)">—</span>'}${c.price_history?.length?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">이전: ${c.price_history.slice(-1)[0].price.toLocaleString()}원 (${c.price_history.slice(-1)[0].date})</div>`:''}</td>
-      <td style="display:flex;gap:4px;justify-content:flex-end">
+      <td style="white-space:nowrap">${(+c.volume%1===0?Math.round(+c.volume).toLocaleString('ko-KR'):(+c.volume).toLocaleString('ko-KR'))}${unit}</td>
+      <td style="white-space:nowrap">${fmt(c.price)}원</td>
+      <td><span class="badge" style="white-space:nowrap">${unitPer}</span></td>
+      <td style="color:var(--tx2);font-size:12px;overflow:hidden">${c.note||'<span style="color:var(--bd)">—</span>'}${c.price_history?.length?`<div style="font-size:10px;color:var(--tx2);margin-top:2px">이전: ${c.price_history.slice(-1)[0].price.toLocaleString()}원 (${c.price_history.slice(-1)[0].date})</div>`:''}</td>
+      <td><div style="display:flex;gap:4px;justify-content:flex-end">
         ${c.link?`<a href="${c.link}" target="_blank" rel="noopener noreferrer" class="btn-icon" title="링크 열기"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></a>`:''}
         <button class="btn-icon" onclick="editCost('${c.id}')">${ICO_EDIT}</button>
         <button class="btn-icon" onclick="deleteCost('${c.id}')">${ICO_DEL}</button>
-      </td></tr>`;}).join('');
+      </div></td></tr>`;}).join('');
 }
 function openCostModal(id){
   editIds.cost=id||null;const c=id?costs.find(x=>x.id===id):null;
