@@ -834,13 +834,13 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
         <span id="orphan-msg" style="flex:1;font-size:13px;color:var(--warn-tx)"></span>
         <button class="btn btn-sm" style="background:var(--danger);color:#fff;border:none" onclick="cleanOrphanOrders()">납품 내역 정리</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
         <div>
           <div class="sec-header" style="margin-bottom:12px"><span class="sec-title" style="font-size:14px">상품 목록</span><button class="btn btn-primary btn-sm" onclick="openProductModal()">+ 추가</button></div>
           <div class="card"><table class="data-table"><thead><tr><th>상품명</th><th></th></tr></thead><tbody id="products-tbody"></tbody></table></div>
         </div>
         <div>
-          <div class="sec-header" style="margin-bottom:12px;margin-top:24px"><span class="sec-title" style="font-size:14px">지점 목록</span><button class="btn btn-primary btn-sm" onclick="openDestModal()">+ 추가</button></div>
+          <div class="sec-header" style="margin-bottom:12px"><span class="sec-title" style="font-size:14px">지점 목록</span><button class="btn btn-primary btn-sm" onclick="openDestModal()">+ 추가</button></div>
           <div class="card"><table class="data-table"><thead><tr><th>지점</th><th></th></tr></thead><tbody id="dests-tbody"></tbody></table></div>
         </div>
       </div>
