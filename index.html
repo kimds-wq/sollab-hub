@@ -1235,6 +1235,7 @@ async function loadAll(){
     wfTasks=tk.data||[]; wfProjects=pj.data||[]; wfRoutines=rt.data||[];
     orderProducts=op.data||[]; orderDests=od.data||[]; orderList=ol.data||[];
     costs=co.data||[]; recipes=rc.data||[];
+    normalizeCostIds();
     persistLocal();
     setSyncStatus('ok');
     renderAll();
@@ -3554,7 +3555,13 @@ async function deleteCost(id){
   persistLocal();sbDelete('costs',id);
   showToast('재료를 삭제했습니다.',()=>{costs=prev;renderCosts();persistLocal();sbUpsert('costs',prev.find(x=>x.id===id));});
 }
-function calcCost(ings){return(ings||[]).reduce((s,i)=>{const m=costs.find(c=>c.id===i.costId);return s+(m&&i.amount?m.price/m.volume*i.amount:0);},0);}
+function normalizeCostIds(){
+  // Supabase costs.id가 integer로 오면 recipes.ingredients.costId와 타입 불일치 발생
+  // 양쪽 모두 String으로 통일해 새로고침 후 "삭제된 재료" 오표시 방지
+  costs=costs.map(c=>({...c,id:String(c.id)}));
+  recipes=recipes.map(r=>({...r,ingredients:(r.ingredients||[]).map(i=>({...i,costId:String(i.costId)}))}));
+}
+function calcCost(ings){return(ings||[]).reduce((s,i)=>{const m=costs.find(c=>String(c.id)===String(i.costId));return s+(m&&i.amount?m.price/m.volume*i.amount:0);},0);}
 function buildRecipeCard(r,isDone){
   const total=calcCost(r.ingredients);
   const yieldQty=r.yield_qty||1;
@@ -3565,7 +3572,7 @@ function buildRecipeCard(r,isDone){
   const rateColor=costRate>40?'var(--danger)':costRate>30?'var(--accent)':'var(--sage-d)';
 
   const ings=(r.ingredients||[]).map(ing=>{
-    const m=costs.find(c=>c.id===ing.costId);
+    const m=costs.find(c=>String(c.id)===String(ing.costId));
     const unit=m?.unit||'g';
     const cost=m?m.price/m.volume*ing.amount:0;
     return`<tr>
@@ -3655,7 +3662,7 @@ async function saveRecipe(){
   const yield_unit=document.getElementById('ri-yield-unit').value||'개';
   const sale_price=parseFloat(document.getElementById('ri-price').value)||0;
   const memo=document.getElementById('ri-memo').value.trim();
-  const ingredients=ingRows.filter(r=>r.costId&&r.amount);
+  const ingredients=ingRows.filter(r=>r.costId&&r.amount).map(r=>({...r,costId:String(r.costId)}));
   const stps=steps.filter(s=>s.trim());
   const existing=editIds.recipe?recipes.find(x=>x.id===editIds.recipe):null;
   const data={name,category,yield_qty,yield_unit,sale_price,memo,ingredients,steps:stps};
@@ -3688,7 +3695,7 @@ async function undoneRecipe(id){
 function addIngRow(){ingRows.push({rowId:uid(),costId:'',amount:'',searchText:''});renderIngRows();setTimeout(()=>{const ins=document.querySelectorAll('.ing-search-input');if(ins.length){ins[ins.length-1].focus();ins[ins.length-1].scrollIntoView({behavior:'smooth',block:'nearest'});}},50);}
 function renderIngRows(){
   document.getElementById('ing-rows').innerHTML=ingRows.map((row,i)=>{
-    const m=costs.find(c=>c.id===row.costId);
+    const m=costs.find(c=>String(c.id)===String(row.costId));
     const dv=(m?m.name:(row.searchText||'')).replace(/"/g,'&quot;');
     const unit=m?.unit||'';
     return`<div class="ing-row">
@@ -3707,16 +3714,16 @@ function onIngSearch(i,v){ingRows[i].searchText=v;ingRows[i].costId='';ddHL[i]=-
 function openIngDd(i){const inp=document.getElementById('igs-'+i),dd=document.getElementById('igdd-'+i);if(!inp||!dd)return;const q=(inp.value||'').trim().toLowerCase();const fil=q?sortKo(costs).filter(c=>c.name.toLowerCase().includes(q)):sortKo(costs);dd.innerHTML=fil.length===0?`<div class="ing-dd-empty">일치하는 재료가 없습니다</div>`:fil.map((c,idx)=>{let lbl=c.name;if(q){const p=c.name.toLowerCase().indexOf(q);if(p!==-1)lbl=c.name.slice(0,p)+`<span class="mhl">${c.name.slice(p,p+q.length)}</span>`+c.name.slice(p+q.length);}return`<div class="ing-dd-item${ddHL[i]===idx?' hl':''}" onmousedown="selIng(${i},'${c.id}')">${lbl}</div>`;}).join('');dd.classList.add('open');}
 function closeIngDd(i){document.getElementById('igdd-'+i)?.classList.remove('open');const row=ingRows[i];if(!row||row.costId)return;const inp=document.getElementById('igs-'+i);if(inp){inp.value='';row.searchText='';}}
 function closeIngDdDelayed(i){setTimeout(()=>closeIngDd(i),150);}
-function selIng(i,costId){const m=costs.find(c=>c.id===costId);if(!m)return;ingRows[i].costId=costId;ingRows[i].searchText=m.name;closeIngDd(i);renderIngRows();// 선택 후 수량 입력에 포커스
+function selIng(i,costId){const m=costs.find(c=>String(c.id)===String(costId));if(!m)return;ingRows[i].costId=String(costId);ingRows[i].searchText=m.name;closeIngDd(i);renderIngRows();// 선택 후 수량 입력에 포커스
 setTimeout(()=>{const row=document.getElementById('ing-rows').children[i];row?.querySelectorAll('input')[1]?.focus();},50);}
 function onIngKd(e,i){const dd=document.getElementById('igdd-'+i);if(!dd?.classList.contains('open'))return;const items=dd.querySelectorAll('.ing-dd-item');if(!items.length)return;if(e.key==='ArrowDown'){e.preventDefault();ddHL[i]=Math.min((ddHL[i]??-1)+1,items.length-1);items.forEach((el,idx)=>el.classList.toggle('hl',idx===ddHL[i]));if(ddHL[i]>=0)items[ddHL[i]].scrollIntoView({block:'nearest'});}else if(e.key==='ArrowUp'){e.preventDefault();ddHL[i]=Math.max((ddHL[i]??0)-1,0);items.forEach((el,idx)=>el.classList.toggle('hl',idx===ddHL[i]));}else if(e.key==='Enter'){e.preventDefault();const h=ddHL[i]??-1;if(h>=0)items[h].dispatchEvent(new MouseEvent('mousedown'));}else if(e.key==='Escape')closeIngDd(i);}
 function ingAmtChange(i,v){ingRows[i].amount=parseFloat(v)||'';updateIngCostDisplay(i);updateIngTotal();}
 function updateIngCostDisplay(i){const el=document.getElementById('igcost-'+i);if(el)el.textContent=ingCostStr(ingRows[i]);}
 function removeIngRow(i){ingRows.splice(i,1);renderIngRows();}
-function ingCostStr(row){const m=costs.find(c=>c.id===row.costId);if(!m||!row.amount)return'-';return fmt(m.price/m.volume*row.amount)+'원 ('+row.amount+(m.unit||'g')+')';
+function ingCostStr(row){const m=costs.find(c=>String(c.id)===String(row.costId));if(!m||!row.amount)return'-';return fmt(m.price/m.volume*row.amount)+'원 ('+row.amount+(m.unit||'g')+')';
 }
 function updateIngTotal(){
-  const total=ingRows.reduce((s,row)=>{const m=costs.find(c=>c.id===row.costId);return s+(m&&row.amount?m.price/m.volume*row.amount:0);},0);
+  const total=ingRows.reduce((s,row)=>{const m=costs.find(c=>String(c.id)===String(row.costId));return s+(m&&row.amount?m.price/m.volume*row.amount:0);},0);
   const tr=document.getElementById('ing-total-row');
   if(tr)tr.style.display=ingRows.length?'':'none';
   const totalEl=document.getElementById('ing-total-val');
