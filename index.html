@@ -1220,7 +1220,7 @@ async function loadAll(){
   // 로딩 중 빈 화면에 스피너 표시
   const empties=document.querySelectorAll('.empty');
   empties.forEach(el=>{if(el.style.display!=='none')el.innerHTML='<div style="font-size:24px;animation:pulse 1s infinite">⋯</div><p style="color:var(--tx2);font-size:13px">불러오는 중...</p>';});
-  if(!_sb){loadLocal();setSyncStatus('local');renderAll();restoreTabState();return;}
+  if(!_sb){loadLocal();normalizeCostIds();setSyncStatus('local');renderAll();restoreTabState();return;}
   try{
     const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
       _sb.from('wf_tasks').select('*').order('sort_order',{nullsFirst:false}).order('created_at'),
@@ -1245,7 +1245,7 @@ async function loadAll(){
     restoreTabState();
   }catch(e){
     console.error('loadAll error:',e);
-    loadLocal();setSyncStatus('err');renderAll();
+    loadLocal();normalizeCostIds();setSyncStatus('err');renderAll();
     restoreTabState();
     showToast('서버 연결 실패 — 로컬 데이터로 표시 중');
   }
@@ -1278,8 +1278,8 @@ async function reloadTable(t){
   else if(t==='order_products'){orderProducts=data;persistLocal();renderOrderProducts();populateOrderSelects();}
   else if(t==='order_dests'){orderDests=data;persistLocal();renderOrderDests();populateOrderSelects();}
   else if(t==='orders'){orderList=data;persistLocal();renderOrderHistory();}
-  else if(t==='costs'){costs=data;persistLocal();renderCosts();}
-  else if(t==='recipes'){recipes=data;persistLocal();renderRecipeDev();renderRecipeDone();}
+  else if(t==='costs'){costs=data;normalizeCostIds();persistLocal();renderCosts();renderRecipeDev();renderRecipeDone();}
+  else if(t==='recipes'){recipes=data;normalizeCostIds();persistLocal();renderRecipeDev();renderRecipeDone();}
 }
 
 // Supabase 저장 헬퍼 (낙관적 업데이트 후 비동기 동기화)
