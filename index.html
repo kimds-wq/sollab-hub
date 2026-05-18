@@ -3543,10 +3543,31 @@ async function saveCost(){
   }
 
   const data={name,category,volume,unit,price,note,link,price_history:priceHistory};
-  const row={id:editIds.cost||uid(),...data};
-  editIds.cost?Object.assign(costs.find(x=>x.id===editIds.cost),data):costs.push(row);
-  persistLocal();sbUpsert('costs',row);renderCosts();
-  closeCostModal();showToast(editIds.cost?'수정됐습니다.':'추가됐습니다.');
+  if(editIds.cost){
+    const row={id:editIds.cost,...data};
+    Object.assign(costs.find(x=>x.id===editIds.cost),data);
+    persistLocal();renderCosts();
+    closeCostModal();showToast('수정됐습니다.');
+    sbUpsert('costs',row);
+  } else {
+    const tempId=uid();
+    const localRow={id:tempId,...data};
+    costs.push(localRow);
+    persistLocal();renderCosts();
+    closeCostModal();showToast('추가됐습니다.');
+    if(_sb){
+      setSyncStatus('saving');
+      const{data:saved,error}=await _sb.from('costs').insert(data).select().single();
+      if(error){console.error('insert error:costs',error);setSyncStatus('err');}
+      else{
+        const idx=costs.findIndex(c=>c.id===tempId);
+        if(idx!==-1)costs[idx].id=String(saved.id);
+        recipes=recipes.map(r=>({...r,ingredients:(r.ingredients||[]).map(i=>i.costId===tempId?{...i,costId:String(saved.id)}:i)}));
+        persistLocal();renderCosts();renderRecipeDev();renderRecipeDone();
+        setSyncStatus('ok');
+      }
+    }
+  }
 }
 async function deleteCost(id){
   if(!confirm('삭제할까요?'))return;
@@ -3669,8 +3690,27 @@ async function saveRecipe(){
   const row={id:editIds.recipe||uid(),...data,done:existing?.done||false};
   if(editIds.recipe){Object.assign(recipes.find(x=>x.id===editIds.recipe)||{},data);}
   else{recipes.push(row);}
-  persistLocal();sbUpsert('recipes',row);renderRecipeDev();renderRecipeDone();
-  closeRecipeModal();showToast(editIds.recipe?'수정됐습니다.':'추가됐습니다.');
+  if(editIds.recipe){
+    persistLocal();renderRecipeDev();renderRecipeDone();
+    closeRecipeModal();showToast('수정됐습니다.');
+    sbUpsert('recipes',row);
+  } else {
+    const tempId=row.id;
+    persistLocal();renderRecipeDev();renderRecipeDone();
+    closeRecipeModal();showToast('추가됐습니다.');
+    if(_sb){
+      setSyncStatus('saving');
+      const insertData={name:row.name,category:row.category,yield_qty:row.yield_qty,yield_unit:row.yield_unit,sale_price:row.sale_price,memo:row.memo,ingredients:row.ingredients,steps:row.steps,done:row.done};
+      const{data:saved,error}=await _sb.from('recipes').insert(insertData).select().single();
+      if(error){console.error('insert error:recipes',error);setSyncStatus('err');}
+      else{
+        const idx=recipes.findIndex(r=>r.id===tempId);
+        if(idx!==-1)recipes[idx].id=String(saved.id);
+        persistLocal();renderRecipeDev();renderRecipeDone();
+        setSyncStatus('ok');
+      }
+    }
+  }
 }
 async function deleteRecipe(id){
   if(!confirm('삭제할까요?'))return;
