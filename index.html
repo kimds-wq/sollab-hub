@@ -856,7 +856,6 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   </div>
 
   <div class="recipe-panel active" id="rpanel-costs">
-    <div id="diag-result" style="display:none;background:#1a1a2e;color:#e0e0e0;border-radius:10px;padding:16px;margin-bottom:16px;font-size:12px;font-family:monospace;white-space:pre-wrap;line-height:1.6;max-height:400px;overflow-y:auto"></div>
     <div class="sec-header">
       <span class="sec-title">원가 정리</span>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -873,7 +872,6 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
         </select>
         <div class="search-wrap"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="cost-search" placeholder="재료 검색..." oninput="renderCosts()"></div>
         <button class="btn btn-primary" onclick="openCostModal()">+ 재료 추가</button>
-        <button class="btn btn-ghost btn-sm" onclick="runDiagnosis()" id="diag-btn">🔍 DB 진단</button>
         <button class="btn btn-ghost btn-sm" onclick="exportCosts()" title="CSV 내보내기"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 내보내기</button>
       </div>
     </div>
@@ -3552,23 +3550,11 @@ async function saveCost(){
     closeCostModal();showToast('수정됐습니다.');
     sbUpsert('costs',row);
   } else {
-    const tempId=uid();
-    const localRow={id:tempId,...data};
-    costs.push(localRow);
+    const row={id:uid(),...data};
+    costs.push(row);
     persistLocal();renderCosts();
     closeCostModal();showToast('추가됐습니다.');
-    if(_sb){
-      setSyncStatus('saving');
-      const{data:saved,error}=await _sb.from('costs').insert(data).select().single();
-      if(error){console.error('insert error:costs',error);setSyncStatus('err');}
-      else{
-        const idx=costs.findIndex(c=>c.id===tempId);
-        if(idx!==-1)costs[idx].id=String(saved.id);
-        recipes=recipes.map(r=>({...r,ingredients:(r.ingredients||[]).map(i=>i.costId===tempId?{...i,costId:String(saved.id)}:i)}));
-        persistLocal();renderCosts();renderRecipeDev();renderRecipeDone();
-        setSyncStatus('ok');
-      }
-    }
+    sbUpsert('costs',row);
   }
 }
 async function deleteCost(id){
@@ -3577,76 +3563,6 @@ async function deleteCost(id){
   costs=costs.filter(c=>c.id!==id);renderCosts();
   persistLocal();sbDelete('costs',id);
   showToast('재료를 삭제했습니다.',()=>{costs=prev;renderCosts();persistLocal();sbUpsert('costs',prev.find(x=>x.id===id));});
-}
-async function runDiagnosis(){
-  const box=document.getElementById('diag-result');
-  box.style.display='block';
-  box.textContent='진단 중...';
-  let out=[];
-  const log=(msg)=>{out.push(msg);box.textContent=out.join('\n');};
-
-  log('=== SoL LAB Supabase 진단 ===\n');
-
-  if(!_sb){log('❌ Supabase 미연결 (로컬 모드)');return;}
-
-  // 1. costs SELECT
-  log('[ 1 ] costs 테이블 SELECT');
-  const{data:cd,error:ce}=await _sb.from('costs').select('*').limit(5);
-  if(ce){log('  ❌ 실패: '+ce.message+'\n  코드: '+ce.code);}
-  else{
-    log('  ✅ 성공 - '+cd.length+'건');
-    if(cd.length>0){log('  id 타입: '+typeof cd[0].id+' / 예시값: '+cd[0].id);}
-    else{log('  (데이터 없음)');}
-  }
-
-  // 2. costs INSERT (id 없이)
-  log('\n[ 2 ] costs INSERT 테스트 (id 없이)');
-  const td={name:'__진단__',category:'테스트',volume:1,unit:'g',price:1,note:'',link:'',price_history:[]};
-  const{data:ins,error:ie}=await _sb.from('costs').insert(td).select().single();
-  if(ie){
-    log('  ❌ 실패!');
-    log('  message: '+ie.message);
-    log('  code: '+ie.code);
-    log('  hint: '+(ie.hint||'없음'));
-    log('  details: '+(ie.details||'없음'));
-  } else {
-    log('  ✅ 성공 - 저장된 id: '+ins.id+' (타입: '+typeof ins.id+')');
-    const{error:de}=await _sb.from('costs').delete().eq('id',ins.id);
-    log('  삭제: '+(de?'❌ '+de.message:'✅ 완료'));
-  }
-
-  // 3. costs INSERT (string id로)
-  log('\n[ 3 ] costs INSERT 테스트 (string id로)');
-  const sid='diag_'+Date.now().toString(36);
-  const{data:ins2,error:ie2}=await _sb.from('costs').insert({id:sid,...td}).select().single();
-  if(ie2){
-    log('  ❌ 실패 - '+ie2.message+' (코드: '+ie2.code+')');
-  } else {
-    log('  ✅ 성공 - 저장된 id: '+ins2.id+' (타입: '+typeof ins2.id+')');
-    await _sb.from('costs').delete().eq('id',ins2.id);
-  }
-
-  // 4. recipes SELECT
-  log('\n[ 4 ] recipes 테이블 SELECT');
-  const{data:rd,error:re}=await _sb.from('recipes').select('id,name,ingredients').limit(3);
-  if(re){log('  ❌ 실패: '+re.message);}
-  else{
-    log('  ✅ 성공 - '+rd.length+'건');
-    if(rd.length>0){
-      log('  id 타입: '+typeof rd[0].id+' / 예시값: '+rd[0].id);
-      const ings=rd[0].ingredients||[];
-      if(ings.length>0){log('  ingredients[0].costId: '+ings[0].costId+' (타입: '+typeof ings[0].costId+')');}
-    }
-  }
-
-  // 5. localStorage 데이터 확인
-  log('\n[ 5 ] localStorage costs 확인');
-  const lc=JSON.parse(localStorage.getItem('hub_costs')||'[]');
-  log('  저장된 costs: '+lc.length+'건');
-  if(lc.length>0)log('  첫 번째 id: '+lc[0].id+' (타입: '+typeof lc[0].id+')');
-
-  log('\n=== 진단 완료 ===');
-  log('결과를 스크린샷 찍어서 공유해주세요!');
 }
 function normalizeCostIds(){
   // Supabase costs.id가 integer로 오면 recipes.ingredients.costId와 타입 불일치 발생
@@ -3762,27 +3678,8 @@ async function saveRecipe(){
   const row={id:editIds.recipe||uid(),...data,done:existing?.done||false};
   if(editIds.recipe){Object.assign(recipes.find(x=>x.id===editIds.recipe)||{},data);}
   else{recipes.push(row);}
-  if(editIds.recipe){
-    persistLocal();renderRecipeDev();renderRecipeDone();
-    closeRecipeModal();showToast('수정됐습니다.');
-    sbUpsert('recipes',row);
-  } else {
-    const tempId=row.id;
-    persistLocal();renderRecipeDev();renderRecipeDone();
-    closeRecipeModal();showToast('추가됐습니다.');
-    if(_sb){
-      setSyncStatus('saving');
-      const insertData={name:row.name,category:row.category,yield_qty:row.yield_qty,yield_unit:row.yield_unit,sale_price:row.sale_price,memo:row.memo,ingredients:row.ingredients,steps:row.steps,done:row.done};
-      const{data:saved,error}=await _sb.from('recipes').insert(insertData).select().single();
-      if(error){console.error('insert error:recipes',error);setSyncStatus('err');}
-      else{
-        const idx=recipes.findIndex(r=>r.id===tempId);
-        if(idx!==-1)recipes[idx].id=String(saved.id);
-        persistLocal();renderRecipeDev();renderRecipeDone();
-        setSyncStatus('ok');
-      }
-    }
-  }
+  persistLocal();sbUpsert('recipes',row);renderRecipeDev();renderRecipeDone();
+  closeRecipeModal();showToast(editIds.recipe?'수정됐습니다.':'추가됐습니다.');
 }
 async function deleteRecipe(id){
   if(!confirm('삭제할까요?'))return;
