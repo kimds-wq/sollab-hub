@@ -427,6 +427,27 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .order-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
 .chart-tab-btn{padding:4px 10px;border:none;background:none;border-radius:6px;font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
 .chart-tab-btn.active{background:var(--sf);color:var(--sage-d);box-shadow:var(--sh)}
+/* 발주 예측 */
+.fc-note{font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.55}
+.fc-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--sf)}
+.fc-row.urgent{border-color:var(--danger);background:var(--danger-l)}
+.fc-row.soon{border-color:var(--accent);background:var(--accent-l)}
+.fc-main{flex:1;min-width:0}
+.fc-title{font-size:13px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
+.fc-meta{font-size:11px;color:var(--tx2);line-height:1.4}
+.fc-badge{flex-shrink:0;text-align:center;min-width:50px}
+.fc-dday{font-size:15px;font-weight:800;line-height:1.1}
+.fc-status{font-size:10px;font-weight:700;margin-top:1px}
+/* 요일 패턴 */
+.wk-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.wk-row{display:flex;gap:10px;padding:8px 6px;border-bottom:1px solid var(--bd);align-items:flex-start}
+.wk-row:last-child{border-bottom:none}
+.wk-row.today{background:var(--sage-l);border-radius:8px;border-bottom:1px solid transparent}
+.wk-day{width:30px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--tx2);padding-top:3px}
+.wk-row.today .wk-day{color:var(--sage-d)}
+.wk-items{flex:1;display:flex;gap:5px;flex-wrap:wrap;min-width:0}
+.wk-pill{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--sage-l);color:var(--sage-d);font-weight:500;white-space:nowrap}
+.wk-empty{font-size:11px;color:var(--tx2);padding-top:3px}
 [id^="chart-"]{overflow:hidden}
 [id^="chart-"] svg{display:block;width:100%;height:auto}
 .order-stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -777,13 +798,13 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
 
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div style="display:flex;gap:2px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:14px" id="chart-tab-bar">
-          <button class="chart-tab-btn active" onclick="switchChartTab('prod')" id="ctab-prod">상품별 납품 현황</button>
-          <button class="chart-tab-btn" onclick="switchChartTab('dest-prod')" id="ctab-dest-prod">지점별 최다·최저</button>
-          <button class="chart-tab-btn" onclick="switchChartTab('prod-dest')" id="ctab-prod-dest">상품별 지점비교</button>
+          <button class="chart-tab-btn active" onclick="switchChartTab('forecast')" id="ctab-forecast">발주 예측</button>
+          <button class="chart-tab-btn" onclick="switchChartTab('weekday')" id="ctab-weekday">요일 패턴</button>
+          <button class="chart-tab-btn" onclick="switchChartTab('prod')" id="ctab-prod">납품량 현황</button>
         </div>
-        <div id="chart-by-prod"></div>
-        <div id="chart-dest-prod" style="display:none"></div>
-        <div id="chart-prod-dest" style="display:none"></div>
+        <div id="chart-forecast"></div>
+        <div id="chart-weekday" style="display:none"></div>
+        <div id="chart-by-prod" style="display:none"></div>
       </div>
       
       <div class="card" style="padding:16px;margin-bottom:16px">
@@ -1328,6 +1349,7 @@ const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" strok
 const ICO_DRAG='<svg width="12" height="18" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="7" y2="4"/><line x1="3" y1="8" x2="7" y2="8"/><line x1="3" y1="12" x2="7" y2="12"/></svg>';
 let wfTaskOrder=[]; // 오늘 탭 업무 순서 (id 배열)
 let orderProducts=[], orderDests=[], orderList=[];
+let wkDestSel='';
 let selectedDests=new Set();
 let costs=[], recipes=[];
 let editIds={task:null,proj:null,routine:null,prod:null,dest:null,cost:null,recipe:null};
@@ -1794,13 +1816,14 @@ function destChipStyle(d){
   return m?`background:${c};color:${m.text};border:1.5px solid ${m.border}`:`background:${c};color:var(--tx)`;
 }
 function switchChartTab(tab){
-  ['prod','dest-prod','prod-dest'].forEach(t=>{
-    const el=document.getElementById('chart-by-'+t.replace('by-',''))
-          ||document.getElementById('chart-'+t);
+  const map={forecast:'chart-forecast',weekday:'chart-weekday',prod:'chart-by-prod'};
+  Object.entries(map).forEach(([t,id])=>{
+    const el=document.getElementById(id);
     if(el)el.style.display=t===tab?'':'none';
     const btn=document.getElementById('ctab-'+t);
     if(btn)btn.classList.toggle('active',t===tab);
   });
+  if(tab==='weekday')renderWeekdayPattern();
 }
 
 function setBottomNav(s){
@@ -2972,6 +2995,119 @@ async function submitOrder(){
   renderOrderHistory();
   showToast(`${newItems.length}건 납품이 저장됐습니다.`);
 }
+function orderValidData(){
+  const vp=new Set(orderProducts.map(p=>p.id)), vd=new Set(orderDests.map(d=>d.id));
+  return orderList.filter(o=>vp.has(o.product_id)&&vd.has(o.dest_id));
+}
+
+// 발주 예측: (상품×지점)별 납품 주기·평균 수량 → 다음 발주 예상일
+function renderForecast(){
+  const el=document.getElementById('chart-forecast'); if(!el)return;
+  const fp=document.getElementById('order-filter-prod')?.value||'';
+  const fd=document.getElementById('order-filter-dest')?.value||'';
+  const q=(document.getElementById('order-search')?.value||'').toLowerCase();
+  const today=new Date(); today.setHours(0,0,0,0);
+
+  let rows=orderValidData().filter(o=>o.order_date);
+  if(fp)rows=rows.filter(o=>o.product_id===fp);
+  if(fd)rows=rows.filter(o=>o.dest_id===fd);
+  if(q)rows=rows.filter(o=>{const p=orderProducts.find(x=>x.id===o.product_id),d=orderDests.find(x=>x.id===o.dest_id);return(p?.name||'').toLowerCase().includes(q)||(d?.name||'').toLowerCase().includes(q);});
+  if(!rows.length){el.innerHTML='<div style="padding:24px;text-align:center;font-size:13px;color:var(--tx2)">납품 기록이 쌓이면 다음 발주 시점을 예측해 드려요</div>';return;}
+
+  // (상품,지점)별 그룹 → 같은 날 여러 건은 1회로 합산
+  const groups={};
+  rows.forEach(o=>{const k=o.product_id+'\u0001'+o.dest_id;(groups[k]=groups[k]||[]).push(o);});
+  const items=Object.entries(groups).map(([k,arr])=>{
+    const [pid,did]=k.split('\u0001');
+    const byDate={}; arr.forEach(o=>{byDate[o.order_date]=(byDate[o.order_date]||0)+o.qty;});
+    const dates=Object.keys(byDate).sort();
+    const qtys=dates.map(d=>byDate[d]);
+    const n=dates.length;
+    const lastDate=dates[n-1], lastQty=qtys[n-1];
+    const avgQty=Math.round(qtys.reduce((s,v)=>s+v,0)/n);
+    let cycle=null;
+    if(n>=2){
+      const iv=[]; for(let i=1;i<n;i++)iv.push(Math.round((parseLocalDate(dates[i])-parseLocalDate(dates[i-1]))/86400000));
+      iv.sort((a,b)=>a-b);
+      const mid=Math.floor(iv.length/2);
+      cycle=iv.length%2?iv[mid]:Math.round((iv[mid-1]+iv[mid])/2); // 중앙값(간격이 들쭉날쭉해도 안정적)
+    }
+    let daysUntil=null,nextDate=null;
+    if(cycle!=null){const nd=parseLocalDate(lastDate);nd.setDate(nd.getDate()+cycle);nextDate=nd;daysUntil=Math.round((nd-today)/86400000);}
+    return{pid,did,n,lastDate,lastQty,avgQty,cycle,daysUntil,nextDate};
+  });
+  items.sort((a,b)=>{const av=a.cycle==null?1e9:a.daysUntil,bv=b.cycle==null?1e9:b.daysUntil;return av-bv;});
+
+  const soonCount=items.filter(it=>it.cycle!=null&&it.daysUntil<=2).length;
+  function badge(it){
+    if(it.cycle==null)return{cls:'',dd:`${it.n}회`,st:'주기 미정',c:'var(--tx2)'};
+    const du=it.daysUntil;
+    if(du<0)return{cls:'urgent',dd:`+${-du}일`,st:'지났어요',c:'var(--danger)'};
+    if(du===0)return{cls:'urgent',dd:'D-0',st:'오늘',c:'var(--danger)'};
+    if(du<=2)return{cls:'soon',dd:`D-${du}`,st:'임박',c:'var(--accent)'};
+    if(du<=Math.max(3,Math.round(it.cycle*0.4)))return{cls:'',dd:`D-${du}`,st:'곧',c:'var(--sage-d)'};
+    return{cls:'',dd:`D-${du}`,st:'여유',c:'var(--tx2)'};
+  }
+  const md=dt=>`${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
+  const list=items.map(it=>{
+    const p=orderProducts.find(x=>x.id===it.pid),d=orderDests.find(x=>x.id===it.did);
+    const b=badge(it), unit=p?.unit||'개';
+    const cyc=it.cycle!=null?`${it.cycle}일 주기`:`${it.n}회 납품`;
+    const nextStr=it.nextDate?` · 예상 <b style="color:${b.c}">${md(it.nextDate)}</b>`:'';
+    return`<div class="fc-row ${b.cls}">
+      <div class="fc-main">
+        <div class="fc-title">${p?.name||'삭제된 상품'} <span class="dest-chip" style="${destChipStyle(d)}">${d?.name||'?'}</span></div>
+        <div class="fc-meta">${cyc} · 평균 ${fmt(it.avgQty)}${unit} · 마지막 ${it.lastDate.slice(5).replace('-','/')}${nextStr}</div>
+      </div>
+      <div class="fc-badge">
+        <div class="fc-dday" style="color:${b.c}">${b.dd}</div>
+        <div class="fc-status" style="color:${b.c}">${b.st}</div>
+      </div>
+    </div>`;
+  }).join('');
+  const note=`<div class="fc-note">과거 납품 간격으로 추정한 <b>다음 발주 예상일</b>이에요. 실제와 다를 수 있어요.${soonCount?`<br><span style="color:var(--accent);font-weight:700">⚡ 지금 챙길 발주 ${soonCount}건</span>`:''}</div>`;
+  el.innerHTML=note+list;
+}
+
+// 요일 패턴: 선택한 지점이 요일마다 어떤 상품을 얼마나 받는지
+function renderWeekdayPattern(){
+  const el=document.getElementById('chart-weekday'); if(!el)return;
+  const dests=sortKo(orderDests);
+  if(!dests.length){el.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">등록된 지점이 없습니다</div>';return;}
+  const fd=document.getElementById('order-filter-dest')?.value||'';
+  let sel=wkDestSel||fd||dests[0].id;
+  if(!dests.some(d=>d.id===sel))sel=dests[0].id;
+  wkDestSel=sel;
+
+  const chips=dests.map(d=>`<button class="dest-toggle-btn ${d.id===sel?'selected':''}" onclick="selectWeekdayDest('${d.id}')">${d.name}</button>`).join('');
+  const all=orderValidData().filter(o=>o.dest_id===sel&&o.order_date);
+  const WK=['월','화','수','목','금','토','일'], WKIDX=[1,2,3,4,5,6,0];
+  const todayDow=new Date().getDay();
+
+  const byDow={};
+  all.forEach(o=>{
+    const dow=parseLocalDate(o.order_date).getDay();
+    const m=(byDow[dow]=byDow[dow]||{});
+    const e=(m[o.product_id]=m[o.product_id]||{count:0,qty:0});
+    e.count++; e.qty+=o.qty;
+  });
+  const rows=WKIDX.map((dow,i)=>{
+    const m=byDow[dow]||{};
+    const items=Object.entries(m).map(([pid,v])=>{
+      const p=orderProducts.find(x=>x.id===pid);
+      return{name:p?.name||'?',unit:p?.unit||'개',avg:Math.round(v.qty/v.count),count:v.count};
+    }).sort((a,b)=>b.count-a.count||b.avg-a.avg);
+    const isToday=dow===todayDow;
+    const pills=items.length?items.map(it=>`<span class="wk-pill">${it.name} ~${fmt(it.avg)}${it.unit}</span>`).join(''):'<span class="wk-empty">—</span>';
+    return`<div class="wk-row ${isToday?'today':''}"><div class="wk-day">${WK[i]}</div><div class="wk-items">${pills}</div></div>`;
+  }).join('');
+
+  el.innerHTML=`<div class="wk-chips">${chips}</div>
+    <div class="fc-note">선택한 지점이 <b>요일마다</b> 보통 어떤 상품을 얼마나 받는지 보여줘요. (과거 납품 평균)</div>
+    ${all.length?rows:'<div style="padding:16px;text-align:center;font-size:13px;color:var(--tx2)">이 지점의 납품 기록이 없습니다</div>'}`;
+}
+function selectWeekdayDest(id){wkDestSel=id;renderWeekdayPattern();}
+
 function renderOrderHistory(){
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
   const fp=document.getElementById('order-filter-prod')?.value||'';
@@ -3064,8 +3200,12 @@ function renderOrderHistory(){
       <div style="font-size:11px;color:var(--tx2);margin-top:2px">조회 기간 기준</div>
     </div>`;
 
+  // 발주 예측·요일 패턴은 기간 필터와 무관하게 전체 이력 기준으로 항상 갱신
+  renderForecast();
+  renderWeekdayPattern();
+
   if(!data.length){
-    ['chart-by-prod','chart-monthly','chart-dest-prod','chart-prod-dest','chart-dest-pie'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
+    ['chart-by-prod','chart-monthly','chart-dest-pie'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
     document.getElementById('order-empty').style.display='';
     document.getElementById('order-tbody').innerHTML='';
     return;
@@ -3125,65 +3265,6 @@ function renderOrderHistory(){
           </g>`;
         }).join('')
       }</svg>`;
-    }
-  }
-
-  const destProdEl=document.getElementById('chart-dest-prod');
-  if(destProdEl){
-    const destRows=sortKo(orderDests).map(d=>{
-      const dOrders=data.filter(o=>o.dest_id===d.id);
-      if(!dOrders.length)return null;
-      const pm={};dOrders.forEach(o=>{const p=orderProducts.find(x=>x.id===o.product_id);if(p)pm[p.name]=(pm[p.name]||0)+o.qty;});
-      const sorted=Object.entries(pm).sort((a,b)=>b[1]-a[1]);
-      const top=sorted[0],bot=sorted[sorted.length-1];
-      return{d,top,bot,total:dOrders.reduce((s,o)=>s+o.qty,0)};
-    }).filter(Boolean);
-
-    if(!destRows.length){
-      destProdEl.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">데이터가 없습니다</div>`;
-    } else {
-      const cm=DEST_COLOR_MAP;
-      destProdEl.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>
-          <th style="padding:8px 10px;text-align:left;color:var(--tx2);font-size:11px;font-weight:600;border-bottom:2px solid var(--bd)">지점</th>
-          <th style="padding:8px 10px;text-align:center;color:var(--tx2);font-size:11px;font-weight:600;border-bottom:2px solid var(--bd)">총 납품</th>
-          <th style="padding:8px 10px;text-align:left;color:var(--tx2);font-size:11px;font-weight:600;border-bottom:2px solid var(--bd)">🏆 최다 상품</th>
-          <th style="padding:8px 10px;text-align:left;color:var(--tx2);font-size:11px;font-weight:600;border-bottom:2px solid var(--bd)">📉 최저 상품</th>
-        </tr></thead>
-        <tbody>${destRows.map(({d,top,bot,total})=>{
-          const cs=destChipStyle(d);
-          return`<tr>
-            <td style="padding:10px;border-bottom:1px solid var(--bd)"><span class="dest-chip" style="${cs}">${d.name}</span></td>
-            <td style="padding:10px;text-align:center;font-weight:700;border-bottom:1px solid var(--bd)">${fmt(total)}</td>
-            <td style="padding:10px;border-bottom:1px solid var(--bd)">
-              <span style="font-weight:600;color:var(--sage-d)">${top[0]}</span>
-              <span style="font-size:11px;color:var(--tx2);margin-left:4px">${fmt(top[1])}</span>
-            </td>
-            <td style="padding:10px;border-bottom:1px solid var(--bd)">
-              <span style="font-weight:500;color:var(--tx2)">${bot[0]}</span>
-              <span style="font-size:11px;color:var(--tx2);margin-left:4px">${fmt(bot[1])}</span>
-            </td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table>`;
-    }
-  }
-
-  const prodDestEl=document.getElementById('chart-prod-dest');
-  if(prodDestEl){
-    const targetProdId=fp||(top3.length?orderProducts.find(p=>p.name===top3[0][0])?.id:'');
-    const targetProd=orderProducts.find(p=>p.id===targetProdId);
-
-    const pdData=targetProdId?data.filter(o=>o.product_id===targetProdId):[];
-    const pdMap={};pdData.forEach(o=>{const d=orderDests.find(x=>x.id===o.dest_id);if(d)pdMap[d.name]=(pdMap[d.name]||0)+o.qty;});
-    const pdEntries=Object.entries(pdMap).sort((a,b)=>b[1]-a[1]);
-    if(pdEntries.length){
-      prodDestEl.innerHTML=hBar(pdEntries,i=>{
-        const d=orderDests.find(x=>x.name===pdEntries[i][0]);
-        const c=d?.color;return c?(DEST_COLOR_MAP[c]?.border||c):'var(--sage)';
-      });
-    } else {
-      prodDestEl.innerHTML=`<div style="padding:20px;text-align:center;font-size:12px;color:var(--tx2)">${targetProdId?'납품 내역 없음':'상품을 선택하면 지점별 수량을 비교할 수 있어요'}</div>`;
     }
   }
 
