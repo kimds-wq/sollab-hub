@@ -1584,8 +1584,8 @@ async function onWeekDrop(e,targetDate){
   const t=wfTasks.find(x=>x.id===_weekDragId);
   _weekDragId=null;
   if(!t||t.repeat)return;
-  if(t.due)t.due=targetDate;
-  else t.created_date=targetDate;
+  // 주간 뷰 배치 기준(예정일)과 일치하도록 예정일을 옮긴다 (마감일은 그대로 유지)
+  t.created_date=targetDate;
   persistLocal();sbUpsert('wf_tasks',t);
   renderToday();renderWeekView();
   showToast('업무 날짜가 변경됐습니다.');
@@ -1951,17 +1951,20 @@ function renderToday(){
     dateLabel.textContent=`${parseInt(m)}월 ${parseInt(d)}일 (${dowNames[dow]})`;
   }
 
-  // 일회성: created_date가 오늘이거나 이전 미완료(이월), due가 오늘인 것
+  // 일회성 업무가 "오늘 화면에 뜨는 날" = 예정일(created_date) 기준으로 통일
+  // 이월: 예정일이 지났는데 아직 미완료 (마감일 유무·과거 여부와 무관하게 절대 누락되지 않음)
   const carryTasks=wfTasks.filter(t=>
     !t.repeat&&!t.done&&
-    t.created_date&&t.created_date<td&&
-    (!t.due||t.due>=td)
+    t.created_date&&t.created_date<td
   );
+  const carryIds=new Set(carryTasks.map(t=>t.id));
   const todayTasks=[
-    ...wfTasks.filter(t=>!t.repeat&&(
-      t.due===td ||
-      (!t.due && t.created_date===td) ||
-      (!t.due && !t.created_date) // created_date 없는 구형 데이터 호환
+    // 오늘 업무: 예정일이 오늘이거나(구형은 예정일 없음=오늘 취급), 예정일은 달라도 마감이 오늘인 것
+    // 단, 이미 이월에 잡힌 업무는 제외해 중복 표시·중복 집계를 막는다
+    ...wfTasks.filter(t=>!t.repeat&&!carryIds.has(t.id)&&(
+      t.created_date===td ||
+      (!t.created_date) || // created_date 없는 구형 데이터 호환
+      t.due===td
     )),
     ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
     ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
@@ -2412,14 +2415,14 @@ async function toggleStage(projId,idx){
     renderProjects();
     if(wasOpen){document.getElementById('pbody-'+projId)?.classList.add('open');document.getElementById('pchev-'+projId)?.classList.add('open');}
   }
-  persistLocal();
+  persistLocal();sbUpsert('wf_projects',p);
 }
 async function markProjDone(id){
   const p=wfProjects.find(x=>x.id===id);if(!p)return;
   if(!confirm(`'${p.name}'을 완료 처리하고 아카이브로 이동할까요?`))return;
   p.done=true;
   renderProjects();renderArchive();showToast('완료 처리됐습니다.');
-  persistLocal();
+  persistLocal();sbUpsert('wf_projects',p);
 }
 async function deleteProj(id){
   if(!confirm('삭제할까요?'))return;
@@ -2500,6 +2503,8 @@ function renderWeekView(){
     const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);
     return d;
   });
+  // 이번 주 화면에 칸으로 보이는 날짜(월~금) 집합 — 이월 중복 방지에 사용
+  const weekDateSet=new Set(days.map(d=>d.toLocaleDateString('sv-SE')));
 
   const [,m0,d0]=days[0].toLocaleDateString('sv-SE').split('-');
   const [,m1,d1]=days[4].toLocaleDateString('sv-SE').split('-');
@@ -2543,13 +2548,11 @@ function renderWeekView(){
     const isHoliday=!!holidayName;
     const isRed=isHoliday;
     const allTasks=[
-      ...wfTasks.filter(t=>!t.repeat&&t.due===dateStr),
-      ...wfTasks.filter(t=>!t.repeat&&!t.due&&t.created_date===dateStr),
-      ...wfTasks.filter(t=>!t.repeat&&!t.due&&!t.created_date&&isToday),
+      ...wfTasks.filter(t=>!t.repeat&&(t.created_date===dateStr||(!t.created_date&&isToday))),
       ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
       ...wfRoutines.filter(r=>(!r.days||r.days.length===0||r.days.includes(dowIdx))),
     ];
-    const carry=isToday?wfTasks.filter(t=>!t.repeat&&!t.done&&t.created_date&&t.created_date<td&&(!t.due||t.due>=td)):[];
+    const carry=isToday?wfTasks.filter(t=>!t.repeat&&!t.done&&t.created_date&&t.created_date<td&&!weekDateSet.has(t.created_date)):[];
     const total=[...carry,...allTasks].length;
     const doneCount=[...carry,...allTasks].filter(t=>{
       if(t.repeat||t._isRoutine)return t.done_dates?.includes(dateStr)||routineDoneToday.includes(t.id);
@@ -2568,15 +2571,13 @@ function renderWeekView(){
     const dowIdx=date.getDay();
 
     const dayTasks=[
-      ...wfTasks.filter(t=>!t.repeat&&t.due===dateStr),
-      ...wfTasks.filter(t=>!t.repeat&&!t.due&&t.created_date===dateStr),
-      ...wfTasks.filter(t=>!t.repeat&&!t.due&&!t.created_date&&isToday),
+      ...wfTasks.filter(t=>!t.repeat&&(t.created_date===dateStr||(!t.created_date&&isToday))),
       ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
       ...wfRoutines.filter(r=>(!r.days||r.days.length===0||r.days.includes(dowIdx))).map(r=>({...r,_isRoutine:true})),
     ].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
 
     const carry=isToday?wfTasks.filter(t=>
-      !t.repeat&&!t.done&&t.created_date&&t.created_date<td&&(!t.due||t.due>=td)
+      !t.repeat&&!t.done&&t.created_date&&t.created_date<td&&!weekDateSet.has(t.created_date)
     ):[];
     const allTasks=[...carry,...dayTasks];
 
@@ -2724,7 +2725,7 @@ function renderArchive(){
   }).join('');
 }
 async function unarchive(id){
-  const p=wfProjects.find(x=>x.id===id);p.done=false;persistLocal();
+  const p=wfProjects.find(x=>x.id===id);p.done=false;persistLocal();sbUpsert('wf_projects',p);
   renderProjects();renderArchive();
 }
 
@@ -2958,20 +2959,45 @@ async function submitOrder(){
   if(!selectedDests.size){showToast('지점을 선택해주세요.');return;}
   const entries=Object.entries(orderQtyMap).filter(([,q])=>q>0);
   if(!entries.length){showToast('수량을 입력해주세요.');return;}
-  
-  const newItems=[];
+
+  // 같은 날짜·지점·상품 중복 감지 → 경고 후 합산 여부 확인
+  const dups=[];
   for(const did of selectedDests){
     for(const [pid,qty] of entries){
-      const row={id:uid(),product_id:pid,dest_id:did,qty:parseFloat(qty),memo:'',order_date:dateVal};
-      newItems.push(row);
-      orderList.unshift(row);
-      sbUpsert('orders',row);
+      const existing=orderList.find(o=>o.order_date===dateVal&&o.dest_id===did&&o.product_id===pid);
+      if(existing)dups.push({did,pid,qty:parseFloat(qty),existing});
+    }
+  }
+  if(dups.length){
+    const lines=dups.map(d=>{
+      const p=orderProducts.find(x=>x.id===d.pid),dst=orderDests.find(x=>x.id===d.did),u=p?.unit||'';
+      return `· ${dst?.name||'?'} ${p?.name||'?'}: 기존 ${fmt(d.existing.qty)}${u} + ${fmt(d.qty)} = ${fmt(d.existing.qty+d.qty)}${u}`;
+    }).join('\n');
+    if(!confirm(`이미 같은 날짜에 저장된 납품이 ${dups.length}건 있습니다.\n\n${lines}\n\n[확인] 기존 수량에 합산\n[취소] 저장하지 않음`))return;
+  }
+  const dupKeys=new Set(dups.map(d=>d.did+'\u0001'+d.pid));
+
+  const newItems=[];   // 새로 저장된 건 (미리보기·취소 대상)
+  let mergedCount=0;   // 기존 납품에 합산된 건
+  for(const did of selectedDests){
+    for(const [pid,qty] of entries){
+      const q=parseFloat(qty);
+      if(dupKeys.has(did+'\u0001'+pid)){
+        const ex=orderList.find(o=>o.order_date===dateVal&&o.dest_id===did&&o.product_id===pid);
+        if(ex){ex.qty+=q;sbUpsert('orders',ex);mergedCount++;}
+      } else {
+        const row={id:uid(),product_id:pid,dest_id:did,qty:q,memo:'',order_date:dateVal};
+        newItems.push(row);
+        orderList.unshift(row);
+        sbUpsert('orders',row);
+      }
     }
   }
   persistLocal();
 
   const wrap=document.getElementById('order-preview-wrap');
   const list=document.getElementById('order-preview-list');
+  if(newItems.length){
   wrap.style.display='';
   list.innerHTML=newItems.map(item=>{
     const p=orderProducts.find(x=>x.id===item.product_id);
@@ -2987,13 +3013,14 @@ async function submitOrder(){
       <button class="btn-cancel-order" onclick="cancelOrder('${item.id}')">취소</button>
     </div>`;
   }).join('')+list.innerHTML;
+  }
 
   orderQtyMap={};
   selectedDests.clear();
   renderDestButtons();
   renderProductCards();
   renderOrderHistory();
-  showToast(`${newItems.length}건 납품이 저장됐습니다.`);
+  showToast(mergedCount?(newItems.length?`${newItems.length}건 저장 · ${mergedCount}건 합산됐습니다.`:`${mergedCount}건이 기존 납품에 합산됐습니다.`):`${newItems.length}건 납품이 저장됐습니다.`);
 }
 function orderValidData(){
   const vp=new Set(orderProducts.map(p=>p.id)), vd=new Set(orderDests.map(d=>d.id));
@@ -3408,8 +3435,8 @@ async function cleanOrphanOrders(){
   const orphans=orderList.filter(o=>!validP.has(o.product_id)||!validD.has(o.dest_id));
   if(!orphans.length){showToast('정리할 내역이 없습니다.');return;}
   if(!confirm(`납품 내역 ${orphans.length}건을 삭제할까요? 되돌릴 수 없습니다.`))return;
-  const prevOrders=[...orderList];
   orderList=orderList.filter(o=>validP.has(o.product_id)&&validD.has(o.dest_id));
+  orphans.forEach(o=>sbDelete('orders',o.id));
   checkOrphanOrders();
   renderOrderHistory();
   persistLocal();
@@ -3493,7 +3520,7 @@ async function deleteProduct(id){
   if(deleteOrders)orderList=orderList.filter(o=>o.product_id!==id);
   renderOrderProducts();populateOrderSelects();renderOrderHistory();
   persistLocal();
-  if(deleteOrders)orderList.filter(o=>o.product_id===id).forEach(o=>sbDelete('orders',o.id));
+  if(deleteOrders)prevOrders.filter(o=>o.product_id===id).forEach(o=>sbDelete('orders',o.id));
   sbDelete('order_products',id);
   showToast(deleteOrders?`상품과 납품 내역 ${related}건을 삭제했습니다.`:'상품을 삭제했습니다.');
 }
@@ -3544,7 +3571,7 @@ async function deleteDest(id){
   if(deleteOrders)orderList=orderList.filter(o=>o.dest_id!==id);
   renderOrderDests();populateOrderSelects();renderDestButtons();renderOrderHistory();
   persistLocal();
-  if(deleteOrders)orderList.filter(o=>o.dest_id===id).forEach(o=>sbDelete('orders',o.id));
+  if(deleteOrders)prevOrders.filter(o=>o.dest_id===id).forEach(o=>sbDelete('orders',o.id));
   sbDelete('order_dests',id);
   showToast(deleteOrders?`지점과 납품 내역 ${related}건을 삭제했습니다.`:'지점을 삭제했습니다.');
   checkOrphanOrders();
