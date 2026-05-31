@@ -588,13 +588,18 @@ body.viewer-mode .task-check:hover{background:transparent!important}
 body.viewer-mode .btn-icon{display:none!important}
 body.viewer-mode .btn-undo{display:none!important}
 body.viewer-mode .drag-handle{display:none!important}
-body.viewer-mode .task-item[draggable]{pointer-events:auto}
-body.viewer-mode .task-item .task-check{pointer-events:none}
 body.viewer-mode #today-add-btn{display:none!important}
+body.viewer-mode #today-tpl-btn{display:none!important}
 body.viewer-mode #clear-done-btn{display:none!important}
 body.viewer-mode .week-add-btn{display:none!important}
 body.viewer-mode .week-task{cursor:default!important;pointer-events:none}
 body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
+/* 진행 상태 선택 버튼 (모달) */
+.status-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .15s}
+.status-btn:hover{border-color:var(--sage-m)}
+.status-btn.selected{background:var(--sage);border-color:var(--sage);color:#fff}
+/* 막힘 상태 업무 강조 */
+.task-item.blocked-item{border-left:3px solid var(--danger)}
 </style>
 </head>
 <body>
@@ -657,6 +662,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       <span class="sec-title" id="today-date-label"></span>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn btn-ghost btn-sm" id="clear-done-btn" onclick="clearDoneTasks()" style="display:none;font-size:12px">✓ 완료 정리</button>
+        <button class="btn btn-ghost btn-sm" id="today-tpl-btn" onclick="openTemplateModal()" style="font-size:12px">⊞ 템플릿</button>
         <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
       </div>
     </div>
@@ -975,6 +981,22 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </select>
       <input class="form-input" type="date" id="tm-task-date-custom" style="display:none;margin-top:6px">
     </div>
+    <div class="form-group" id="tm-status-row">
+      <label class="form-label">진행 상태</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="tm-status-group">
+        <button type="button" class="status-btn" data-status="todo" onclick="selectTaskStatus('todo')">할 일</button>
+        <button type="button" class="status-btn" data-status="doing" onclick="selectTaskStatus('doing')">진행 중</button>
+        <button type="button" class="status-btn" data-status="review" onclick="selectTaskStatus('review')">검토 요청</button>
+        <button type="button" class="status-btn" data-status="blocked" onclick="selectTaskStatus('blocked')">막힘</button>
+      </div>
+    </div>
+    <div class="form-group" id="tm-link-row">
+      <label class="form-label">연결 <span style="font-weight:400;color:var(--tx2)">(선택 — 프로젝트·레시피)</span></label>
+      <div style="display:flex;gap:6px">
+        <select class="form-input" id="tm-project" style="flex:1;font-size:13px"><option value="">프로젝트 없음</option></select>
+        <select class="form-input" id="tm-recipe" style="flex:1;font-size:13px"><option value="">레시피 없음</option></select>
+      </div>
+    </div>
     <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
     <div class="form-group">
       <label class="form-label">담당자</label>
@@ -1208,6 +1230,40 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">취소</button><button class="btn btn-primary" onclick="saveSettings()">저장</button></div>
 </div></div>
 
+<div class="overlay" id="template-modal"><div class="modal modal-lg">
+  <div class="modal-header"><span class="modal-title" id="template-modal-title">업무 템플릿</span><button class="btn-icon" onclick="closeModal('template-modal')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="modal-body">
+    <!-- 목록 화면 -->
+    <div id="tpl-list-view">
+      <p style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.5">자주 반복하는 업무 묶음을 템플릿으로 저장해두면, 한 번에 여러 업무를 생성할 수 있어요. (예: 신메뉴 개발 단계)</p>
+      <div id="tpl-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;border:1.5px dashed var(--bd)" onclick="tplStartCreate()">+ 새 템플릿 만들기</button>
+    </div>
+    <!-- 편집 화면 -->
+    <div id="tpl-edit-view" style="display:none">
+      <div class="form-group"><label class="form-label">템플릿 이름 *</label><input class="form-input" id="tpl-name" placeholder="예: 신메뉴 개발"></div>
+      <label class="form-label">단계(업무) 목록</label>
+      <div id="tpl-items" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;border:1.5px dashed var(--bd)" onclick="tplAddItem()">+ 단계 추가</button>
+    </div>
+  </div>
+  <div class="modal-footer" id="tpl-list-footer"><button class="btn btn-ghost" onclick="closeModal('template-modal')">닫기</button></div>
+  <div class="modal-footer" id="tpl-edit-footer" style="display:none"><button class="btn btn-ghost" onclick="tplBackToList()">취소</button><button class="btn btn-primary" onclick="tplSaveTemplate()">저장</button></div>
+</div></div>
+
+<div class="overlay" id="template-apply-modal"><div class="modal">
+  <div class="modal-header"><span class="modal-title">템플릿 적용</span><button class="btn-icon" onclick="closeModal('template-apply-modal')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="modal-body">
+    <p style="font-size:13px;color:var(--tx)" id="tpl-apply-desc"></p>
+    <div class="form-group" style="margin-top:12px"><label class="form-label">시작 기준일</label>
+      <input class="form-input" type="date" id="tpl-apply-base" onchange="renderTplApplyPreview()">
+      <p style="font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5">각 단계의 "일차"에 따라 이 날짜부터 순서대로 배치됩니다.</p>
+    </div>
+    <div id="tpl-apply-preview" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('template-apply-modal')">취소</button><button class="btn btn-primary" onclick="tplApplyConfirm()">업무 생성</button></div>
+</div></div>
+
 <div class="toast" id="toast"><span class="toast-msg"></span><button class="toast-undo" id="toast-undo-btn" onclick="doToastUndo()" style="display:none">되돌리기</button></div>
 
 <script>
@@ -1359,6 +1415,21 @@ let projStages=[];
 const PW_ADMIN='921210', PW_VIEWER='0000';
 let appRole=null; // 'admin' | 'viewer'
 let orderRole=null; // Order Flow 내부 호환용
+
+// ── 업무 진행 상태 메타 (①)
+const TASK_STATUS={
+  todo:   {label:'할 일',   color:'var(--tx2)',   bg:'var(--cream)',    bd:'var(--bd)'},
+  doing:  {label:'진행 중', color:'var(--sage-d)', bg:'var(--sage-l)',   bd:'var(--sage-m)'},
+  review: {label:'검토 요청',color:'var(--accent)', bg:'var(--accent-l)', bd:'var(--accent)'},
+  blocked:{label:'막힘',    color:'var(--danger)', bg:'var(--danger-l)', bd:'var(--danger)'},
+  done:   {label:'완료',    color:'var(--sage-d)', bg:'var(--sage-l)',   bd:'var(--sage)'}
+};
+const STATUS_CYCLE=['todo','doing','review','blocked']; // 뱃지 탭 시 순환(완료는 체크박스로)
+// 업무의 현재 상태를 반환 (하위호환: status 없으면 done 여부로 보정)
+function getTaskStatus(t){
+  if(t.done)return 'done';
+  return (t.status&&TASK_STATUS[t.status]&&t.status!=='done')?t.status:'todo';
+}
 
 function appLogin(){
   const pw=document.getElementById('app-pw').value;
@@ -1523,6 +1594,7 @@ function sortMembers(members){
 }
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
+let taskTemplates=JSON.parse(localStorage.getItem('hub_task_templates')||'[]'); // 업무 템플릿(④)
 function addVersionNote(){
   const ta=document.getElementById('ri-memo');
   if(!ta)return;
@@ -1540,6 +1612,8 @@ function showWeekTaskDetail(id,dateStr){
   const done=isRepeat?(t.done_dates?.includes(dateStr)||routineDoneToday.includes(id)):t.done;
   const toggleFn=isRepeat?`toggleRoutineDoneDate('${id}','${dateStr}')`:`toggleTask('${id}')`;
   const members=sortMembers(t.members||[]);
+  const canT=appRole==='admin';
+  const stMeta=TASK_STATUS[getTaskStatus(t)];
 
   const existing=document.getElementById('week-task-popup');
   if(existing)existing.remove();
@@ -1552,15 +1626,17 @@ function showWeekTaskDetail(id,dateStr){
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:15px;line-height:1.4;word-break:keep-all">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:6px;padding:1px 6px;margin-left:6px">루틴</span>':''}</div>
         ${t.start_time?`<div style="font-size:12px;color:var(--tx2);margin-top:4px">⏰ ${t.start_time}${t.end_time?' ~ '+t.end_time:''}</div>`:''}
+        ${(!isRepeat||t.project_id||t.recipe_id||getTaskStatus(t)!=='todo')?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;align-items:center">${!isRepeat&&!done?`<span style="font-size:11px;font-weight:600;color:${stMeta.color};background:${stMeta.bg};border:1px solid ${stMeta.bd};border-radius:6px;padding:2px 8px">${stMeta.label}</span>`:''}${linkBadgeHtml(t)}</div>`:''}
         ${members.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${members.map(m=>memberTag(m)).join('')}</div>`:''}
         ${t.memo?`<div style="font-size:13px;color:var(--tx2);margin-top:8px;padding:8px;background:var(--cream);border-radius:6px;line-height:1.5;white-space:pre-wrap">${t.memo}</div>`:''}
       </div>
       <button onclick="document.getElementById('week-task-popup').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx2);flex-shrink:0;line-height:1">×</button>
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="${toggleFn};document.getElementById('week-task-popup').remove()" style="flex:1;padding:10px;border-radius:8px;border:none;background:${done?'var(--bd)':'var(--sage)'};color:${done?'var(--tx2)':'#fff'};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+      ${canT?`<button onclick="${toggleFn};document.getElementById('week-task-popup').remove()" style="flex:1;padding:10px;border-radius:8px;border:none;background:${done?'var(--bd)':'var(--sage)'};color:${done?'var(--tx2)':'#fff'};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
         ${done?'<span>↩ 완료 취소</span>':'<span>✓ 완료</span>'}
-      </button>
+      </button>`:`<div style="flex:1;padding:10px;border-radius:8px;background:var(--cream);color:var(--tx2);font-size:13px;text-align:center;line-height:1.4">보기 전용</div>`}
+      ${(!isRepeat&&canT&&!done)?`<button onclick="cycleTaskStatus('${id}');showWeekTaskDetail('${id}','${dateStr}')" style="padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">상태 ↻</button>`:''}
       ${appRole==='admin'?`<button onclick="editTask('${id}');document.getElementById('week-task-popup').remove()" style="padding:10px 16px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:14px;cursor:pointer;font-family:inherit">수정</button>`:''}
     </div>
   `;
@@ -1592,18 +1668,7 @@ async function onWeekDrop(e,targetDate){
 }
 
 function openTaskModalForDate(dateStr){
-  openTaskModal();
-  // 날짜 선택을 해당 날짜로 설정
-  setTimeout(()=>{
-    const td=TODAY();
-    const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-    const tmrStr=tomorrow.toLocaleDateString('sv-SE');
-    const sel=document.getElementById('tm-task-date');
-    const custom=document.getElementById('tm-task-date-custom');
-    if(dateStr===td){sel.value='today';custom.style.display='none';}
-    else if(dateStr===tmrStr){sel.value='tomorrow';custom.style.display='none';}
-    else{sel.value='custom';custom.value=dateStr;custom.style.display='';}
-  },50);
+  openTaskModal(null,dateStr);
 }
 
 function setTheme(t){
@@ -1624,6 +1689,136 @@ function applyStoredTheme(){
 applyStoredTheme();
 
 function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
+
+// ── 업무 템플릿 (④)
+let _tplEditing=null, _tplApplyId=null;
+function saveTaskTemplates(){localStorage.setItem('hub_task_templates',JSON.stringify(taskTemplates));}
+function openTemplateModal(){tplBackToList();openModal('template-modal');}
+function tplBackToList(){
+  document.getElementById('tpl-list-view').style.display='';
+  document.getElementById('tpl-edit-view').style.display='none';
+  document.getElementById('tpl-list-footer').style.display='';
+  document.getElementById('tpl-edit-footer').style.display='none';
+  document.getElementById('template-modal-title').textContent='업무 템플릿';
+  renderTemplateList();
+}
+function renderTemplateList(){
+  const wrap=document.getElementById('tpl-list');
+  if(!taskTemplates.length){wrap.innerHTML='<p style="font-size:13px;color:var(--tx2);text-align:center;padding:16px 0">저장된 템플릿이 없습니다.</p>';return;}
+  wrap.innerHTML=taskTemplates.map(t=>`
+    <div style="border:1px solid var(--bd);border-radius:10px;padding:12px;display:flex;align-items:center;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">${t.name}</div>
+        <div style="font-size:12px;color:var(--tx2);margin-top:2px">${t.items.length}개 단계</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="tplApply('${t.id}')">적용</button>
+      <button class="btn-icon" onclick="tplEditTemplate('${t.id}')">${ICO_EDIT}</button>
+      <button class="btn-icon" onclick="tplDeleteTemplate('${t.id}')">${ICO_DEL}</button>
+    </div>`).join('');
+}
+function tplStartCreate(){
+  _tplEditing={id:uid(),name:'',items:[{name:'',dayOffset:0,members:'',memo:''}]};
+  tplOpenEdit(false);
+}
+function tplEditTemplate(id){
+  const t=taskTemplates.find(x=>x.id===id);if(!t)return;
+  _tplEditing=JSON.parse(JSON.stringify(t));
+  if(!_tplEditing.items||!_tplEditing.items.length)_tplEditing.items=[{name:'',dayOffset:0,members:'',memo:''}];
+  tplOpenEdit(true);
+}
+function tplOpenEdit(isEdit){
+  document.getElementById('tpl-list-view').style.display='none';
+  document.getElementById('tpl-edit-view').style.display='';
+  document.getElementById('tpl-list-footer').style.display='none';
+  document.getElementById('tpl-edit-footer').style.display='';
+  document.getElementById('template-modal-title').textContent=isEdit?'템플릿 수정':'새 템플릿';
+  document.getElementById('tpl-name').value=_tplEditing.name||'';
+  renderTplItems();
+}
+function renderTplItems(){
+  const wrap=document.getElementById('tpl-items');
+  wrap.innerHTML=_tplEditing.items.map((it,idx)=>`
+    <div style="border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--cream)">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;color:var(--sage-d);flex-shrink:0">단계 ${idx+1}</span>
+        <input class="form-input" style="flex:1;font-size:13px" placeholder="업무명" value="${(it.name||'').replace(/"/g,'&quot;')}" oninput="_tplEditing.items[${idx}].name=this.value">
+        <button class="btn-icon" onclick="tplRemoveItem(${idx})" style="flex-shrink:0">${ICO_DEL}</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><span style="font-size:12px;color:var(--tx2)">D+</span><input class="form-input" type="number" min="0" style="width:54px;font-size:13px" value="${it.dayOffset||0}" oninput="_tplEditing.items[${idx}].dayOffset=parseInt(this.value)||0"></div>
+        <input class="form-input" style="flex:1;font-size:13px" placeholder="담당자 (쉼표 구분)" value="${(it.members||'').replace(/"/g,'&quot;')}" oninput="_tplEditing.items[${idx}].members=this.value">
+      </div>
+    </div>`).join('');
+}
+function tplAddItem(){
+  const last=_tplEditing.items[_tplEditing.items.length-1];
+  _tplEditing.items.push({name:'',dayOffset:last?(last.dayOffset||0):0,members:'',memo:''});
+  renderTplItems();
+}
+function tplRemoveItem(idx){
+  _tplEditing.items.splice(idx,1);
+  if(!_tplEditing.items.length)_tplEditing.items=[{name:'',dayOffset:0,members:'',memo:''}];
+  renderTplItems();
+}
+function tplSaveTemplate(){
+  const name=document.getElementById('tpl-name').value.trim();
+  if(!name){showToast('템플릿 이름을 입력해주세요.');return;}
+  const items=_tplEditing.items.filter(it=>(it.name||'').trim());
+  if(!items.length){showToast('단계를 1개 이상 입력해주세요.');return;}
+  _tplEditing.name=name;_tplEditing.items=items;
+  const exist=taskTemplates.find(t=>t.id===_tplEditing.id);
+  if(exist)Object.assign(exist,_tplEditing);
+  else taskTemplates.push(_tplEditing);
+  saveTaskTemplates();
+  tplBackToList();
+  showToast('템플릿을 저장했습니다.');
+}
+function tplDeleteTemplate(id){
+  if(!confirm('이 템플릿을 삭제할까요?'))return;
+  taskTemplates=taskTemplates.filter(t=>t.id!==id);
+  saveTaskTemplates();
+  renderTemplateList();
+  showToast('템플릿을 삭제했습니다.');
+}
+function tplApply(id){
+  const t=taskTemplates.find(x=>x.id===id);if(!t)return;
+  _tplApplyId=id;
+  document.getElementById('tpl-apply-desc').textContent=`"${t.name}" — ${t.items.length}개 단계의 업무를 생성합니다.`;
+  document.getElementById('tpl-apply-base').value=TODAY();
+  renderTplApplyPreview();
+  closeModal('template-modal');
+  openModal('template-apply-modal');
+}
+function renderTplApplyPreview(){
+  const t=taskTemplates.find(x=>x.id===_tplApplyId);if(!t)return;
+  const base=document.getElementById('tpl-apply-base').value||TODAY();
+  const wrap=document.getElementById('tpl-apply-preview');
+  const dowNames=['일','월','화','수','목','금','토'];
+  wrap.innerHTML=t.items.map(it=>{
+    const d=parseLocalDate(base);d.setDate(d.getDate()+(it.dayOffset||0));
+    const [,m,dd]=d.toLocaleDateString('sv-SE').split('-');
+    return `<div style="font-size:12px;color:var(--tx2);display:flex;gap:8px"><span style="color:var(--sage-d);font-weight:600;flex-shrink:0">${parseInt(m)}/${parseInt(dd)}(${dowNames[d.getDay()]})</span><span style="color:var(--tx)">${it.name}</span></div>`;
+  }).join('');
+}
+function tplApplyConfirm(){
+  const t=taskTemplates.find(x=>x.id===_tplApplyId);if(!t)return;
+  const base=document.getElementById('tpl-apply-base').value||TODAY();
+  let maxSort=Math.max(0,...wfTasks.map(x=>x.sort_order||0));
+  t.items.forEach(it=>{
+    const d=parseLocalDate(base);d.setDate(d.getDate()+(it.dayOffset||0));
+    const cd=d.toLocaleDateString('sv-SE');
+    const row={id:uid(),name:it.name,repeat:false,days:[],
+      start_time:'',end_time:'',due:'',
+      members:(it.members||'').split(',').map(s=>s.trim()).filter(Boolean),
+      memo:it.memo||'',status:'todo',project_id:null,recipe_id:null,
+      done:false,created_date:cd,sort_order:++maxSort};
+    wfTasks.push(row);sbUpsert('wf_tasks',row);
+  });
+  persistLocal();
+  closeModal('template-apply-modal');
+  renderToday();renderWeekView();
+  showToast(`${t.items.length}개 업무를 생성했습니다.`);
+}
 
 // 구형 wfRoutines → wf_tasks.repeat 자동 마이그레이션
 async function migrateRoutines(){
@@ -1661,7 +1856,7 @@ function toggleRoutineDoneDate(id,dateStr){
 function getTaskDate(){
   const sel=document.getElementById('tm-task-date').value;
   if(sel==='today')return TODAY();
-  if(sel==='tomorrow'){const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().slice(0,10);}
+  if(sel==='tomorrow'){const d=new Date();d.setDate(d.getDate()+1);return d.toLocaleDateString('sv-SE');}
   return document.getElementById('tm-task-date-custom').value||TODAY();
 }
 function onTaskDateChange(){
@@ -1669,7 +1864,7 @@ function onTaskDateChange(){
   const custom=document.getElementById('tm-task-date-custom');
   if(sel==='custom'){
     custom.style.display='';
-    if(!custom.value){const d=new Date();d.setDate(d.getDate()+1);custom.value=d.toISOString().slice(0,10);}
+    if(!custom.value){const d=new Date();d.setDate(d.getDate()+1);custom.value=d.toLocaleDateString('sv-SE');}
   } else {
     custom.style.display='none';
   }
@@ -1842,6 +2037,36 @@ window.addEventListener('resize', applyMobileLayout);
 // ── 반복 업무 토글
 let _taskRepeat=false;
 let _taskDays=[];
+let _taskStatus='todo'; // 모달에서 선택 중인 진행 상태
+
+// 모달 진행 상태 버튼 선택 (①)
+function selectTaskStatus(s){
+  _taskStatus=s;
+  document.querySelectorAll('#tm-status-group .status-btn').forEach(b=>{
+    b.classList.toggle('selected',b.dataset.status===s);
+  });
+}
+// 모달의 프로젝트/레시피 연결 드롭다운 채우기 (②)
+function populateTaskLinks(projId,recId){
+  const projSel=document.getElementById('tm-project');
+  const recSel=document.getElementById('tm-recipe');
+  if(projSel){
+    const active=wfProjects.filter(p=>!p.done);
+    projSel.innerHTML='<option value="">프로젝트 없음</option>'+
+      active.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+    // 연결된 프로젝트가 완료/삭제된 경우에도 표시 유지
+    if(projId&&!active.find(p=>p.id===projId)){
+      const p=wfProjects.find(x=>x.id===projId);
+      if(p)projSel.innerHTML+=`<option value="${p.id}">${p.name} (완료)</option>`;
+    }
+    projSel.value=projId||'';
+  }
+  if(recSel){
+    recSel.innerHTML='<option value="">레시피 없음</option>'+
+      recipes.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+    recSel.value=recId||'';
+  }
+}
 
 function toggleTaskRepeat(){
   _taskRepeat=!_taskRepeat;
@@ -1885,12 +2110,14 @@ function initRepeatState(repeat,days){
   const label=document.getElementById('tm-repeat-label');
   const daysWrap=document.getElementById('tm-repeat-days-wrap');
   const dueRow=document.getElementById('tm-due-row');
+  const statusRow=document.getElementById('tm-status-row');
   document.querySelectorAll('.day-toggle-btn').forEach(b=>b.classList.remove('selected'));
   if(repeat){
     _taskRepeat=true;_taskDays=days||[];
     track.style.background='var(--sage)';thumb.style.left='18px';
     label.textContent='ON — 루틴';
     daysWrap.style.display='';dueRow.style.display='none';
+    if(statusRow)statusRow.style.display='none';
     _taskDays.forEach(d=>{
       const btn=document.querySelector(`.day-toggle-btn[data-day="${d}"]`);
       if(btn)btn.classList.add('selected');
@@ -1899,6 +2126,7 @@ function initRepeatState(repeat,days){
     track.style.background='var(--bd)';thumb.style.left='2px';
     label.textContent='OFF — 일회성 업무';
     daysWrap.style.display='none';dueRow.style.display='';
+    if(statusRow)statusRow.style.display='';
   }
 }
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
@@ -2038,8 +2266,10 @@ function renderToday(){
         <div style="flex:1;min-width:0">
           <div class="task-title${done?' done-txt':''}">${t.name}<span class="carry-badge">${daysAgo}일 전</span></div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
+            ${statusBadgeHtml(t)}
             ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
             ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
+            ${linkBadgeHtml(t)}
           </div>
           ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
         </div>
@@ -2066,17 +2296,19 @@ function renderToday(){
       `<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>t.days.includes(i)).join('·')}</span>`:'';
     const sortedMembers=sortMembers(t.members||[]);
     const draggable=!isRepeat&&appRole==='admin';
-    return`<div class="task-item${done?' done-item':''}" ${draggable?`draggable="true" data-id="${t.id}" ondragstart="onDragStart(event,'${t.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${t.id}')" ondragend="onDragEnd(event)"`:''}> 
+    return`<div class="task-item${done?' done-item':''}${getTaskStatus(t)==='blocked'?' blocked-item':''}" ${draggable?`draggable="true" data-id="${t.id}" ondragstart="onDragStart(event,'${t.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${t.id}')" ondragend="onDragEnd(event)"`:''}> 
       ${draggable?`<div class="drag-handle" title="드래그하여 순서 변경">${ICO_DRAG}</div>`:''}
       <div class="priority-dot"></div>
       <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
       <div style="flex:1;min-width:0">
         <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">루틴</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
+          ${statusBadgeHtml(t)}
           ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
           ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
           ${repeatDays}
           ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
+          ${linkBadgeHtml(t)}
         </div>
         ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
       </div>
@@ -2241,10 +2473,49 @@ function initTouchDrag(){
   list.addEventListener('touchcancel',()=>_cleanTouchDrag(),{passive:true});
 }
 
+// 상태 뱃지 HTML — 탭하면 다음 상태로 순환 (①). 루틴/완료는 표시 안 함
+function statusBadgeHtml(t,small){
+  if(t.repeat||t._isRoutine)return '';
+  const st=getTaskStatus(t);
+  if(st==='done')return '';
+  const m=TASK_STATUS[st];
+  const editable=appRole==='admin';
+  const fs=small?'8px':'10px';
+  const pad=small?'0 4px':'1px 7px';
+  return `<span ${editable?`onclick="cycleTaskStatus('${t.id}',event)"`:''} title="${editable?'탭하여 상태 변경':''}" style="display:inline-block;font-size:${fs};font-weight:600;color:${m.color};background:${m.bg};border:1px solid ${m.bd};border-radius:6px;padding:${pad};line-height:1.4;${editable?'cursor:pointer':''}">${m.label}</span>`;
+}
+// 연결(프로젝트/레시피) 뱃지 HTML (②)
+function linkBadgeHtml(t,small){
+  let out='';
+  const fs=small?'8px':'10px';
+  const pad=small?'0 4px':'1px 6px';
+  if(t.project_id){
+    const p=wfProjects.find(x=>x.id===t.project_id);
+    if(p)out+=`<span style="font-size:${fs};color:var(--sage-d);background:var(--sage-l);border-radius:6px;padding:${pad};line-height:1.4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle">📁 ${p.name}</span>`;
+  }
+  if(t.recipe_id){
+    const r=recipes.find(x=>x.id===t.recipe_id);
+    if(r)out+=`<span style="font-size:${fs};color:var(--accent);background:var(--accent-l);border-radius:6px;padding:${pad};line-height:1.4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle">🧪 ${r.name}</span>`;
+  }
+  return out;
+}
 async function toggleTask(id){
   const t=wfTasks.find(x=>x.id===id);if(!t)return;
-
   t.done=!t.done;
+  t.status=t.done?'done':'todo'; // 완료/해제 시 상태 동기화
+  renderToday();
+  if(workView==='week')renderWeekView();
+  persistLocal();sbUpsert('wf_tasks',t);
+}
+// 카드의 상태 뱃지 탭 → 다음 진행 상태로 순환 (①)
+async function cycleTaskStatus(id,ev){
+  if(ev)ev.stopPropagation();
+  const t=wfTasks.find(x=>x.id===id);if(!t)return;
+  if(t.done){showToast('완료된 업무입니다. 먼저 완료를 취소하세요.');return;}
+  const cur=getTaskStatus(t);
+  const idx=STATUS_CYCLE.indexOf(cur);
+  t.status=STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
+  t.done=false;
   renderToday();
   if(workView==='week')renderWeekView();
   persistLocal();sbUpsert('wf_tasks',t);
@@ -2280,7 +2551,7 @@ async function deleteTask(id){
   persistLocal();sbDelete('wf_tasks',id);
   showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
 }
-function openTaskModal(id){
+function openTaskModal(id,presetDate){
   editIds.task=id||null;
   fillTimeSelects();
   const t=id?wfTasks.find(x=>x.id===id):null;
@@ -2291,22 +2562,25 @@ function openTaskModal(id){
   document.getElementById('tm-due').value=t?.due||'';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   renderMemberChips('tm-member-chips','tm-members');
-  // 날짜 초기화
-  const cd=t?.created_date||TODAY();
+  // 날짜 초기화 (수정=기존 예정일 / 신규=눌린 날짜(presetDate) / 그 외=오늘)
+  const cd=t?.created_date||presetDate||TODAY();
   const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
   const tmrStr=tomorrow.toLocaleDateString('sv-SE');
   const customEl=document.getElementById('tm-task-date-custom');
   const dateSelEl=document.getElementById('tm-task-date');
-  if(!t){
+  if(cd===TODAY()){
     dateSelEl.value='today';customEl.style.display='none';customEl.value='';
-  } else if(cd===TODAY()){
-    dateSelEl.value='today';customEl.style.display='none';
   } else if(cd===tmrStr){
-    dateSelEl.value='tomorrow';customEl.style.display='none';
+    dateSelEl.value='tomorrow';customEl.style.display='none';customEl.value='';
   } else {
     dateSelEl.value='custom';customEl.value=cd;customEl.style.display='';
   }
   document.getElementById('tm-memo').value=t?.memo||'';
+  // 진행 상태(①): 완료 업무는 todo로 표시하되 done 플래그는 저장 시 보존
+  const curStatus=getTaskStatus(t||{});
+  selectTaskStatus(curStatus==='done'?'todo':curStatus);
+  // 프로젝트/레시피 연결(②)
+  populateTaskLinks(t?.project_id||'',t?.recipe_id||'');
   initRepeatState(t?.repeat||false,t?.days||[]);
   openModal('task-modal');
 }
@@ -2317,6 +2591,8 @@ async function saveTask(){
   if(!name){showToast('업무명을 입력해주세요.');return;}
   const _st=document.getElementById('tm-start-time').value,_et=document.getElementById('tm-end-time').value;
   if(_st&&_et&&_et<=_st){showToast('종료 시간은 시작 시간보다 늦어야 합니다.');return;}
+  const prevTask=editIds.task?wfTasks.find(x=>x.id===editIds.task):null;
+  const done=prevTask?(prevTask.done||false):false;
   const row={id:editIds.task||uid(),name,
     repeat:_taskRepeat,
     days:_taskRepeat?[..._taskDays]:[],
@@ -2325,9 +2601,12 @@ async function saveTask(){
     due:_taskRepeat?'':document.getElementById('tm-due').value,
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
-    done:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.done||false):false,
-    created_date:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.created_date||TODAY()):getTaskDate(),
-    sort_order:editIds.task?(wfTasks.find(x=>x.id===editIds.task)?.sort_order??9999):(Math.max(0,...wfTasks.map(t=>t.sort_order||0))+1)};
+    status:_taskRepeat?'':(done?'done':_taskStatus),
+    project_id:document.getElementById('tm-project').value||null,
+    recipe_id:document.getElementById('tm-recipe').value||null,
+    done:done,
+    created_date:editIds.task?(prevTask?.created_date||TODAY()):getTaskDate(),
+    sort_order:editIds.task?(prevTask?.sort_order??9999):(Math.max(0,...wfTasks.map(t=>t.sort_order||0))+1)};
   if(editIds.task){Object.assign(wfTasks.find(x=>x.id===editIds.task)||{},row);}
   else{wfTasks.push(row);}
   persistLocal();sbUpsert('wf_tasks',row);
@@ -2595,8 +2874,10 @@ function renderWeekView(){
           <div style="width:12px;height:12px;min-width:12px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;margin-top:1px;flex-shrink:0">${done?ICO_CHK:''}</div>
           <div style="flex:1;min-width:0">
             <div class="week-task-name${done?' done-txt':''}">${t.name}${isRepeat&&!t._isRoutine?'':isRepeat?'<span style="font-size:8px;background:var(--sage-l);color:var(--sage-d);border-radius:3px;padding:0 2px;margin-left:2px">루틴</span>':''}</div>
+            ${(!isRepeat&&!done&&getTaskStatus(t)!=='todo')?`<div style="margin-top:2px">${statusBadgeHtml(t,true)}</div>`:''}
             ${t.start_time?`<div class="week-task-meta">${t.start_time}</div>`:''}
             ${members.length?`<div class="week-task-meta">${members.map(m=>m).join(', ')}</div>`:''}
+            ${(!isRepeat&&(t.project_id||t.recipe_id))?`<div style="margin-top:2px;display:flex;gap:2px;flex-wrap:wrap">${linkBadgeHtml(t,true)}</div>`:''}
           </div>
         </div>
       </div>`;
