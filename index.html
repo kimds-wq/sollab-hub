@@ -1299,7 +1299,7 @@ async function loadAll(){
   empties.forEach(el=>{if(el.style.display!=='none')el.innerHTML='<div style="font-size:24px;animation:pulse 1s infinite">⋯</div><p style="color:var(--tx2);font-size:13px">불러오는 중...</p>';});
   if(!_sb){loadLocal();normalizeCostIds();setSyncStatus('local');renderAll();restoreTabState();return;}
   try{
-    const[tk,pj,rt,op,od,ol,co,rc]=await Promise.all([
+    const[tk,pj,rt,op,od,ol,co,rc,tp]=await Promise.all([
       _sb.from('wf_tasks').select('*').order('sort_order',{nullsFirst:false}).order('created_at'),
       _sb.from('wf_projects').select('*').order('created_at'),
       _sb.from('wf_routines').select('*').order('created_at'),
@@ -1308,16 +1308,20 @@ async function loadAll(){
       _sb.from('orders').select('*').order('created_at',{ascending:false}),
       _sb.from('costs').select('*').order('name'),
       _sb.from('recipes').select('*').order('name'),
+      _sb.from('wf_templates').select('*').order('created_at'),
     ]);
     wfTasks=tk.data||[]; wfProjects=pj.data||[]; wfRoutines=rt.data||[];
     orderProducts=op.data||[]; orderDests=od.data||[]; orderList=ol.data||[];
     costs=co.data||[]; recipes=rc.data||[];
+    // wf_templates: 테이블 미생성 시 error 객체만 반환(throw 아님) → 기존 로컬 유지
+    if(tp&&tp.data)taskTemplates=tp.data;
     normalizeCostIds();
     persistLocal();
     setSyncStatus('ok');
     renderAll();
     autoCleanDone();
     migrateRoutines();
+    migrateTemplates();
     subscribeRt();
     restoreTabState();
   }catch(e){
@@ -1332,7 +1336,7 @@ function subscribeRt(){
   if(!_sb)return;
   if(_rt)_sb.removeChannel(_rt);
   _rt=_sb.channel('hub-realtime');
-  const tables=['wf_tasks','wf_projects','wf_routines','order_products','order_dests','orders','costs','recipes'];
+  const tables=['wf_tasks','wf_projects','wf_routines','order_products','order_dests','orders','costs','recipes','wf_templates'];
   tables.forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>reloadTable(t)));
   _rt.subscribe(s=>{
     if(s==='SUBSCRIBED')setSyncStatus('ok');
@@ -1357,6 +1361,7 @@ async function reloadTable(t){
   else if(t==='orders'){orderList=data;persistLocal();renderOrderHistory();}
   else if(t==='costs'){costs=data;normalizeCostIds();persistLocal();renderCosts();renderRecipeDev();renderRecipeDone();}
   else if(t==='recipes'){recipes=data;normalizeCostIds();persistLocal();renderRecipeDev();renderRecipeDone();}
+  else if(t==='wf_templates'){taskTemplates=data;persistLocal();if(document.getElementById('template-modal').classList.contains('open'))renderTemplateList();}
 }
 
 // Supabase 저장 헬퍼 (낙관적 업데이트 후 비동기 동기화)
@@ -1384,6 +1389,7 @@ function loadLocal(){
   orderList=JSON.parse(localStorage.getItem('hub_order_list')||'[]');
   costs=JSON.parse(localStorage.getItem('hub_costs')||'[]');
   recipes=JSON.parse(localStorage.getItem('hub_recipes')||'[]');
+  taskTemplates=JSON.parse(localStorage.getItem('hub_task_templates')||'[]');
   wfTaskOrder=[];// sort_order로 전환, 하위 호환용 유지
 }
 function persistLocal(){
@@ -1395,6 +1401,7 @@ function persistLocal(){
   localStorage.setItem('hub_order_list',JSON.stringify(orderList));
   localStorage.setItem('hub_costs',JSON.stringify(costs));
   localStorage.setItem('hub_recipes',JSON.stringify(recipes));
+  localStorage.setItem('hub_task_templates',JSON.stringify(taskTemplates));
 }
 
 let wfTasks=[], wfProjects=[], wfRoutines=[];
@@ -1770,6 +1777,7 @@ function tplSaveTemplate(){
   if(exist)Object.assign(exist,_tplEditing);
   else taskTemplates.push(_tplEditing);
   saveTaskTemplates();
+  sbUpsert('wf_templates',{id:_tplEditing.id,name:_tplEditing.name,items:_tplEditing.items});
   tplBackToList();
   showToast('템플릿을 저장했습니다.');
 }
@@ -1777,6 +1785,7 @@ function tplDeleteTemplate(id){
   if(!confirm('이 템플릿을 삭제할까요?'))return;
   taskTemplates=taskTemplates.filter(t=>t.id!==id);
   saveTaskTemplates();
+  sbDelete('wf_templates',id);
   renderTemplateList();
   showToast('템플릿을 삭제했습니다.');
 }
@@ -1837,6 +1846,23 @@ async function migrateRoutines(){
   wfRoutines=[];
   persistLocal();
   renderRoutine();renderToday();renderWeekView();
+}
+
+// localStorage 전용이던 템플릿 → Supabase 1회 이전 (기존 데이터 보존)
+async function migrateTemplates(){
+  if(localStorage.getItem('hub_tpl_migrated')==='1')return;
+  const local=JSON.parse(localStorage.getItem('hub_task_templates')||'[]');
+  const toMigrate=local.filter(l=>!taskTemplates.find(t=>t.id===l.id));
+  toMigrate.forEach(t=>{
+    const row={id:t.id,name:t.name,items:t.items||[]};
+    taskTemplates.push(row);
+    sbUpsert('wf_templates',row);
+  });
+  localStorage.setItem('hub_tpl_migrated','1');
+  if(toMigrate.length){
+    persistLocal();
+    if(document.getElementById('template-modal').classList.contains('open'))renderTemplateList();
+  }
 }
 
 function toggleRoutineDoneDate(id,dateStr){
