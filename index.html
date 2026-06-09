@@ -368,7 +368,17 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .dest-stat-badge.ok{background:var(--sage-l);color:var(--sage-d)}
 .dest-stat-badge.warn{background:var(--warn-bg);color:var(--warn-tx)}
 .dest-stat-badge.alert{background:var(--danger-l);color:var(--danger)}
-@media(max-width:640px){.dest-cards-row{grid-template-columns:repeat(2,1fr)}}
+.dest-stat-card{cursor:pointer}
+.dest-stat-card.selected{border-color:var(--sage-d);border-width:2px;box-shadow:0 0 0 2px var(--sage-l)}
+.dest-status-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dest-clear-btn{padding:4px 10px;border-radius:14px;border:1px solid var(--sage-m);background:var(--sage-l);color:var(--sage-d);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.dest-clear-btn:hover{background:var(--sage-m);color:#fff}
+.fc-more{display:block;width:100%;margin-top:4px;padding:8px;border:1px dashed var(--bd);border-radius:10px;background:var(--sf);color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.fc-more:hover{border-color:var(--sage-m);color:var(--sage-d)}
+.order-more-btn{padding:8px 18px;border-radius:18px;border:1px solid var(--bd);background:var(--sf);color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.order-more-btn:hover{border-color:var(--sage-m);color:var(--sage-d)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media(max-width:640px){.dest-cards-row{grid-template-columns:repeat(2,1fr)}.analysis-grid{grid-template-columns:1fr;gap:20px}}
 .dest-toggle-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;color:var(--tx2)}
 .dest-toggle-btn.selected{border-color:var(--sage);background:var(--sage-l);color:var(--sage-d)}
 
@@ -795,7 +805,10 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
 
     <div class="order-panel" id="opanel-history">
 
-      <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.02em">이번 달 지점 현황</div>
+      <div class="dest-status-head">
+        <span id="dest-status-title" style="font-size:12px;font-weight:600;color:var(--tx2);letter-spacing:.02em">이번 달 지점 현황</span>
+        <button id="dest-clear-btn" class="dest-clear-btn" onclick="clearDestFilter()" style="display:none">← 전체 보기</button>
+      </div>
       <div class="dest-cards-row" id="dest-cards-row"></div>
 
       <div style="height:20px"></div>
@@ -815,7 +828,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       
       <div class="card" style="padding:16px;margin-bottom:16px">
         <div style="font-size:13px;font-weight:600;margin-bottom:12px">납품 분석</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+        <div class="analysis-grid">
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.03em">월별 납품 추이</div>
             <div id="chart-monthly"></div>
@@ -828,13 +841,13 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <select id="order-filter-dest" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="renderOrderHistory()">
+        <select id="order-filter-dest" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="resetOrderHist()">
           <option value="">전체 지점</option>
         </select>
-        <select id="order-filter-prod" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="renderOrderHistory()">
+        <select id="order-filter-prod" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="resetOrderHist()">
           <option value="">전체 상품</option>
         </select>
-        <select id="order-filter-period" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="renderOrderHistory()">
+        <select id="order-filter-period" class="form-input" style="width:auto;padding:7px 10px;font-size:13px" onchange="resetOrderHist()">
           <option value="">전체 기간</option>
           <option value="7">최근 7일</option>
           <option value="30">최근 30일</option>
@@ -842,7 +855,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
         </select>
         <div class="search-wrap" style="margin-left:auto">
           <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-          <input type="text" id="order-search" placeholder="검색..." oninput="renderOrderHistory()">
+          <input type="text" id="order-search" placeholder="검색..." oninput="resetOrderHist()">
         </div>
       </div>
       <div class="card">
@@ -851,6 +864,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
           <tbody id="order-tbody"></tbody>
         </table>
       </div>
+      <div id="order-more-wrap" style="text-align:center;margin-top:12px"></div>
       <div id="order-empty" class="empty" style="display:none"><div class="empty-icon">📦</div><p>납품 내역이 없습니다.<br><span style="font-size:12px;color:var(--tx2)">납품 입력 탭에서 지점과 수량을 선택해 저장하세요.</span></p></div>
     </div>
 
@@ -3383,7 +3397,7 @@ function renderForecast(){
     return{cls:'',dd:`D-${du}`,st:'여유',c:'var(--tx2)'};
   }
   const md=dt=>`${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
-  const list=items.map(it=>{
+  const rowHtml=it=>{
     const p=orderProducts.find(x=>x.id===it.pid),d=orderDests.find(x=>x.id===it.did);
     const b=badge(it), unit=p?.unit||'개';
     const cyc=it.cycle!=null?`${it.cycle}일 주기`:`${it.n}회 납품`;
@@ -3398,9 +3412,25 @@ function renderForecast(){
         <div class="fc-status" style="color:${b.c}">${b.st}</div>
       </div>
     </div>`;
-  }).join('');
+  };
+  // 임박(주기 추정 가능 + D-2 이하)만 기본 노출, 나머지는 접어둠
+  const nowItems=items.filter(it=>it.cycle!=null&&it.daysUntil<=2);
+  const restItems=items.filter(it=>!(it.cycle!=null&&it.daysUntil<=2));
   const note=`<div class="fc-note">과거 납품 간격으로 추정한 <b>다음 발주 예상일</b>이에요. 실제와 다를 수 있어요.${soonCount?`<br><span style="color:var(--accent);font-weight:700">⚡ 지금 챙길 발주 ${soonCount}건</span>`:''}</div>`;
-  el.innerHTML=note+list;
+  const nowHtml=nowItems.length?nowItems.map(rowHtml).join(''):'<div style="padding:14px;text-align:center;font-size:13px;color:var(--tx2)">임박한 발주가 없어요. 여유 있습니다 👍</div>';
+  let restHtml='';
+  if(restItems.length){
+    restHtml=`<div id="fc-rest" style="display:none">${restItems.map(rowHtml).join('')}</div>
+      <button class="fc-more" id="fc-more-btn" data-n="${restItems.length}" onclick="toggleForecastRest()">나머지 ${restItems.length}건 보기 ▾</button>`;
+  }
+  el.innerHTML=note+nowHtml+restHtml;
+}
+function toggleForecastRest(){
+  const el=document.getElementById('fc-rest'),btn=document.getElementById('fc-more-btn');
+  if(!el||!btn)return;
+  const open=el.style.display!=='none';
+  el.style.display=open?'none':'';
+  btn.innerHTML=open?`나머지 ${btn.dataset.n}건 보기 ▾`:`접기 ▴`;
 }
 
 // 요일 패턴: 선택한 지점이 요일마다 어떤 상품을 얼마나 받는지
@@ -3491,7 +3521,8 @@ function renderOrderHistory(){
         const badgeClass=isAlert?'alert':isWarn?'warn':'ok';
         const badgeText=daysSince!=null?(isAlert?`${daysSince}일 경과 ⚠`:isWarn?`${daysSince}일 경과`:`${daysSince}일 전`):'납품 없음';
         const cardBorderStyle=!cardClass?`border-color:${borderColor}`:'';
-        return`<div class="dest-stat-card ${cardClass}" style="${cardBorderStyle}">
+        const selCls=fd&&d.id===fd?' selected':'';
+        return`<div class="dest-stat-card ${cardClass}${selCls}" style="${cardBorderStyle}" onclick="toggleDestFilter('${d.id}')">
           <div class="dest-stat-name" style="color:${cm?cm.text:'var(--tx2)'}">${d.name}</div>
           <div class="dest-stat-qty${monthQty===0?' zero':''}">${monthQty===0?'-':fmt(monthQty)}</div>
           <div class="dest-stat-meta">이번 달 납품량</div>
@@ -3500,6 +3531,14 @@ function renderOrderHistory(){
         </div>`;
       }).join('');
     }
+  }
+  // 지점 현황 헤더: 특정 지점 선택 시 안내 + 전체 보기 버튼
+  const dStatTitle=document.getElementById('dest-status-title');
+  const dClearBtn=document.getElementById('dest-clear-btn');
+  if(dStatTitle&&dClearBtn){
+    const selDest=fd?orderDests.find(x=>x.id===fd):null;
+    if(selDest){dStatTitle.textContent=`${selDest.name} 지점만 보는 중`;dClearBtn.style.display='';}
+    else{dStatTitle.textContent='이번 달 지점 현황';dClearBtn.style.display='none';}
   }
 
   const totalQty=data.reduce((s,o)=>s+o.qty,0);
@@ -3542,6 +3581,7 @@ function renderOrderHistory(){
     ['chart-by-prod','chart-monthly','chart-dest-pie'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
     document.getElementById('order-empty').style.display='';
     document.getElementById('order-tbody').innerHTML='';
+    const mw=document.getElementById('order-more-wrap');if(mw)mw.innerHTML='';
     return;
   }
 
@@ -3578,29 +3618,6 @@ function renderOrderHistory(){
   }
   const prodEl=document.getElementById('chart-by-prod');
   if(prodEl)prodEl.innerHTML=hBar(prodEntries,i=>COLORS[i%COLORS.length]);
-
-  const monthMap={};data.forEach(o=>{if(!o.order_date)return;const m=o.order_date.slice(0,7);monthMap[m]=(monthMap[m]||0)+o.qty;});
-  const monthEntries=Object.entries(monthMap).sort((a,b)=>a[0]>b[0]?1:-1).slice(-12);
-  const monthEl=document.getElementById('chart-monthly');
-  if(monthEl){
-    if(!monthEntries.length){monthEl.innerHTML=EMPTY;}
-    else{
-      const maxM=Math.max(...monthEntries.map(e=>e[1]));
-      const W2=360,H2=80,BW=Math.max(20,Math.floor(W2/monthEntries.length)-4);
-      monthEl.innerHTML=`<svg viewBox="0 0 ${W2} ${H2+24}" style="width:100%">${
-        monthEntries.map(([m,v],i)=>{
-          const bh=maxM>0?Math.round(v/maxM*H2):0;
-          const x=i*(W2/monthEntries.length)+2;
-          const isThis=m===thisMonth;
-          return`<g>
-            <rect x="${x}" y="${H2-bh}" width="${BW}" height="${bh||2}" rx="3" fill="${isThis?'var(--sage-d)':'var(--sage)'}" opacity=".85"/>
-            <text x="${x+BW/2}" y="${H2+14}" text-anchor="middle" font-size="9" fill="${isThis?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${isThis?'700':'400'}">${m.slice(5)}</text>
-            ${bh>16?`<text x="${x+BW/2}" y="${H2-bh+12}" text-anchor="middle" font-size="9" fill="#fff" font-family="inherit">${fmt(v)}</text>`:''}
-          </g>`;
-        }).join('')
-      }</svg>`;
-    }
-  }
 
   // ── 꺾은선 그래프: 월별 총 납품량
   const monthlyEl=document.getElementById('chart-monthly');
@@ -3693,7 +3710,10 @@ function renderOrderHistory(){
   document.getElementById('order-empty').style.display=data.length?'none':'';
   const isAdmin=orderRole==='admin';
   document.getElementById('order-action-th').textContent='';
-  document.getElementById('order-tbody').innerHTML=data.map(o=>{
+  // 최신순 정렬 후 limit 만큼만 표시 (나머지는 더보기)
+  const sorted=[...data].sort((a,b)=>{const da=a.order_date||'',db=b.order_date||'';if(!da&&!db)return 0;if(!da)return 1;if(!db)return -1;return db.localeCompare(da);});
+  const shown=sorted.slice(0,orderHistLimit);
+  document.getElementById('order-tbody').innerHTML=shown.map(o=>{
     const p=orderProducts.find(x=>x.id===o.product_id),d=orderDests.find(x=>x.id===o.dest_id);
     const chipSt=d?destChipStyle(d):'';
     return`<tr>
@@ -3704,6 +3724,31 @@ function renderOrderHistory(){
       <td>${isAdmin?`<button class="btn-icon" onclick="deleteOrder('${o.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</td>
     </tr>`;
   }).join('');
+  const moreWrap=document.getElementById('order-more-wrap');
+  if(moreWrap){
+    const remain=sorted.length-shown.length;
+    moreWrap.innerHTML=remain>0?`<button class="order-more-btn" onclick="moreOrderHist()">더보기 (${fmt(remain)}건 더) ▾</button>`:'';
+  }
+}
+let orderHistLimit=30;
+function resetOrderHist(){orderHistLimit=30;renderOrderHistory();}
+function moreOrderHist(){orderHistLimit+=30;renderOrderHistory();}
+// 지점 카드 클릭: 해당 지점으로 필터 토글 (이미 선택돼 있으면 해제)
+function toggleDestFilter(id){
+  const sel=document.getElementById('order-filter-dest');
+  if(!sel)return;
+  const on=sel.value!==id;
+  sel.value=on?id:'';
+  wkDestSel=on?id:'';   // 요일 패턴 탭도 같은 지점으로 동기화
+  orderHistLimit=30;
+  renderOrderHistory();
+}
+function clearDestFilter(){
+  const sel=document.getElementById('order-filter-dest');
+  if(sel)sel.value='';
+  wkDestSel='';
+  orderHistLimit=30;
+  renderOrderHistory();
 }
 
 async function cancelOrder(id){
