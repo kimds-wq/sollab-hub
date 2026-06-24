@@ -209,18 +209,15 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .tt-now::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--danger)}
 
 /* ── PROJECTS ── */
-.proj-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
-.proj-header{padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
-.proj-header:hover{background:var(--sage-l)}
-.proj-name{font-size:14px;font-weight:600;flex:1}
-.proj-body{border-top:1px solid var(--bd);padding:16px;display:none}
-.proj-body.open{display:block}
-.stage-list{list-style:none}
-.stage-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
-.stage-item:last-child{border-bottom:none}
-.stage-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--sage-m);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:none;transition:all .15s}
-.stage-check.done{background:var(--sage);border-color:var(--sage)}
-.stage-name{flex:1;font-size:13px}.stage-name.done-txt{text-decoration:line-through;color:var(--tx2)}
+.note-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.note-card-body{flex:1;min-width:0}
+.note-card-title{font-size:14px;font-weight:600;word-break:break-word}
+.note-card-memo{margin-top:6px;font-size:13px;color:var(--tx2);line-height:1.6;white-space:normal;word-break:break-word}
+.note-card-actions{display:flex;gap:4px;flex-shrink:0}
+.dest-order-block{margin-bottom:18px;padding-top:4px;border-top:1px dashed var(--bd)}
+.dest-order-block:first-child{border-top:none;padding-top:0}
+.dest-order-block-head{display:flex;align-items:center;gap:8px;margin-top:12px}
+.dest-order-count{font-size:11px;color:var(--tx2)}
 .deadline-bar{margin-top:10px;background:var(--sage-l);border-radius:6px;overflow:hidden;height:6px}
 .deadline-fill{height:100%;background:var(--sage);transition:width .3s}
 .deadline-fill.overdue{background:var(--danger)}
@@ -283,8 +280,6 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .cal-event.ev-over{background:var(--danger);color:#fff;border-left:3px solid #A02020}
 
 /* ── ROUTINE ── */
-.routine-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.routine-days{display:flex;gap:4px}
 .day-chip{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:var(--sage-l);color:var(--tx2)}
 .day-chip.active{background:var(--sage);color:#fff}
 
@@ -500,9 +495,6 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
   .tt-block{font-size:11px;padding:2px 6px}
 
   /* 프로젝트 — 헤더 정보 줄바꿈 허용 */
-  .proj-header{flex-wrap:wrap;gap:6px;padding:12px}
-  .proj-name{font-size:13px;width:100%}
-  .proj-body{padding:12px}
 
   /* 캘린더 — 셀 높이·폰트 축소 */
   .cal-day{min-height:52px;padding:3px 2px}
@@ -511,8 +503,6 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
   .cal-dow{font-size:10px;padding:4px 0}
 
   /* 고정업무 카드 — 요일칩 줄바꿈 */
-  .routine-card{flex-wrap:wrap;gap:8px;padding:12px}
-  .routine-days{flex-wrap:wrap;gap:3px}
 
   /* ── ORDER FLOW */
   /* 납품 입력 — 일자 100% */
@@ -577,7 +567,6 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
   .timetable-wrap{background:var(--sf)}
   .tt-row.tt-half{background:var(--cream)}
   .cal-day{background:var(--sf)}
-  .proj-card{background:var(--sf)}
   .routine-card,.task-item{background:var(--sf)}
   .stat-box{background:var(--sf)}
 }
@@ -649,9 +638,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
 <div class="section active" id="sec-workflow">
   <div class="wf-tabs">
     <button class="wf-tab active" onclick="goWfTab('today')">업무</button>
-    <button class="wf-tab" onclick="goWfTab('projects')">프로젝트</button>
-    <button class="wf-tab" onclick="goWfTab('routine')">루틴</button>
-    <button class="wf-tab" onclick="goWfTab('archive')">아카이브</button>
+    <button class="wf-tab" onclick="goWfTab('notes')">기록</button>
   </div>
 
   <div class="wf-panel active" id="wfp-today">
@@ -713,37 +700,16 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   </div>
 </div><!-- /wfp-today -->
 
-  <div class="wf-panel" id="wfp-projects">
+  <div class="wf-panel" id="wfp-notes">
     <div class="sec-header">
-      <span class="sec-title">프로젝트</span>
-      <button class="btn btn-primary btn-sm" onclick="openProjModal()">+ 프로젝트 추가</button>
+      <span class="sec-title">기록</span>
+      <button class="btn btn-primary btn-sm" id="note-add-btn" onclick="openNoteModal()">+ 기록 추가</button>
     </div>
-    <div id="proj-list"></div>
-    <div id="proj-empty" class="empty" style="display:none">
-      <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
-      <p>진행 중인 프로젝트가 없습니다.</p>
-    </div>
-  </div>
-
-  <div class="wf-panel" id="wfp-routine">
-    <div class="sec-header">
-      <span class="sec-title">루틴 관리</span>
-      <button class="btn btn-primary btn-sm" onclick="openTaskModal()">+ 루틴 추가</button>
-    </div>
-    <p style="font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.6">등록된 루틴 목록입니다. 설정한 요일에 오늘 탭에 자동으로 표시됩니다.</p>
-    <div id="routine-list"></div>
-    <div id="routine-empty" class="empty" style="display:none">
-      <div class="empty-icon">🔄</div>
-      <p>등록된 루틴이 없습니다.<br>업무 추가 → 루틴 ON으로 만들 수 있어요.</p>
-    </div>
-  </div>
-
-  <div class="wf-panel" id="wfp-archive">
-    <div class="sec-header"><span class="sec-title">완료 아카이브</span></div>
-    <div id="archive-list"></div>
-    <div id="archive-empty" class="empty" style="display:none">
-      <div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--tx2)"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-      <p>완료된 항목이 없습니다.</p>
+    <p style="font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.6">큰 프로젝트나 오래 들고 갈 내용을 자유롭게 적어두는 공간이에요.</p>
+    <div id="note-list"></div>
+    <div id="note-empty" class="empty" style="display:none">
+      <div class="empty-icon">📝</div>
+      <p>기록이 없습니다.<br>오른쪽 위 + 버튼으로 추가해 보세요.</p>
     </div>
   </div>
 </div>
@@ -772,16 +738,18 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
     <div class="order-panel active" id="opanel-input">
       
       <div class="card" style="padding:16px;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:var(--sage-d);margin-bottom:12px;letter-spacing:.04em">① 지점 선택 <span style="font-weight:400;color:var(--tx2)">(복수 선택 가능)</span></div>
-        <div id="dest-btn-group" class="dest-btn-group"></div>
-        <div style="margin-top:14px">
-          <div class="form-label">납품 일자</div>
-          <input type="date" id="order-date" class="form-input" style="font-size:13px;padding:8px 10px;max-width:200px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--sage-d);letter-spacing:.04em">① 지점 선택 <span style="font-weight:400;color:var(--tx2)">(복수 가능)</span></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--tx2)">납품일</span>
+            <input type="date" id="order-date" class="form-input" style="font-size:13px;padding:6px 8px;width:auto">
+          </div>
         </div>
+        <div id="dest-btn-group" class="dest-btn-group"></div>
       </div>
       
       <div class="card" style="padding:16px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
           <div style="font-size:12px;font-weight:700;color:var(--sage-d);letter-spacing:.04em">② 수량 입력</div>
           <button class="btn btn-ghost btn-sm" onclick="resetProductCards()">초기화</button>
         </div>
@@ -1005,11 +973,8 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       </div>
     </div>
     <div class="form-group" id="tm-link-row">
-      <label class="form-label">연결 <span style="font-weight:400;color:var(--tx2)">(선택 — 프로젝트·레시피)</span></label>
-      <div style="display:flex;gap:6px">
-        <select class="form-input" id="tm-project" style="flex:1;font-size:13px"><option value="">프로젝트 없음</option></select>
-        <select class="form-input" id="tm-recipe" style="flex:1;font-size:13px"><option value="">레시피 없음</option></select>
-      </div>
+      <label class="form-label">레시피 연결 <span style="font-weight:400;color:var(--tx2)">(선택)</span></label>
+      <select class="form-input" id="tm-recipe" style="width:100%;font-size:13px"><option value="">레시피 없음</option></select>
     </div>
     <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
     <div class="form-group">
@@ -1022,68 +987,13 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeTaskModal()">취소</button><button class="btn btn-primary" onclick="saveTask()">저장</button></div>
 </div></div>
 
-<div class="overlay" id="proj-modal"><div class="modal modal-lg">
-  <div class="modal-header"><span class="modal-title" id="proj-modal-title">프로젝트 추가</span><button class="btn-icon" onclick="closeProjModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+<div class="overlay" id="note-modal"><div class="modal">
+  <div class="modal-header"><span class="modal-title" id="note-modal-title">기록 추가</span><button class="btn-icon" onclick="closeNoteModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
   <div class="modal-body">
-    <div class="form-group"><label class="form-label">프로젝트명 *</label><input class="form-input" id="pm-name" placeholder="프로젝트명"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">시작일</label><input class="form-input" type="date" id="pm-start"></div>
-      <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="pm-due"></div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">담당자</label>
-      <div class="member-chip-wrap" id="pm-member-chips"></div>
-      <input class="form-input" id="pm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:6px;font-size:13px">
-    </div>
-    <div class="form-group"><label class="form-label">메모</label><textarea class="form-input" id="pm-memo" rows="1"></textarea></div>
-    <hr class="divider">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <span style="font-size:13px;font-weight:600">단계</span>
-      <button class="btn btn-ghost btn-sm" onclick="addProjStage()">+ 단계 추가</button>
-    </div>
-    <div id="pm-stages"></div>
+    <div class="form-group"><label class="form-label">제목</label><input class="form-input" id="nm-name" placeholder="제목"></div>
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-input" id="nm-memo" rows="6" placeholder="자유롭게 기록하세요"></textarea></div>
   </div>
-  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeProjModal()">취소</button><button class="btn btn-primary" onclick="saveProj()">저장</button></div>
-</div></div>
-
-<div class="overlay" id="routine-modal"><div class="modal">
-  <div class="modal-header"><span class="modal-title" id="routine-modal-title">고정 업무 추가</span><button class="btn-icon" onclick="closeRoutineModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-  <div class="modal-body">
-    <div class="form-group"><label class="form-label">업무명 *</label><input class="form-input" id="rm-name" placeholder="업무명"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">시작 시간</label>
-        <select class="form-input" id="rm-start-time"><option value="">-</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">종료 시간</label>
-        <select class="form-input" id="rm-end-time"><option value="">-</option></select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">반복 요일</label>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;margin-bottom:8px">
-        <div id="rm-repeat-track" onclick="toggleRoutineRepeat()" style="width:40px;height:22px;border-radius:11px;background:var(--bd);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0">
-          <div id="rm-repeat-thumb" style="position:absolute;top:3px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s"></div>
-        </div>
-        <span id="rm-repeat-label" style="font-size:13px;color:var(--tx2)">OFF — 매일 반복</span>
-      </div>
-      <div id="rm-days-wrap" style="display:none;flex-wrap:wrap;gap:6px">
-        <button type="button" class="day-toggle-btn" data-rday="0" onclick="toggleRDay(this)">일</button>
-        <button type="button" class="day-toggle-btn" data-rday="1" onclick="toggleRDay(this)">월</button>
-        <button type="button" class="day-toggle-btn" data-rday="2" onclick="toggleRDay(this)">화</button>
-        <button type="button" class="day-toggle-btn" data-rday="3" onclick="toggleRDay(this)">수</button>
-        <button type="button" class="day-toggle-btn" data-rday="4" onclick="toggleRDay(this)">목</button>
-        <button type="button" class="day-toggle-btn" data-rday="5" onclick="toggleRDay(this)">금</button>
-        <button type="button" class="day-toggle-btn" data-rday="6" onclick="toggleRDay(this)">토</button>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">담당자</label>
-      <div class="member-chip-wrap" id="rm-member-chips"></div>
-      <input class="form-input" id="rm-members" placeholder="직접 입력 (쉼표 구분)" style="margin-top:6px;font-size:13px">
-    </div>
-    <div class="form-group"><label class="form-label">메모</label><input class="form-input" id="rm-memo" placeholder="메모" style="font-size:13px"></div>
-  </div>
-  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeRoutineModal()">취소</button><button class="btn btn-primary" onclick="saveRoutine()">저장</button></div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeNoteModal()">취소</button><button class="btn btn-primary" onclick="saveNote()">저장</button></div>
 </div></div>
 
 <div class="overlay" id="product-modal"><div class="modal">
@@ -1367,9 +1277,9 @@ async function reloadTable(t){
   else q=q.order('created_at');
   const{data}=await q;
   if(!data)return;
-  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderArchive();renderRoutine();renderWeekView();}
-  else if(t==='wf_projects'){wfProjects=data;persistLocal();renderProjects();renderArchive();}
-  else if(t==='wf_routines'){wfRoutines=data;persistLocal();renderRoutine();renderToday();}
+  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderWeekView();}
+  else if(t==='wf_projects'){wfProjects=data;persistLocal();renderNotes();}
+  else if(t==='wf_routines'){wfRoutines=data;persistLocal();renderToday();}
   else if(t==='order_products'){orderProducts=data;persistLocal();renderOrderProducts();populateOrderSelects();}
   else if(t==='order_dests'){orderDests=data;persistLocal();renderOrderDests();populateOrderSelects();}
   else if(t==='orders'){orderList=data;persistLocal();renderOrderHistory();}
@@ -1379,18 +1289,25 @@ async function reloadTable(t){
 }
 
 // Supabase 저장 헬퍼 (낙관적 업데이트 후 비동기 동기화)
+let _saveErrAt=0;
+function notifySaveError(){
+  // 같은 에러로 토스트가 도배되지 않도록 4초에 한 번만
+  if(Date.now()-_saveErrAt<4000)return;
+  _saveErrAt=Date.now();
+  showToast('저장 실패 — 연결을 확인해주세요. (새로고침 시 사라질 수 있어요)');
+}
 async function sbUpsert(table,row){
   if(!_sb)return;
   setSyncStatus('saving');
   const{error}=await _sb.from(table).upsert(row);
-  if(error){console.error('upsert error:',table,error);setSyncStatus('err');}
+  if(error){console.error('upsert error:',table,error);setSyncStatus('err');notifySaveError();}
   else setSyncStatus('ok');
 }
 async function sbDelete(table,id){
   if(!_sb)return;
   setSyncStatus('saving');
   const{error}=await _sb.from(table).delete().eq('id',id);
-  if(error){console.error('delete error:',table,error);setSyncStatus('err');}
+  if(error){console.error('delete error:',table,error);setSyncStatus('err');notifySaveError();}
   else setSyncStatus('ok');
 }
 
@@ -1429,7 +1346,7 @@ let orderProducts=[], orderDests=[], orderList=[];
 let wkDestSel='';
 let selectedDests=new Set();
 let costs=[], recipes=[];
-let editIds={task:null,proj:null,routine:null,prod:null,dest:null,cost:null,recipe:null};
+let editIds={task:null,note:null,prod:null,dest:null,cost:null,recipe:null};
 let ingRows=[], steps=[], ddHL={};
 let projStages=[];
 
@@ -1539,7 +1456,8 @@ function applyAppRole(){
 function restoreTabState(){
   const isAdmin=appRole==='admin';
   const savedSection=sessionStorage.getItem('hub_section')||'workflow';
-  const savedWfTab=sessionStorage.getItem('hub_wf_tab')||'today';
+  let savedWfTab=sessionStorage.getItem('hub_wf_tab')||'today';
+  if(!['today','notes'].includes(savedWfTab))savedWfTab='today';
   const savedWorkView=sessionStorage.getItem('hub_work_view')||'today';
   const savedOrderTab=sessionStorage.getItem('hub_order_tab')||'input';
   const savedRecipeTab=sessionStorage.getItem('hub_recipe_tab')||'costs';
@@ -1859,7 +1777,7 @@ async function migrateRoutines(){
   });
   wfRoutines=[];
   persistLocal();
-  renderRoutine();renderToday();renderWeekView();
+  renderToday();renderWeekView();
 }
 
 // localStorage 전용이던 템플릿 → Supabase 1회 이전 (기존 데이터 보존)
@@ -2001,10 +1919,12 @@ function goWfTab(t){
       el.style.opacity='';el.classList.remove('drag-over','dragging');
     });
   }catch(e){}
+  if(!['today','notes'].includes(t))t='today';
   sessionStorage.setItem('hub_wf_tab',t);
-  document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','projects','routine','archive'][i]===t));
+  document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','notes'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('wfp-'+t).classList.add('active');
+  const panel=document.getElementById('wfp-'+t);
+  if(panel)panel.classList.add('active');
   if(t==='today'){
     const curView=document.getElementById('work-week-view').style.display==='none'?'today':'week';
     setWorkView(curView);
@@ -2088,19 +2008,7 @@ function selectTaskStatus(s){
 }
 // 모달의 프로젝트/레시피 연결 드롭다운 채우기 (②)
 function populateTaskLinks(projId,recId){
-  const projSel=document.getElementById('tm-project');
   const recSel=document.getElementById('tm-recipe');
-  if(projSel){
-    const active=wfProjects.filter(p=>!p.done);
-    projSel.innerHTML='<option value="">프로젝트 없음</option>'+
-      active.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
-    // 연결된 프로젝트가 완료/삭제된 경우에도 표시 유지
-    if(projId&&!active.find(p=>p.id===projId)){
-      const p=wfProjects.find(x=>x.id===projId);
-      if(p)projSel.innerHTML+=`<option value="${p.id}">${p.name} (완료)</option>`;
-    }
-    projSel.value=projId||'';
-  }
   if(recSel){
     recSel.innerHTML='<option value="">레시피 없음</option>'+
       recipes.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
@@ -2118,7 +2026,7 @@ function toggleTaskRepeat(){
   if(_taskRepeat){
     track.style.background='var(--sage)';
     thumb.style.left='18px';
-    label.textContent='ON — 루틴';
+    label.textContent='ON — 반복';
     daysWrap.style.display='';
     dueRow.style.display='none';
   } else {
@@ -2155,7 +2063,7 @@ function initRepeatState(repeat,days){
   if(repeat){
     _taskRepeat=true;_taskDays=days||[];
     track.style.background='var(--sage)';thumb.style.left='18px';
-    label.textContent='ON — 루틴';
+    label.textContent='ON — 반복';
     daysWrap.style.display='';dueRow.style.display='none';
     if(statusRow)statusRow.style.display='none';
     _taskDays.forEach(d=>{
@@ -2171,7 +2079,7 @@ function initRepeatState(repeat,days){
 }
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
 
-function renderAll(){renderToday();renderWeekView();renderProjects();renderArchive();renderRoutine();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
+function renderAll(){renderToday();renderWeekView();renderNotes();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
 
 
 function timeOptions(){
@@ -2263,30 +2171,6 @@ function renderToday(){
   const clearBtn=document.getElementById('clear-done-btn');
   if(clearBtn)clearBtn.style.display=todayTasks.some(t=>isDone(t))||routineDoneToday.length?'':'none';
 
-  // 마감 임박 프로젝트 배너 (D-3 이내)
-  const urgentProjs=wfProjects.filter(p=>{
-    if(p.done||!p.due)return false;
-    const dd=ddayBadge(p.due);
-    return dd&&(dd.cls==='dday-today'||dd.cls==='dday-soon'||dd.cls==='dday-over');
-  });
-  let projBanner=document.getElementById('today-proj-banner');
-  if(urgentProjs.length){
-    const container=document.getElementById('work-today-view')||document.getElementById('wfp-today');
-    const insertRef=document.getElementById('today-carry-wrap');
-    if(!projBanner){
-      projBanner=document.createElement('div');
-      projBanner.id='today-proj-banner';
-      if(insertRef&&insertRef.parentNode===container){
-        container.insertBefore(projBanner,insertRef);
-      } else {
-        container.prepend(projBanner);
-      }
-    }
-    projBanner.innerHTML=`<div style="background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:8px;padding:10px 14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-      <span style="font-size:11px;font-weight:700;color:var(--warn-tx);flex-shrink:0">📋 마감 임박</span>
-      ${urgentProjs.map(p=>{const dd=ddayBadge(p.due);return`<span style="font-size:12px;color:var(--tx);font-weight:500">${p.name} <span class="dday ${dd.cls}">${dd.label}</span></span>`;}).join('')}
-    </div>`;
-  } else if(projBanner){projBanner.remove();}
 
 
   // ── 이월 업무 렌더
@@ -2330,8 +2214,8 @@ function renderToday(){
     const pri=t.priority||'mid';
     const dd=(!isRepeat&&t.due&&!done)?ddayBadge(t.due):null;
     const toggleFn=isRepeat?`toggleRoutineDone('${t.id}')`:`toggleTask('${t.id}')`;
-    const editFn=isRoutineObj?`editRoutine('${t.id}')`:`editTask('${t.id}')`;
-    const delFn=isRoutineObj?`deleteRoutine('${t.id}')`:`deleteTask('${t.id}')`;
+    const editFn=`editTask('${t.id}')`;
+    const delFn=`deleteTask('${t.id}')`;
     const repeatDays=isRepeat&&t.days&&t.days.length?
       `<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>t.days.includes(i)).join('·')}</span>`:'';
     const sortedMembers=sortMembers(t.members||[]);
@@ -2341,7 +2225,7 @@ function renderToday(){
       <div class="priority-dot"></div>
       <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
       <div style="flex:1;min-width:0">
-        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">루틴</span>':''}</div>
+        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">반복</span>':''}</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
           ${statusBadgeHtml(t)}
           ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
@@ -2529,10 +2413,6 @@ function linkBadgeHtml(t,small){
   let out='';
   const fs=small?'8px':'10px';
   const pad=small?'0 4px':'1px 6px';
-  if(t.project_id){
-    const p=wfProjects.find(x=>x.id===t.project_id);
-    if(p)out+=`<span style="font-size:${fs};color:var(--sage-d);background:var(--sage-l);border-radius:6px;padding:${pad};line-height:1.4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle">📁 ${p.name}</span>`;
-  }
   if(t.recipe_id){
     const r=recipes.find(x=>x.id===t.recipe_id);
     if(r)out+=`<span style="font-size:${fs};color:var(--accent);background:var(--accent-l);border-radius:6px;padding:${pad};line-height:1.4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle">🧪 ${r.name}</span>`;
@@ -2587,9 +2467,9 @@ async function deleteTask(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(x=>x.id!==id);
-  renderToday();renderRoutine();renderWeekView();
+  renderToday();renderWeekView();
   persistLocal();sbDelete('wf_tasks',id);
-  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();renderRoutine();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
+  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
 }
 function openTaskModal(id,presetDate){
   editIds.task=id||null;
@@ -2642,7 +2522,7 @@ async function saveTask(){
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
     status:_taskRepeat?'':(done?'done':_taskStatus),
-    project_id:document.getElementById('tm-project').value||null,
+    project_id:null,
     recipe_id:document.getElementById('tm-recipe').value||null,
     done:done,
     created_date:editIds.task?(prevTask?.created_date||TODAY()):getTaskDate(),
@@ -2652,140 +2532,62 @@ async function saveTask(){
   persistLocal();sbUpsert('wf_tasks',row);
   closeTaskModal();
   renderToday();
-  renderRoutine();
   renderWeekView();
   showToast('저장됐습니다.');
 }
 
-function renderProjects(){
-  const list=document.getElementById('proj-list');
-  const active=wfProjects.filter(p=>!p.done);
-  document.getElementById('proj-empty').style.display=active.length?'none':'';
-  list.innerHTML=active.map(p=>{
-    const stages=p.stages||[];
-    const doneSt=stages.filter(s=>s.done).length;
-    const pct=stages.length?Math.round(doneSt/stages.length*100):0;
-    const overdue=p.due&&p.due<TODAY();
-    const dd=ddayBadge(p.due);
-    return`<div class="proj-card">
-      <div class="proj-header" onclick="toggleProj('${p.id}')">
-        <div style="flex:1">
-          <div class="proj-name">${p.name}</div>
-          ${p.members&&p.members.length?`<div style="margin-top:4px">${p.members.map(m=>`<span class="member-tag">${m}</span>`).join('')}</div>`:''}
-        </div>
-        ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
-        <span class="badge${overdue?' danger':''}">${
-stages.length?pct+'%':'단계 미설정'}</span>
-        <span class="chevron" id="pchev-${p.id}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="proj-body" id="pbody-${p.id}">
-        ${p.memo?`<div style="font-size:13px;color:var(--tx2);padding:2px 0 10px;border-bottom:1px solid var(--bd);margin-bottom:10px;line-height:1.6">${p.memo}</div>`:''}
-        ${p.due?`<div class="deadline-bar"><div class="deadline-fill${overdue?' overdue':''}" style="width:${pct}%"></div></div><div style="font-size:12px;color:var(--tx2);margin-top:4px">마감 ${p.due}${overdue?' · 초과':''}</div>`:''}
-        ${stages.length?`<ul class="stage-list" style="margin-top:12px">${stages.map((s,i)=>`
-          <li class="stage-item" style="flex-direction:column;align-items:flex-start;gap:4px">
-            <div style="display:flex;align-items:center;gap:10px;width:100%">
-              <div class="stage-check${s.done?' done':''}" onclick="toggleStage('${p.id}',${i})">
-                ${s.done?'<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}
-              </div>
-              <span class="stage-name${s.done?' done-txt':''}">${s.name}</span>
-            </div>
-            ${s.memo?`<div class="stage-memo-txt" style="font-size:12px;color:var(--tx2);padding-left:28px;line-height:1.5">${s.memo}</div>`:''}
-          </li>`).join('')}</ul>`:''}
-        <hr class="divider">
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-accent btn-sm" onclick="markProjDone('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 완료</button>
-          <button class="btn btn-ghost btn-sm" onclick="editProj('${p.id}')">수정</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteProj('${p.id}')">삭제</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+function renderNotes(){
+  const list=document.getElementById('note-list');
+  const empty=document.getElementById('note-empty');
+  if(!list)return;
+  const notes=[...wfProjects].sort((a,b)=>(b.created_at||b.id||'').toString().localeCompare((a.created_at||a.id||'').toString()));
+  if(empty)empty.style.display=notes.length?'none':'';
+  const admin=appRole==='admin';
+  list.innerHTML=notes.map(n=>`<div class="note-card">
+    <div class="note-card-body">
+      <div class="note-card-title">${n.name||'(제목 없음)'}</div>
+      ${n.memo?`<div class="note-card-memo">${n.memo.replace(/\n/g,'<br>')}</div>`:''}
+    </div>
+    ${admin?`<div class="note-card-actions">
+      <button class="btn-icon" title="수정" onclick="editNote('${n.id}')">${ICO_EDIT}</button>
+      <button class="btn-icon" title="삭제" onclick="deleteNote('${n.id}')">${ICO_DEL}</button>
+    </div>`:''}
+  </div>`).join('');
 }
-function toggleProj(id){document.getElementById('pbody-'+id)?.classList.toggle('open');document.getElementById('pchev-'+id)?.classList.toggle('open');}
-async function toggleStage(projId,idx){
-  const p=wfProjects.find(x=>x.id===projId);if(!p)return;
-  p.stages[idx].done=!p.stages[idx].done;
-
-  const stageEl=document.querySelector(`#pbody-${projId} .stage-list li:nth-child(${idx+1})`);
-  if(stageEl){
-    const chk=stageEl.querySelector('.stage-check');
-    const nm=stageEl.querySelector('.stage-name');
-    const memo=stageEl.querySelector('.stage-memo-txt');
-    if(p.stages[idx].done){
-      chk.classList.add('done');
-      chk.innerHTML='<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
-      nm&&nm.classList.add('done-txt');
-    } else {
-      chk.classList.remove('done');
-      chk.innerHTML='';
-      nm&&nm.classList.remove('done-txt');
-    }
-
-    const stages=p.stages||[];
-    const doneSt=stages.filter(s=>s.done).length;
-    const pct=stages.length?Math.round(doneSt/stages.length*100):0;
-    const badge=document.querySelector(`#pbody-${projId}`)?.closest('.proj-card')?.querySelector('.proj-header .badge');
-    if(badge)badge.textContent=stages.length?pct+'%':'단계 미설정';
-    const bar=document.querySelector(`#pbody-${projId} .deadline-fill`);
-    if(bar)bar.style.width=pct+'%';
+function openNoteModal(id){
+  editIds.note=id||null;
+  const n=id?wfProjects.find(x=>x.id===id):null;
+  document.getElementById('note-modal-title').textContent=n?'기록 수정':'기록 추가';
+  document.getElementById('nm-name').value=n?.name||'';
+  document.getElementById('nm-memo').value=n?.memo||'';
+  openModal('note-modal');
+  setTimeout(()=>document.getElementById('nm-name')?.focus(),60);
+}
+function editNote(id){openNoteModal(id);}
+function closeNoteModal(){closeModal('note-modal');}
+async function saveNote(){
+  const name=document.getElementById('nm-name').value.trim();
+  const memo=document.getElementById('nm-memo').value.trim();
+  if(!name&&!memo){showToast('제목이나 내용을 입력해주세요.');return;}
+  let row;
+  if(editIds.note){
+    const ex=wfProjects.find(x=>x.id===editIds.note)||{};
+    row={...ex,id:editIds.note,name,memo};
+    Object.assign(ex,row);
   } else {
-
-    const wasOpen=document.getElementById('pbody-'+projId)?.classList.contains('open');
-    renderProjects();
-    if(wasOpen){document.getElementById('pbody-'+projId)?.classList.add('open');document.getElementById('pchev-'+projId)?.classList.add('open');}
+    row={id:uid(),name,memo,done:false,created_at:new Date().toISOString()};
+    wfProjects.push(row);
   }
-  persistLocal();sbUpsert('wf_projects',p);
+  persistLocal();sbUpsert('wf_projects',row);
+  closeNoteModal();renderNotes();showToast('저장됐습니다.');
 }
-async function markProjDone(id){
-  const p=wfProjects.find(x=>x.id===id);if(!p)return;
-  if(!confirm(`'${p.name}'을 완료 처리하고 아카이브로 이동할까요?`))return;
-  p.done=true;
-  renderProjects();renderArchive();showToast('완료 처리됐습니다.');
-  persistLocal();sbUpsert('wf_projects',p);
-}
-async function deleteProj(id){
-  if(!confirm('삭제할까요?'))return;
+async function deleteNote(id){
+  if(!confirm('이 기록을 삭제할까요?'))return;
   const prev=[...wfProjects];
   wfProjects=wfProjects.filter(x=>x.id!==id);
-  renderProjects();
+  renderNotes();
   persistLocal();sbDelete('wf_projects',id);
-  showToast('프로젝트를 삭제했습니다.',()=>{wfProjects=prev;renderProjects();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
-}
-let projStagesArr=[];
-function openProjModal(id){
-  editIds.proj=id||null;const p=id?wfProjects.find(x=>x.id===id):null;
-  document.getElementById('proj-modal-title').textContent=p?'프로젝트 수정':'프로젝트 추가';
-  document.getElementById('pm-name').value=p?.name||'';
-  document.getElementById('pm-start').value=p?.start_date||'';
-  document.getElementById('pm-due').value=p?.due||'';
-  document.getElementById('pm-members').value=(p?.members||[]).join(', ');
-  renderMemberChips('pm-member-chips','pm-members');
-  document.getElementById('pm-memo').value=p?.memo||'';
-  projStagesArr=p?[...(p.stages||[]).map(s=>({...s}))]:[]; renderProjStages();
-  openModal('proj-modal');
-}
-function closeProjModal(){closeModal('proj-modal');}
-function editProj(id){openProjModal(id);}
-function renderProjStages(){
-  document.getElementById('pm-stages').innerHTML=projStagesArr.map((s,i)=>`
-    <div style="margin-bottom:10px;background:var(--cream);border-radius:8px;padding:10px;border:1px solid var(--bd)">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-        <div style="width:18px;height:18px;border-radius:4px;background:${s.done?'var(--sage)':'var(--sage-l)'};border:2px solid var(--sage-m);flex-shrink:0"></div>
-        <input class="form-input" value="${s.name}" oninput="projStagesArr[${i}].name=this.value" placeholder="단계명" style="flex:1;padding:6px 10px;font-size:13px">
-        <button class="btn-icon" onclick="projStagesArr.splice(${i},1);renderProjStages()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-      </div>
-      <input class="form-input" value="${s.memo||''}" oninput="projStagesArr[${i}].memo=this.value" placeholder="메모 (선택)" style="font-size:12px;padding:5px 10px;color:var(--tx2)">
-    </div>`).join('');
-}
-function addProjStage(){projStagesArr.push({name:'',done:false,memo:''});renderProjStages();}
-async function saveProj(){
-  const name=document.getElementById('pm-name').value.trim();
-  if(!name){showToast('프로젝트명을 입력해주세요.');return;}
-  const row={id:editIds.proj||uid(),name,start_date:document.getElementById('pm-start').value,due:document.getElementById('pm-due').value,members:document.getElementById('pm-members').value.split(',').map(s=>s.trim()).filter(Boolean),memo:document.getElementById('pm-memo').value.trim(),stages:projStagesArr.filter(s=>s.name.trim()),done:false};
-  if(editIds.proj){Object.assign(wfProjects.find(x=>x.id===editIds.proj)||{},row);}
-  else{wfProjects.push(row);}
-  persistLocal();sbUpsert('wf_projects',row);
-  closeProjModal();renderProjects();showToast('저장됐습니다.');
+  showToast('기록을 삭제했습니다.',()=>{wfProjects=prev;renderNotes();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
 }
 
 let workView='today'; // 'today' | 'week'
@@ -3005,165 +2807,6 @@ function showCalPopup(dateStr,e){
   },100);
 }
 
-function renderArchive(){
-  const done=wfProjects.filter(p=>p.done);
-  document.getElementById('archive-empty').style.display=done.length?'none':'';
-  document.getElementById('archive-list').innerHTML=done.map(p=>{
-    const stages=p.stages||[];
-    const doneSt=stages.filter(s=>s.done).length;
-    const pct=stages.length?Math.round(doneSt/stages.length*100):0;
-    return`<div class="proj-card" style="margin-bottom:10px">
-      <div class="proj-header" onclick="toggleProj('arc-${p.id}')">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span class="proj-name">${p.name}</span>
-            <span class="tag tag-done" style="flex-shrink:0">완료</span>
-          </div>
-          ${p.members&&p.members.length?`<div style="margin-top:4px">${p.members.map(m=>`<span class="member-tag">${m}</span>`).join('')}</div>`:''}
-        </div>
-        ${p.due?`<span class="badge" style="flex-shrink:0">~${p.due}</span>`:''}
-        ${stages.length?`<span class="badge" style="flex-shrink:0">${pct}%</span>`:''}
-        <span class="chevron" id="pchev-arc-${p.id}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="proj-body" id="pbody-arc-${p.id}">
-        ${p.memo?`<div style="font-size:13px;color:var(--tx2);padding:2px 0 10px;border-bottom:1px solid var(--bd);margin-bottom:10px;line-height:1.6">${p.memo}</div>`:''}
-        ${p.due?`<div style="font-size:12px;color:var(--tx2);margin-bottom:10px">기간: ${p.start_date||'미지정'} ~ ${p.due}</div>`:''}
-        ${stages.length?`<ul class="stage-list">${stages.map(s=>`
-          <li class="stage-item" style="opacity:${s.done?1:.5}">
-            <div class="stage-check${s.done?' done':''}" style="cursor:default">
-              ${s.done?'<svg width="9" height="9" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>':''}
-            </div>
-            <span class="stage-name${s.done?' done-txt':''}">${s.name}</span>
-            ${s.done?'<span style="font-size:11px;color:var(--sage);font-weight:600">완료</span>':'<span style="font-size:11px;color:var(--tx2)">미완</span>'}
-          </li>`).join('')}</ul>`:'<div style="font-size:13px;color:var(--tx2)">등록된 단계 없음</div>'}
-        <hr class="divider">
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="unarchive('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> 되돌리기</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteProj('${p.id}')">삭제</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function unarchive(id){
-  const p=wfProjects.find(x=>x.id===id);p.done=false;persistLocal();sbUpsert('wf_projects',p);
-  renderProjects();renderArchive();
-}
-
-function renderRoutine(){
-  const DAY_NAMES=['일','월','화','수','목','금','토'];
-  const DAY_ORDER=[1,2,3,4,5,6,0];
-
-  const repeatTasks=wfTasks.filter(t=>t.repeat);
-  const allRepeat=[
-    ...repeatTasks.map(t=>({...t,_src:'task'})),
-    ...wfRoutines.map(r=>({...r,_src:'routine'}))
-  ];
-
-  document.getElementById('routine-empty').style.display=allRepeat.length?'none':'';
-
-  function dayChips(days){
-    return DAY_ORDER.map(i=>{
-      const active=!days||days.length===0||days.includes(i);
-      return`<div class="day-chip${active?' active':''}">${DAY_NAMES[i]}</div>`;
-    }).join('');
-  }
-
-  document.getElementById('routine-list').innerHTML=allRepeat.map(r=>{
-    const editFn=r._src==='task'?`editTask('${r.id}')`:`editRoutine('${r.id}')`;
-    const delFn=r._src==='task'?`deleteTask('${r.id}')`:`deleteRoutine('${r.id}')`;
-    const scheduleText=r.days&&r.days.length
-      ? r.days.map(i=>DAY_NAMES[i]).join('·')+'요일'
-      : '매일';
-    return`<div class="task-item" style="flex-wrap:wrap;gap:8px">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:500">${r.name}</span>
-          <span style="font-size:11px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 7px;font-weight:600">🔄 ${scheduleText}</span>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">
-          ${r.start_time?`<span class="task-meta">⏰ ${r.start_time}${r.end_time?' ~ '+r.end_time:''}</span>`:''}
-          ${r.members&&r.members.length?r.members.map(m=>`<span class="member-tag">${m}</span>`).join(''):''}
-          ${r.memo?`<span class="task-meta">${r.memo}</span>`:''}
-        </div>
-        <div class="routine-days" style="margin-top:6px">${dayChips(r.days)}</div>
-      </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn-icon" onclick="${editFn}" title="수정">${ICO_EDIT}</button>
-        <button class="btn-icon" onclick="${delFn}" title="삭제">${ICO_DEL}</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function openRoutineModal(id){
-  editIds.routine=id||null;
-  fillTimeSelects();
-  const r=id?wfRoutines.find(x=>x.id===id):null;
-  document.getElementById('routine-modal-title').textContent=r?'고정 업무 수정':'고정 업무 추가';
-  document.getElementById('rm-name').value=r?.name||'';
-  document.getElementById('rm-start-time').value=r?.start_time||'';
-  document.getElementById('rm-end-time').value=r?.end_time||'';
-  document.getElementById('rm-members').value=(r?.members||[]).join(', ');
-  renderMemberChips('rm-member-chips','rm-members');
-  document.getElementById('rm-memo').value=r?.memo||'';
-  initRoutineRepeat(r?.days||[]);
-  openModal('routine-modal');
-}
-function editRoutine(id){openRoutineModal(id);}
-function closeRoutineModal(){closeModal('routine-modal');}
-
-let _routineRepeat=false;
-function _applyRoutineRepeatUI(){
-  const track=document.getElementById('rm-repeat-track');
-  const thumb=document.getElementById('rm-repeat-thumb');
-  const label=document.getElementById('rm-repeat-label');
-  const wrap=document.getElementById('rm-days-wrap');
-  if(_routineRepeat){
-    track.style.background='var(--sage)';thumb.style.left='22px';
-    label.textContent='ON — 요일 선택';wrap.style.display='flex';
-  } else {
-    track.style.background='var(--bd)';thumb.style.left='2px';
-    label.textContent='OFF — 매일 반복';wrap.style.display='none';
-    document.querySelectorAll('#rm-days-wrap .day-toggle-btn').forEach(b=>b.classList.remove('selected'));
-  }
-}
-function initRoutineRepeat(days){
-  _routineRepeat=days.length>0;
-  _applyRoutineRepeatUI();
-  if(_routineRepeat){
-    document.querySelectorAll('#rm-days-wrap .day-toggle-btn').forEach(b=>{
-      b.classList.toggle('selected',days.includes(parseInt(b.dataset.rday)));
-    });
-  }
-}
-function toggleRoutineRepeat(){
-  _routineRepeat=!_routineRepeat;
-  _applyRoutineRepeatUI();
-}
-function toggleRDay(btn){btn.classList.toggle('selected');}
-async function saveRoutine(){
-  const name=document.getElementById('rm-name').value.trim();
-  if(!name){showToast('업무명을 입력해주세요.');return;}
-  const _st=document.getElementById('rm-start-time').value,_et=document.getElementById('rm-end-time').value;
-  if(_st&&_et&&_et<=_st){showToast('종료 시간은 시작 시간보다 늦어야 합니다.');return;}
-  const days=_routineRepeat?[...document.querySelectorAll('#rm-days-wrap .day-toggle-btn.selected')].map(b=>parseInt(b.dataset.rday)):[];
-  const row={id:editIds.routine||uid(),name,
-    start_time:document.getElementById('rm-start-time').value,
-    end_time:document.getElementById('rm-end-time').value,
-    days,members:document.getElementById('rm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
-    memo:document.getElementById('rm-memo').value.trim()};
-  editIds.routine?Object.assign(wfRoutines.find(x=>x.id===editIds.routine),row):wfRoutines.push(row);persistLocal();sbUpsert('wf_routines',row);
-  closeRoutineModal();renderRoutine();renderToday();showToast(editIds.routine?'수정됐습니다.':'루틴이 추가됐습니다.');
-}
-async function deleteRoutine(id){
-  if(!confirm('삭제할까요?'))return;
-  const prev=[...wfRoutines];
-  wfRoutines=wfRoutines.filter(x=>x.id!==id);
-  renderRoutine();renderToday();
-  persistLocal();sbDelete('wf_routines',id);
-  showToast('루틴을 삭제했습니다.',()=>{wfRoutines=prev;renderRoutine();renderToday();persistLocal();sbUpsert('wf_routines',prev.find(x=>x.id===id));});
-}
 
 function applyOrderRole(){
   const isAdmin=orderRole==='admin';
@@ -3213,86 +2856,106 @@ function toggleDestSel(id){
   }
 }
 
-let orderQtyMap={}; // { productId: qty }
+let orderQty={}; // { destId: { productId: qty } }
 function renderProductCards(){
   const el=document.getElementById('order-prod-cards');
   if(!el)return;
-  const hasDest=selectedDests.size>0;
-  if(!hasDest||!orderProducts.length){
+  const dests=[...selectedDests];
+  if(!dests.length||!orderProducts.length){
     el.innerHTML='<div class="empty" style="padding:24px"><p>'+(
-      !hasDest?'지점을 먼저 선택해주세요.':'등록된 상품이 없습니다.'
+      !dests.length?'지점을 먼저 선택해주세요.':'등록된 상품이 없습니다.'
     )+'</p></div>';
     updateQtySummary();
     return;
   }
-  el.innerHTML='<div class="prod-card-grid">'+
-    sortKo(orderProducts).map(p=>{
-      const qty=orderQtyMap[p.id]||'';
+  // 선택 해제된 지점의 입력값은 정리
+  Object.keys(orderQty).forEach(did=>{if(!selectedDests.has(did))delete orderQty[did];});
+  const dstObjs=sortKo(dests.map(id=>orderDests.find(d=>d.id===id)).filter(Boolean));
+  el.innerHTML=dstObjs.map(d=>{
+    const map=orderQty[d.id]||{};
+    const chipSt=destChipStyle(d);
+    const cards=sortKo(orderProducts).map(p=>{
+      const qty=map[p.id]||'';
       const hasQty=qty&&parseFloat(qty)>0;
-      return`<div class="prod-order-card${hasQty?' has-qty':''}" id="pcard-${p.id}">
+      return`<div class="prod-order-card${hasQty?' has-qty':''}" id="pcard-${d.id}-${p.id}">
         <div class="prod-order-card-name" title="${p.name}">${p.name}</div>
         <div class="prod-order-card-unit">${p.unit||''}</div>
         <div class="prod-qty-wrap">
-          <button class="prod-qty-btn minus" onclick="stepProdQty('${p.id}',-1)">−</button>
+          <button class="prod-qty-btn minus" onclick="stepProdQty('${d.id}','${p.id}',-1)">−</button>
           <input class="prod-order-qty" type="number" min="0" placeholder="0"
             value="${qty}" inputmode="numeric"
-            oninput="onProdQtyInput('${p.id}',this.value)"
+            oninput="onProdQtyInput('${d.id}','${p.id}',this.value)"
             onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
-          <button class="prod-qty-btn plus" onclick="stepProdQty('${p.id}',1)">+</button>
+          <button class="prod-qty-btn plus" onclick="stepProdQty('${d.id}','${p.id}',1)">+</button>
         </div>
         <div class="prod-qty-wrap5">
-          <button class="prod-qty-btn5 minus5" onclick="stepProdQty('${p.id}',-5)">−5</button>
-          <button class="prod-qty-btn5 plus5" onclick="stepProdQty('${p.id}',5)">+5</button>
+          <button class="prod-qty-btn5 minus5" onclick="stepProdQty('${d.id}','${p.id}',-5)">−5</button>
+          <button class="prod-qty-btn5 plus5" onclick="stepProdQty('${d.id}','${p.id}',5)">+5</button>
         </div>
       </div>`;
-    }).join('')+
-  '</div>';
+    }).join('');
+    return`<div class="dest-order-block">
+      <div class="dest-order-block-head">
+        <span class="dest-chip" style="${chipSt}">${d.name}</span>
+        <span class="dest-order-count" id="dcount-${d.id}"></span>
+      </div>
+      <div class="prod-card-grid">${cards}</div>
+    </div>`;
+  }).join('');
   updateQtySummary();
 }
-function stepProdQty(pid,delta){
-  const cur=parseFloat(orderQtyMap[pid])||0;
+function stepProdQty(did,pid,delta){
+  const map=orderQty[did]||(orderQty[did]={});
+  const cur=parseFloat(map[pid])||0;
   const next=Math.max(0,cur+delta);
-  onProdQtyInput(pid,next);
-
-  const card=document.getElementById('pcard-'+pid);
+  onProdQtyInput(did,pid,next);
+  const card=document.getElementById('pcard-'+did+'-'+pid);
   if(card){const inp=card.querySelector('.prod-order-qty');if(inp)inp.value=next||'';}
 }
-function onProdQtyInput(pid,val){
+function onProdQtyInput(did,pid,val){
   const v=parseFloat(val)||0;
-  if(v>0)orderQtyMap[pid]=v;else delete orderQtyMap[pid];
-  const card=document.getElementById('pcard-'+pid);
+  const map=orderQty[did]||(orderQty[did]={});
+  if(v>0)map[pid]=v;else delete map[pid];
+  const card=document.getElementById('pcard-'+did+'-'+pid);
   if(card)card.classList.toggle('has-qty',v>0);
   updateQtySummary();
 }
 function updateQtySummary(){
+  for(const did of selectedDests){
+    const c=Object.values(orderQty[did]||{}).filter(q=>parseFloat(q)>0).length;
+    const el=document.getElementById('dcount-'+did);
+    if(el)el.textContent=c?`${c}개 입력`:'';
+  }
   const el=document.getElementById('order-qty-summary');if(!el)return;
-  const count=Object.keys(orderQtyMap).length;
-  el.textContent=count?`${count}개 상품 선택됨`:'';
+  let cnt=0;
+  for(const did of selectedDests)cnt+=Object.values(orderQty[did]||{}).filter(q=>parseFloat(q)>0).length;
+  el.textContent=cnt?`총 ${cnt}건 입력됨`:'';
 }
-function resetProductCards(){orderQtyMap={};renderProductCards();}
+function resetProductCards(){orderQty={};renderProductCards();}
 
-function renderOrderRows(){const el=document.getElementById('order-rows');if(el)el.innerHTML='';}
-function addOrderRow(){}
-function removeOrderRow(){}
-let orderRows=[];
 async function submitOrder(){
   const dateVal=document.getElementById('order-date').value||TODAY();
   if(!selectedDests.size){showToast('지점을 선택해주세요.');return;}
-  const entries=Object.entries(orderQtyMap).filter(([,q])=>q>0);
+  const entries=[];
+  for(const did of selectedDests){
+    const m=orderQty[did]||{};
+    for(const [pid,qty] of Object.entries(m)){
+      const q=parseFloat(qty);
+      if(q>0)entries.push({did,pid,q});
+    }
+  }
   if(!entries.length){showToast('수량을 입력해주세요.');return;}
 
   // 같은 날짜·지점·상품 중복 감지 → 경고 후 합산 여부 확인
   const dups=[];
-  for(const did of selectedDests){
-    for(const [pid,qty] of entries){
-      const existing=orderList.find(o=>o.order_date===dateVal&&o.dest_id===did&&o.product_id===pid);
-      if(existing)dups.push({did,pid,qty:parseFloat(qty),existing});
-    }
+  for(const e of entries){
+    const existing=orderList.find(o=>o.order_date===dateVal&&o.dest_id===e.did&&o.product_id===e.pid);
+    if(existing)dups.push({...e,existing});
   }
   if(dups.length){
     const lines=dups.map(d=>{
       const p=orderProducts.find(x=>x.id===d.pid),dst=orderDests.find(x=>x.id===d.did),u=p?.unit||'';
-      return `· ${dst?.name||'?'} ${p?.name||'?'}: 기존 ${fmt(d.existing.qty)}${u} + ${fmt(d.qty)} = ${fmt(d.existing.qty+d.qty)}${u}`;
+      return `· ${dst?.name||'?'} ${p?.name||'?'}: 기존 ${fmt(d.existing.qty)}${u} + ${fmt(d.q)} = ${fmt(d.existing.qty+d.q)}${u}`;
     }).join('\n');
     if(!confirm(`이미 같은 날짜에 저장된 납품이 ${dups.length}건 있습니다.\n\n${lines}\n\n[확인] 기존 수량에 합산\n[취소] 저장하지 않음`))return;
   }
@@ -3300,18 +2963,15 @@ async function submitOrder(){
 
   const newItems=[];   // 새로 저장된 건 (미리보기·취소 대상)
   let mergedCount=0;   // 기존 납품에 합산된 건
-  for(const did of selectedDests){
-    for(const [pid,qty] of entries){
-      const q=parseFloat(qty);
-      if(dupKeys.has(did+'\u0001'+pid)){
-        const ex=orderList.find(o=>o.order_date===dateVal&&o.dest_id===did&&o.product_id===pid);
-        if(ex){ex.qty+=q;sbUpsert('orders',ex);mergedCount++;}
-      } else {
-        const row={id:uid(),product_id:pid,dest_id:did,qty:q,memo:'',order_date:dateVal};
-        newItems.push(row);
-        orderList.unshift(row);
-        sbUpsert('orders',row);
-      }
+  for(const e of entries){
+    if(dupKeys.has(e.did+'\u0001'+e.pid)){
+      const ex=orderList.find(o=>o.order_date===dateVal&&o.dest_id===e.did&&o.product_id===e.pid);
+      if(ex){ex.qty+=e.q;sbUpsert('orders',ex);mergedCount++;}
+    } else {
+      const row={id:uid(),product_id:e.pid,dest_id:e.did,qty:e.q,memo:'',order_date:dateVal};
+      newItems.push(row);
+      orderList.unshift(row);
+      sbUpsert('orders',row);
     }
   }
   persistLocal();
@@ -3336,7 +2996,7 @@ async function submitOrder(){
   }).join('')+list.innerHTML;
   }
 
-  orderQtyMap={};
+  orderQty={};
   selectedDests.clear();
   renderDestButtons();
   renderProductCards();
