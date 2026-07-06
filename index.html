@@ -233,11 +233,11 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 /* ── 주간 뷰 */
 .week-wrap{border:1px solid var(--bd);border-radius:10px;overflow:hidden}
 .week-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
-.week-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));min-width:320px}
+.week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));min-width:320px}
 .week-col{display:flex;flex-direction:column;border-right:1px solid var(--bd)}
 .week-col:last-child{border-right:none}
 /* sticky 헤더 */
-.week-header-row{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));min-width:550px;position:sticky;top:0;z-index:3;background:var(--cream);border-bottom:1px solid var(--bd)}
+.week-header-row{display:grid;grid-template-columns:repeat(7,minmax(92px,1fr));min-width:644px;position:sticky;top:0;z-index:3;background:var(--cream);border-bottom:1px solid var(--bd)}
 .week-col-header{padding:8px 6px 6px;text-align:center;background:var(--cream);scroll-snap-align:start}
 .week-col-header.today-col{background:var(--sage-l)}
 .week-col-header.holiday-col{background:var(--danger-l)!important}
@@ -248,19 +248,23 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .week-date-num.red-num{color:var(--danger)}
 .week-cnt{font-size:9px;font-weight:600;color:var(--tx2);margin-top:2px;height:12px}
 .week-col-header.today-col .week-cnt{color:var(--sage-d)}
-.week-body-row{display:grid;grid-template-columns:repeat(5,minmax(110px,1fr));min-width:550px}
+.week-body-row{display:grid;grid-template-columns:repeat(7,minmax(92px,1fr));min-width:644px}
 .week-col-body{padding:6px 5px;min-height:200px;border-right:1px solid var(--bd);box-sizing:border-box}
 .week-col-body:last-child{border-right:none}
 .week-task{background:var(--sf);border:1px solid var(--bd);border-radius:6px;padding:5px 7px;margin-bottom:4px;font-size:12px;line-height:1.5;cursor:pointer;transition:opacity .15s}
 .week-task:active{opacity:.7}
 .week-task.done-task{opacity:.4}
-.week-task.carry-task{border-color:var(--danger);background:var(--danger-l)}
 .week-task-name{font-weight:500;color:var(--tx);word-break:keep-all;overflow-wrap:break-word;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .week-task-name.done-txt{text-decoration:line-through;color:var(--tx2)}
 .week-task-meta{font-size:10px;color:var(--tx2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .week-add-btn{width:100%;border:1.5px dashed var(--bd);background:none;color:var(--tx2);font-size:12px;padding:6px;cursor:pointer;border-radius:6px;font-family:inherit;margin-top:4px;transition:all .15s}
 .week-add-btn:hover,.week-add-btn:active{background:var(--sage-l);color:var(--sage-d);border-color:var(--sage)}
 .week-col-body.week-drop-over{background:var(--sage-l);outline:2px dashed var(--sage)}
+@media (max-width:480px){
+  .week-header-row,.week-body-row{grid-template-columns:repeat(7,minmax(78px,1fr));min-width:546px}
+  .week-task{padding:4px 5px;font-size:11px}
+  .week-date-num{width:24px;height:24px;font-size:15px}
+}
 .cal-nav-title{font-size:15px;font-weight:600}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0}
 .cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--tx2);padding:6px 0}
@@ -345,8 +349,6 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .prod-order-card.has-qty .prod-order-qty{background:var(--sf)}
 /* 지점 다중 선택 */
 .dest-btn-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.day-toggle-btn{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;color:var(--tx2);cursor:pointer;font-family:inherit;transition:all .15s}
-.day-toggle-btn.selected{background:var(--sage);color:#fff;border-color:var(--sage)}
 /* 지점 현황 카드 */
 .dest-cards-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
 @media(min-width:480px){.dest-cards-row{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
@@ -372,8 +374,7 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 .fc-more:hover{border-color:var(--sage-m);color:var(--sage-d)}
 .order-more-btn{padding:8px 18px;border-radius:18px;border:1px solid var(--bd);background:var(--sf);color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
 .order-more-btn:hover{border-color:var(--sage-m);color:var(--sage-d)}
-.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-@media(max-width:640px){.dest-cards-row{grid-template-columns:repeat(2,1fr)}.analysis-grid{grid-template-columns:1fr;gap:20px}}
+@media(max-width:640px){.dest-cards-row{grid-template-columns:repeat(2,1fr)}}
 .dest-toggle-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--bd);background:var(--sf);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;color:var(--tx2)}
 .dest-toggle-btn.selected{border-color:var(--sage);background:var(--sage-l);color:var(--sage-d)}
 
@@ -430,29 +431,35 @@ textarea.form-input{resize:none;min-height:56px;line-height:1.5}
 /* ── RESPONSIVE ── */
 /* ── 납품 차트 그리드 (데스크탑 2열, 모바일 1열) */
 .order-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-.chart-tab-btn{padding:4px 10px;border:none;background:none;border-radius:6px;font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
-.chart-tab-btn.active{background:var(--sf);color:var(--sage-d);box-shadow:var(--sh)}
-/* 발주 예측 */
-.fc-note{font-size:11px;color:var(--tx2);margin-bottom:10px;line-height:1.55}
-.fc-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:7px;background:var(--sf)}
-.fc-row.urgent{border-color:var(--danger);background:var(--danger-l)}
-.fc-row.soon{border-color:var(--accent);background:var(--accent-l)}
-.fc-main{flex:1;min-width:0}
-.fc-title{font-size:13px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px}
-.fc-meta{font-size:11px;color:var(--tx2);line-height:1.4}
-.fc-badge{flex-shrink:0;text-align:center;min-width:50px}
-.fc-dday{font-size:15px;font-weight:800;line-height:1.1}
-.fc-status{font-size:10px;font-weight:700;margin-top:1px}
-/* 요일 패턴 */
-.wk-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.wk-row{display:flex;gap:10px;padding:8px 6px;border-bottom:1px solid var(--bd);align-items:flex-start}
-.wk-row:last-child{border-bottom:none}
-.wk-row.today{background:var(--sage-l);border-radius:8px;border-bottom:1px solid transparent}
-.wk-day{width:30px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--tx2);padding-top:3px}
-.wk-row.today .wk-day{color:var(--sage-d)}
-.wk-items{flex:1;display:flex;gap:5px;flex-wrap:wrap;min-width:0}
-.wk-pill{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--sage-l);color:var(--sage-d);font-weight:500;white-space:nowrap}
-.wk-empty{font-size:11px;color:var(--tx2);padding-top:3px}
+/* 발주 예측 타임라인 */
+.fc-note{font-size:11px;color:var(--tx2);margin-bottom:12px;line-height:1.55}
+.tl-node{display:flex;gap:10px;position:relative;padding-bottom:16px}
+.tl-node:last-child{padding-bottom:0}
+.tl-node:has(+ .tl-node)::before{content:'';position:absolute;left:5px;top:16px;bottom:-2px;width:2px;background:var(--bd)}
+.tl-dot{width:12px;height:12px;border-radius:50%;background:var(--tx2);flex-shrink:0;margin-top:2px;z-index:1}
+.tl-node.overdue .tl-dot{background:var(--danger)}
+.tl-node.soon .tl-dot{background:var(--accent)}
+.tl-node.today .tl-dot{background:var(--sage);box-shadow:0 0 0 3px var(--sage-l)}
+.tl-node.nocycle .tl-dot{background:var(--bd)}
+.tl-content{flex:1;min-width:0}
+.tl-date{font-size:12px;font-weight:700;color:var(--tx);margin-bottom:7px}
+.tl-node.overdue .tl-date{color:var(--danger)}
+.tl-node.soon .tl-date{color:var(--accent)}
+.tl-dday{font-size:11px;font-weight:600;color:var(--tx2);margin-left:5px}
+.tl-chips{display:flex;flex-direction:column;gap:6px}
+.tl-chip{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;background:var(--cream);border-radius:8px;padding:7px 10px}
+.tl-chip-name{font-weight:600;color:var(--tx)}
+.tl-chip-meta{font-size:11px;color:var(--tx2);margin-left:auto}
+.fc-more{display:block;width:100%;margin-top:10px;padding:8px;border:1px dashed var(--bd);border-radius:10px;background:var(--sf);color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.fc-more:hover{border-color:var(--sage-m);color:var(--sage-d)}
+/* 상품 × 지점 매트릭스 */
+.mx-scroll{overflow-x:auto}
+.mx-table{border-collapse:collapse;width:100%;font-size:12px;min-width:480px}
+.mx-table th,.mx-table td{padding:7px 9px;text-align:center;white-space:nowrap;border-bottom:1px solid var(--bd)}
+.mx-corner,.mx-prod{text-align:left!important;font-weight:600;position:sticky;left:0;background:var(--sf);z-index:1;border-right:1px solid var(--bd)}
+.mx-total-col{font-weight:700;color:var(--sage-d);background:var(--sage-l)}
+.mx-dest{font-size:11px;font-weight:700}
+.mx-cell{font-weight:600;color:var(--tx)}
 [id^="chart-"]{overflow:hidden}
 [id^="chart-"] svg{display:block;width:100%;height:auto}
 .order-stat-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -588,8 +595,6 @@ body.viewer-mode .btn-icon{display:none!important}
 body.viewer-mode .btn-undo{display:none!important}
 body.viewer-mode .drag-handle{display:none!important}
 body.viewer-mode #today-add-btn{display:none!important}
-body.viewer-mode #today-tpl-btn{display:none!important}
-body.viewer-mode #clear-done-btn{display:none!important}
 body.viewer-mode .week-add-btn{display:none!important}
 body.viewer-mode .week-task{cursor:default!important;pointer-events:none}
 body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
@@ -642,63 +647,26 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   </div>
 
   <div class="wf-panel active" id="wfp-today">
-    <!-- 오늘/주간 서브 토글 -->
-    <div style="display:flex;gap:4px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:14px;width:fit-content">
-      <button id="sub-tab-today" class="wf-tab active" onclick="setWorkView('today')" style="padding:5px 16px;font-size:12px">오늘</button>
-      <button id="sub-tab-week" class="wf-tab" onclick="setWorkView('week')" style="padding:5px 16px;font-size:12px">주간</button>
-    </div>
-    <!-- 오늘 뷰 -->
-    <div id="work-today-view">
-    <div class="today-stats">
-      <div class="ts-card"><div class="ts-label">전체</div><div class="ts-val" id="ts-total">0</div></div>
-      <div class="ts-card"><div class="ts-label">완료</div><div class="ts-val" id="ts-done">0</div></div>
-      <div class="ts-card"><div class="ts-label">진행 중</div><div class="ts-val" id="ts-prog">0</div></div>
-      <div class="ts-card"><div class="ts-label">오늘 마감</div><div class="ts-val" id="ts-due">0</div></div>
-    </div>
-    <div class="sec-header" style="margin-bottom:14px">
-      <span class="sec-title" id="today-date-label"></span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-ghost btn-sm" id="clear-done-btn" onclick="clearDoneTasks()" style="display:none;font-size:12px">✓ 완료 정리</button>
-        <button class="btn btn-ghost btn-sm" id="today-tpl-btn" onclick="openTemplateModal()" style="font-size:12px">⊞ 템플릿</button>
-        <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
-      </div>
-    </div>
-    <!-- 이월 업무 (미완료 이월) -->
-    <div id="today-carry-wrap" style="display:none;margin-bottom:20px">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-left:2px">
-        <span style="font-size:11px;font-weight:700;color:var(--danger);letter-spacing:.04em">⚠ 미완료 이월</span>
-        <span id="today-carry-count" style="font-size:10px;background:var(--danger);color:#fff;border-radius:10px;padding:1px 6px;font-weight:700"></span>
-      </div>
-      <div id="today-carry-list"></div>
-    </div>
-    <!-- 시간 지정 업무 -->
-    <div id="today-timed-wrap" style="display:none;margin-bottom:16px">
-      <div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px">⏰ 시간별 업무</div>
-      <div id="today-timed-list"></div>
-    </div>
-    <!-- 시간 미지정 업무 -->
-    <div id="today-untimed-wrap">
-      <div id="today-untimed-label" style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px;display:none">📋 업무 목록</div>
-      <div id="today-untimed-list"></div>
-    </div>
-    <div id="today-empty" class="empty" style="display:none">
-      <div class="empty-icon">☀️</div>
-      <p>오늘 업무가 없습니다.<br>업무를 추가해 보세요.</p>
-    </div>
-  </div><!-- /work-today-view -->
-  <!-- 주간 뷰 -->
-  <div id="work-week-view" style="display:none">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
       <div style="display:flex;align-items:center;gap:4px">
         <button class="btn-icon" onclick="weekMove(-1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
         <span id="week-title" style="font-size:13px;font-weight:600;min-width:130px;text-align:center"></span>
         <button class="btn-icon" onclick="weekMove(1)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="weekMove(0)">이번 주</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="weekMove(0)">이번 주</button>
+        <button class="btn btn-primary btn-sm" id="today-add-btn" onclick="openTaskModal()">+ 업무 추가</button>
+      </div>
+    </div>
+    <div id="today-list-section" style="margin-bottom:18px">
+      <div style="font-size:11px;font-weight:700;color:var(--tx2);letter-spacing:.04em;margin-bottom:8px;padding-left:2px">☀️ 오늘 업무</div>
+      <div id="today-list"></div>
+      <div id="today-list-empty" class="empty" style="display:none;padding:16px 0">
+        <p style="font-size:13px;color:var(--tx2)">오늘 업무가 없습니다.</p>
+      </div>
     </div>
     <div id="week-grid-wrap"></div>
-  </div>
-</div><!-- /wfp-today -->
+  </div><!-- /wfp-today -->
 
   <div class="wf-panel" id="wfp-notes">
     <div class="sec-header">
@@ -784,28 +752,13 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
       <div class="order-stat-grid-4" style="grid-template-columns:repeat(3,1fr)" id="order-stat-cards"></div>
 
       <div class="card" style="padding:16px;margin-bottom:16px">
-        <div style="display:flex;gap:2px;background:var(--sage-l);border-radius:8px;padding:3px;margin-bottom:14px" id="chart-tab-bar">
-          <button class="chart-tab-btn active" onclick="switchChartTab('forecast')" id="ctab-forecast">발주 예측</button>
-          <button class="chart-tab-btn" onclick="switchChartTab('weekday')" id="ctab-weekday">요일 패턴</button>
-          <button class="chart-tab-btn" onclick="switchChartTab('prod')" id="ctab-prod">납품량 현황</button>
-        </div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">📅 발주 예측 타임라인</div>
         <div id="chart-forecast"></div>
-        <div id="chart-weekday" style="display:none"></div>
-        <div id="chart-by-prod" style="display:none"></div>
       </div>
-      
+
       <div class="card" style="padding:16px;margin-bottom:16px">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px">납품 분석</div>
-        <div class="analysis-grid">
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.03em">월별 납품 추이</div>
-            <div id="chart-monthly"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:8px;letter-spacing:.03em">이번 달 지점 비중</div>
-            <div id="chart-dest-pie"></div>
-          </div>
-        </div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">📦 상품 × 지점 납품 현황</div>
+        <div id="chart-matrix"></div>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
@@ -924,36 +877,6 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-header"><span class="modal-title" id="task-modal-title">업무 추가</span><button class="btn-icon" onclick="closeTaskModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
   <div class="modal-body">
     <div class="form-group"><label class="form-label">업무명 *</label><input class="form-input" id="tm-name" placeholder="업무명 입력"></div>
-    <!-- 반복 토글 -->
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--sage-l);border-radius:8px;margin-bottom:10px;cursor:pointer" onclick="toggleTaskRepeat()">
-      <div style="position:relative;width:34px;height:18px;flex-shrink:0">
-        <div id="tm-repeat-track" style="width:34px;height:18px;border-radius:9px;background:var(--bd);transition:background .2s"></div>
-        <div id="tm-repeat-thumb" style="position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
-      </div>
-      <span style="font-size:12px;font-weight:600;color:var(--tx)">루틴</span>
-      <span style="font-size:12px;color:var(--tx2)" id="tm-repeat-label">OFF — 일회성 업무</span>
-    </div>
-    <!-- 반복 요일 선택 (반복 ON일 때만 표시) -->
-    <div id="tm-repeat-days-wrap" style="display:none;margin-bottom:10px">
-      <div class="form-label" style="margin-bottom:8px">반복 요일 <span style="font-weight:400;color:var(--tx2)">(미선택 시 매일)</span></div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="tm-days-group">
-        <button class="day-toggle-btn" data-day="1" onclick="toggleDay(this)">월</button>
-        <button class="day-toggle-btn" data-day="2" onclick="toggleDay(this)">화</button>
-        <button class="day-toggle-btn" data-day="3" onclick="toggleDay(this)">수</button>
-        <button class="day-toggle-btn" data-day="4" onclick="toggleDay(this)">목</button>
-        <button class="day-toggle-btn" data-day="5" onclick="toggleDay(this)">금</button>
-        <button class="day-toggle-btn" data-day="6" onclick="toggleDay(this)">토</button>
-        <button class="day-toggle-btn" data-day="0" onclick="toggleDay(this)">일</button>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label class="form-label">시작 시간</label>
-        <select class="form-input" id="tm-start-time"><option value="">-</option></select>
-      </div>
-      <div class="form-group"><label class="form-label">종료 시간</label>
-        <select class="form-input" id="tm-end-time"><option value="">-</option></select>
-      </div>
-    </div>
     <div class="form-group" id="tm-due-row">
       <label class="form-label">날짜</label>
       <select class="form-input" id="tm-task-date" onchange="onTaskDateChange()">
@@ -972,11 +895,6 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
         <button type="button" class="status-btn" data-status="blocked" onclick="selectTaskStatus('blocked')">막힘</button>
       </div>
     </div>
-    <div class="form-group" id="tm-link-row">
-      <label class="form-label">레시피 연결 <span style="font-weight:400;color:var(--tx2)">(선택)</span></label>
-      <select class="form-input" id="tm-recipe" style="width:100%;font-size:13px"><option value="">레시피 없음</option></select>
-    </div>
-    <div class="form-group"><label class="form-label">마감일</label><input class="form-input" type="date" id="tm-due"></div>
     <div class="form-group">
       <label class="form-label">담당자</label>
       <div class="member-chip-wrap" id="tm-member-chips"></div>
@@ -1154,40 +1072,6 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('settings-modal')">취소</button><button class="btn btn-primary" onclick="saveSettings()">저장</button></div>
 </div></div>
 
-<div class="overlay" id="template-modal"><div class="modal modal-lg">
-  <div class="modal-header"><span class="modal-title" id="template-modal-title">업무 템플릿</span><button class="btn-icon" onclick="closeModal('template-modal')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-  <div class="modal-body">
-    <!-- 목록 화면 -->
-    <div id="tpl-list-view">
-      <p style="font-size:12px;color:var(--tx2);margin-bottom:12px;line-height:1.5">자주 반복하는 업무 묶음을 템플릿으로 저장해두면, 한 번에 여러 업무를 생성할 수 있어요. (예: 신메뉴 개발 단계)</p>
-      <div id="tpl-list" style="display:flex;flex-direction:column;gap:8px"></div>
-      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px;border:1.5px dashed var(--bd)" onclick="tplStartCreate()">+ 새 템플릿 만들기</button>
-    </div>
-    <!-- 편집 화면 -->
-    <div id="tpl-edit-view" style="display:none">
-      <div class="form-group"><label class="form-label">템플릿 이름 *</label><input class="form-input" id="tpl-name" placeholder="예: 신메뉴 개발"></div>
-      <label class="form-label">단계(업무) 목록</label>
-      <div id="tpl-items" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
-      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;border:1.5px dashed var(--bd)" onclick="tplAddItem()">+ 단계 추가</button>
-    </div>
-  </div>
-  <div class="modal-footer" id="tpl-list-footer"><button class="btn btn-ghost" onclick="closeModal('template-modal')">닫기</button></div>
-  <div class="modal-footer" id="tpl-edit-footer" style="display:none"><button class="btn btn-ghost" onclick="tplBackToList()">취소</button><button class="btn btn-primary" onclick="tplSaveTemplate()">저장</button></div>
-</div></div>
-
-<div class="overlay" id="template-apply-modal"><div class="modal">
-  <div class="modal-header"><span class="modal-title">템플릿 적용</span><button class="btn-icon" onclick="closeModal('template-apply-modal')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-  <div class="modal-body">
-    <p style="font-size:13px;color:var(--tx)" id="tpl-apply-desc"></p>
-    <div class="form-group" style="margin-top:12px"><label class="form-label">시작 기준일</label>
-      <input class="form-input" type="date" id="tpl-apply-base" onchange="renderTplApplyPreview()">
-      <p style="font-size:12px;color:var(--tx2);margin-top:6px;line-height:1.5">각 단계의 "일차"에 따라 이 날짜부터 순서대로 배치됩니다.</p>
-    </div>
-    <div id="tpl-apply-preview" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
-  </div>
-  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('template-apply-modal')">취소</button><button class="btn btn-primary" onclick="tplApplyConfirm()">업무 생성</button></div>
-</div></div>
-
 <div class="toast" id="toast"><span class="toast-msg"></span><button class="toast-undo" id="toast-undo-btn" onclick="doToastUndo()" style="display:none">되돌리기</button></div>
 
 <script>
@@ -1216,36 +1100,28 @@ function setSyncStatus(s){
 
 async function loadAll(){
   setSyncStatus('loading');
-  // 완료 체크는 로컬 우선 로드
-  routineDoneToday=JSON.parse(localStorage.getItem('hub_rdt_'+TODAY())||'[]');
   // 로딩 중 빈 화면에 스피너 표시
   const empties=document.querySelectorAll('.empty');
   empties.forEach(el=>{if(el.style.display!=='none')el.innerHTML='<div style="font-size:24px;animation:pulse 1s infinite">⋯</div><p style="color:var(--tx2);font-size:13px">불러오는 중...</p>';});
   if(!_sb){loadLocal();normalizeCostIds();setSyncStatus('local');renderAll();restoreTabState();return;}
   try{
-    const[tk,pj,rt,op,od,ol,co,rc,tp]=await Promise.all([
+    const[tk,pj,op,od,ol,co,rc]=await Promise.all([
       _sb.from('wf_tasks').select('*').order('sort_order',{nullsFirst:false}).order('created_at'),
       _sb.from('wf_projects').select('*').order('created_at'),
-      _sb.from('wf_routines').select('*').order('created_at'),
       _sb.from('order_products').select('*').order('name'),
       _sb.from('order_dests').select('*').order('name'),
       _sb.from('orders').select('*').order('created_at',{ascending:false}),
       _sb.from('costs').select('*').order('name'),
       _sb.from('recipes').select('*').order('name'),
-      _sb.from('wf_templates').select('*').order('created_at'),
     ]);
-    wfTasks=tk.data||[]; wfProjects=pj.data||[]; wfRoutines=rt.data||[];
+    wfTasks=tk.data||[]; wfProjects=pj.data||[];
     orderProducts=op.data||[]; orderDests=od.data||[]; orderList=ol.data||[];
     costs=co.data||[]; recipes=rc.data||[];
-    // wf_templates: 테이블 미생성 시 error 객체만 반환(throw 아님) → 기존 로컬 유지
-    if(tp&&tp.data)taskTemplates=tp.data;
     normalizeCostIds();
     persistLocal();
     setSyncStatus('ok');
     renderAll();
     autoCleanDone();
-    migrateRoutines();
-    migrateTemplates();
     subscribeRt();
     restoreTabState();
   }catch(e){
@@ -1260,7 +1136,7 @@ function subscribeRt(){
   if(!_sb)return;
   if(_rt)_sb.removeChannel(_rt);
   _rt=_sb.channel('hub-realtime');
-  const tables=['wf_tasks','wf_projects','wf_routines','order_products','order_dests','orders','costs','recipes','wf_templates'];
+  const tables=['wf_tasks','wf_projects','order_products','order_dests','orders','costs','recipes'];
   tables.forEach(t=>_rt.on('postgres_changes',{event:'*',schema:'public',table:t},()=>reloadTable(t)));
   _rt.subscribe(s=>{
     if(s==='SUBSCRIBED')setSyncStatus('ok');
@@ -1277,15 +1153,13 @@ async function reloadTable(t){
   else q=q.order('created_at');
   const{data}=await q;
   if(!data)return;
-  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderToday();renderWeekView();}
+  if(t==='wf_tasks'){wfTasks=data;persistLocal();renderWeekView();}
   else if(t==='wf_projects'){wfProjects=data;persistLocal();renderNotes();}
-  else if(t==='wf_routines'){wfRoutines=data;persistLocal();renderToday();}
   else if(t==='order_products'){orderProducts=data;persistLocal();renderOrderProducts();populateOrderSelects();}
   else if(t==='order_dests'){orderDests=data;persistLocal();renderOrderDests();populateOrderSelects();}
   else if(t==='orders'){orderList=data;persistLocal();renderOrderHistory();}
   else if(t==='costs'){costs=data;normalizeCostIds();persistLocal();renderCosts();renderRecipeDev();renderRecipeDone();}
   else if(t==='recipes'){recipes=data;normalizeCostIds();persistLocal();renderRecipeDev();renderRecipeDone();}
-  else if(t==='wf_templates'){taskTemplates=data;persistLocal();if(document.getElementById('template-modal').classList.contains('open'))renderTemplateList();}
 }
 
 // Supabase 저장 헬퍼 (낙관적 업데이트 후 비동기 동기화)
@@ -1314,28 +1188,24 @@ async function sbDelete(table,id){
 function loadLocal(){
   wfTasks=JSON.parse(localStorage.getItem('hub_wf_tasks')||'[]');
   wfProjects=JSON.parse(localStorage.getItem('hub_wf_projects')||'[]');
-  wfRoutines=JSON.parse(localStorage.getItem('hub_wf_routines')||'[]');
   orderProducts=JSON.parse(localStorage.getItem('hub_order_products')||'[]');
   orderDests=JSON.parse(localStorage.getItem('hub_order_dests')||'[]');
   orderList=JSON.parse(localStorage.getItem('hub_order_list')||'[]');
   costs=JSON.parse(localStorage.getItem('hub_costs')||'[]');
   recipes=JSON.parse(localStorage.getItem('hub_recipes')||'[]');
-  taskTemplates=JSON.parse(localStorage.getItem('hub_task_templates')||'[]');
   wfTaskOrder=[];// sort_order로 전환, 하위 호환용 유지
 }
 function persistLocal(){
   localStorage.setItem('hub_wf_tasks',JSON.stringify(wfTasks));
   localStorage.setItem('hub_wf_projects',JSON.stringify(wfProjects));
-  localStorage.setItem('hub_wf_routines',JSON.stringify(wfRoutines));
   localStorage.setItem('hub_order_products',JSON.stringify(orderProducts));
   localStorage.setItem('hub_order_dests',JSON.stringify(orderDests));
   localStorage.setItem('hub_order_list',JSON.stringify(orderList));
   localStorage.setItem('hub_costs',JSON.stringify(costs));
   localStorage.setItem('hub_recipes',JSON.stringify(recipes));
-  localStorage.setItem('hub_task_templates',JSON.stringify(taskTemplates));
 }
 
-let wfTasks=[], wfProjects=[], wfRoutines=[];
+let wfTasks=[], wfProjects=[];
 // 전역 아이콘 상수 (1회 선언)
 const ICO_CHK='<svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 const ICO_EDIT='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
@@ -1343,7 +1213,6 @@ const ICO_DEL='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" strok
 const ICO_DRAG='<svg width="12" height="18" viewBox="0 0 10 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="3" y1="4" x2="7" y2="4"/><line x1="3" y1="8" x2="7" y2="8"/><line x1="3" y1="12" x2="7" y2="12"/></svg>';
 let wfTaskOrder=[]; // 오늘 탭 업무 순서 (id 배열)
 let orderProducts=[], orderDests=[], orderList=[];
-let wkDestSel='';
 let selectedDests=new Set();
 let costs=[], recipes=[];
 let editIds={task:null,note:null,prod:null,dest:null,cost:null,recipe:null};
@@ -1458,7 +1327,6 @@ function restoreTabState(){
   const savedSection=sessionStorage.getItem('hub_section')||'workflow';
   let savedWfTab=sessionStorage.getItem('hub_wf_tab')||'today';
   if(!['today','notes'].includes(savedWfTab))savedWfTab='today';
-  const savedWorkView=sessionStorage.getItem('hub_work_view')||'today';
   const savedOrderTab=sessionStorage.getItem('hub_order_tab')||'input';
   const savedRecipeTab=sessionStorage.getItem('hub_recipe_tab')||'costs';
 
@@ -1466,10 +1334,8 @@ function restoreTabState(){
 
   if(isAdmin){
     goWfTab(savedWfTab);
-    if(savedWfTab==='today') setWorkView(savedWorkView);
   } else {
     goWfTab('today');
-    setWorkView(savedWorkView==='week'?'week':'today');
   }
 
   if(isAdmin){
@@ -1478,8 +1344,6 @@ function restoreTabState(){
   }
 }
 const TODAY=()=>{const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const TT_START=10, TT_END=22;
-let routineDoneToday=JSON.parse(localStorage.getItem('hub_rdt_'+TODAY())||'[]');
 let selectedDestColor='#D6EAD8';
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -1533,7 +1397,6 @@ function sortMembers(members){
 }
 // ── 팀원 등록
 let teamMembers=JSON.parse(localStorage.getItem('hub_team_members')||'[]');
-let taskTemplates=JSON.parse(localStorage.getItem('hub_task_templates')||'[]'); // 업무 템플릿(④)
 function addVersionNote(){
   const ta=document.getElementById('ri-memo');
   if(!ta)return;
@@ -1545,11 +1408,10 @@ function addVersionNote(){
 }
 
 function showWeekTaskDetail(id,dateStr){
-  const t=wfTasks.find(x=>x.id===id)||wfRoutines.find(x=>x.id===id);
+  const t=wfTasks.find(x=>x.id===id);
   if(!t)return;
-  const isRepeat=t.repeat||t._isRoutine;
-  const done=isRepeat?(t.done_dates?.includes(dateStr)||routineDoneToday.includes(id)):t.done;
-  const toggleFn=isRepeat?`toggleRoutineDoneDate('${id}','${dateStr}')`:`toggleTask('${id}')`;
+  const done=t.done;
+  const toggleFn=`toggleTask('${id}')`;
   const members=sortMembers(t.members||[]);
   const canT=appRole==='admin';
   const stMeta=TASK_STATUS[getTaskStatus(t)];
@@ -1563,9 +1425,9 @@ function showWeekTaskDetail(id,dateStr){
   popup.innerHTML=`
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:15px;line-height:1.4;word-break:keep-all">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:6px;padding:1px 6px;margin-left:6px">루틴</span>':''}</div>
+        <div style="font-weight:600;font-size:15px;line-height:1.4;word-break:keep-all">${t.name}</div>
         ${t.start_time?`<div style="font-size:12px;color:var(--tx2);margin-top:4px">⏰ ${t.start_time}${t.end_time?' ~ '+t.end_time:''}</div>`:''}
-        ${(!isRepeat||t.project_id||t.recipe_id||getTaskStatus(t)!=='todo')?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;align-items:center">${!isRepeat&&!done?`<span style="font-size:11px;font-weight:600;color:${stMeta.color};background:${stMeta.bg};border:1px solid ${stMeta.bd};border-radius:6px;padding:2px 8px">${stMeta.label}</span>`:''}${linkBadgeHtml(t)}</div>`:''}
+        ${(!done&&getTaskStatus(t)!=='todo')?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;align-items:center"><span style="font-size:11px;font-weight:600;color:${stMeta.color};background:${stMeta.bg};border:1px solid ${stMeta.bd};border-radius:6px;padding:2px 8px">${stMeta.label}</span></div>`:''}
         ${members.length?`<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${members.map(m=>memberTag(m)).join('')}</div>`:''}
         ${t.memo?`<div style="font-size:13px;color:var(--tx2);margin-top:8px;padding:8px;background:var(--cream);border-radius:6px;line-height:1.5;white-space:pre-wrap">${t.memo}</div>`:''}
       </div>
@@ -1575,8 +1437,9 @@ function showWeekTaskDetail(id,dateStr){
       ${canT?`<button onclick="${toggleFn};document.getElementById('week-task-popup').remove()" style="flex:1;padding:10px;border-radius:8px;border:none;background:${done?'var(--bd)':'var(--sage)'};color:${done?'var(--tx2)':'#fff'};font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
         ${done?'<span>↩ 완료 취소</span>':'<span>✓ 완료</span>'}
       </button>`:`<div style="flex:1;padding:10px;border-radius:8px;background:var(--cream);color:var(--tx2);font-size:13px;text-align:center;line-height:1.4">보기 전용</div>`}
-      ${(!isRepeat&&canT&&!done)?`<button onclick="cycleTaskStatus('${id}');showWeekTaskDetail('${id}','${dateStr}')" style="padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">상태 ↻</button>`:''}
+      ${(canT&&!done)?`<button onclick="cycleTaskStatus('${id}');showWeekTaskDetail('${id}','${dateStr}')" style="padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">상태 ↻</button>`:''}
       ${appRole==='admin'?`<button onclick="editTask('${id}');document.getElementById('week-task-popup').remove()" style="padding:10px 16px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-size:14px;cursor:pointer;font-family:inherit">수정</button>`:''}
+      ${appRole==='admin'?`<button onclick="document.getElementById('week-task-popup').remove();deleteTask('${id}')" style="padding:10px 12px;border-radius:8px;border:1px solid var(--danger);background:var(--danger-l);color:var(--danger);font-size:14px;cursor:pointer;font-family:inherit">삭제</button>`:''}
     </div>
   `;
   document.body.appendChild(popup);
@@ -1598,11 +1461,11 @@ async function onWeekDrop(e,targetDate){
   if(!_weekDragId)return;
   const t=wfTasks.find(x=>x.id===_weekDragId);
   _weekDragId=null;
-  if(!t||t.repeat)return;
+  if(!t)return;
   // 주간 뷰 배치 기준(예정일)과 일치하도록 예정일을 옮긴다 (마감일은 그대로 유지)
   t.created_date=targetDate;
   persistLocal();sbUpsert('wf_tasks',t);
-  renderToday();renderWeekView();
+  renderWeekView();
   showToast('업무 날짜가 변경됐습니다.');
 }
 
@@ -1629,188 +1492,6 @@ applyStoredTheme();
 
 function saveTeamMembers(){localStorage.setItem('hub_team_members',JSON.stringify(teamMembers));}
 
-// ── 업무 템플릿 (④)
-let _tplEditing=null, _tplApplyId=null;
-function saveTaskTemplates(){localStorage.setItem('hub_task_templates',JSON.stringify(taskTemplates));}
-function openTemplateModal(){tplBackToList();openModal('template-modal');}
-function tplBackToList(){
-  document.getElementById('tpl-list-view').style.display='';
-  document.getElementById('tpl-edit-view').style.display='none';
-  document.getElementById('tpl-list-footer').style.display='';
-  document.getElementById('tpl-edit-footer').style.display='none';
-  document.getElementById('template-modal-title').textContent='업무 템플릿';
-  renderTemplateList();
-}
-function renderTemplateList(){
-  const wrap=document.getElementById('tpl-list');
-  if(!taskTemplates.length){wrap.innerHTML='<p style="font-size:13px;color:var(--tx2);text-align:center;padding:16px 0">저장된 템플릿이 없습니다.</p>';return;}
-  wrap.innerHTML=taskTemplates.map(t=>`
-    <div style="border:1px solid var(--bd);border-radius:10px;padding:12px;display:flex;align-items:center;gap:8px">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:14px">${t.name}</div>
-        <div style="font-size:12px;color:var(--tx2);margin-top:2px">${t.items.length}개 단계</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="tplApply('${t.id}')">적용</button>
-      <button class="btn-icon" onclick="tplEditTemplate('${t.id}')">${ICO_EDIT}</button>
-      <button class="btn-icon" onclick="tplDeleteTemplate('${t.id}')">${ICO_DEL}</button>
-    </div>`).join('');
-}
-function tplStartCreate(){
-  _tplEditing={id:uid(),name:'',items:[{name:'',dayOffset:0,members:'',memo:''}]};
-  tplOpenEdit(false);
-}
-function tplEditTemplate(id){
-  const t=taskTemplates.find(x=>x.id===id);if(!t)return;
-  _tplEditing=JSON.parse(JSON.stringify(t));
-  if(!_tplEditing.items||!_tplEditing.items.length)_tplEditing.items=[{name:'',dayOffset:0,members:'',memo:''}];
-  tplOpenEdit(true);
-}
-function tplOpenEdit(isEdit){
-  document.getElementById('tpl-list-view').style.display='none';
-  document.getElementById('tpl-edit-view').style.display='';
-  document.getElementById('tpl-list-footer').style.display='none';
-  document.getElementById('tpl-edit-footer').style.display='';
-  document.getElementById('template-modal-title').textContent=isEdit?'템플릿 수정':'새 템플릿';
-  document.getElementById('tpl-name').value=_tplEditing.name||'';
-  renderTplItems();
-}
-function renderTplItems(){
-  const wrap=document.getElementById('tpl-items');
-  wrap.innerHTML=_tplEditing.items.map((it,idx)=>`
-    <div style="border:1px solid var(--bd);border-radius:8px;padding:10px;background:var(--cream)">
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-        <span style="font-size:11px;font-weight:700;color:var(--sage-d);flex-shrink:0">단계 ${idx+1}</span>
-        <input class="form-input" style="flex:1;font-size:13px" placeholder="업무명" value="${(it.name||'').replace(/"/g,'&quot;')}" oninput="_tplEditing.items[${idx}].name=this.value">
-        <button class="btn-icon" onclick="tplRemoveItem(${idx})" style="flex-shrink:0">${ICO_DEL}</button>
-      </div>
-      <div style="display:flex;gap:6px">
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><span style="font-size:12px;color:var(--tx2)">D+</span><input class="form-input" type="number" min="0" style="width:54px;font-size:13px" value="${it.dayOffset||0}" oninput="_tplEditing.items[${idx}].dayOffset=parseInt(this.value)||0"></div>
-        <input class="form-input" style="flex:1;font-size:13px" placeholder="담당자 (쉼표 구분)" value="${(it.members||'').replace(/"/g,'&quot;')}" oninput="_tplEditing.items[${idx}].members=this.value">
-      </div>
-    </div>`).join('');
-}
-function tplAddItem(){
-  const last=_tplEditing.items[_tplEditing.items.length-1];
-  _tplEditing.items.push({name:'',dayOffset:last?(last.dayOffset||0):0,members:'',memo:''});
-  renderTplItems();
-}
-function tplRemoveItem(idx){
-  _tplEditing.items.splice(idx,1);
-  if(!_tplEditing.items.length)_tplEditing.items=[{name:'',dayOffset:0,members:'',memo:''}];
-  renderTplItems();
-}
-function tplSaveTemplate(){
-  const name=document.getElementById('tpl-name').value.trim();
-  if(!name){showToast('템플릿 이름을 입력해주세요.');return;}
-  const items=_tplEditing.items.filter(it=>(it.name||'').trim());
-  if(!items.length){showToast('단계를 1개 이상 입력해주세요.');return;}
-  _tplEditing.name=name;_tplEditing.items=items;
-  const exist=taskTemplates.find(t=>t.id===_tplEditing.id);
-  if(exist)Object.assign(exist,_tplEditing);
-  else taskTemplates.push(_tplEditing);
-  saveTaskTemplates();
-  sbUpsert('wf_templates',{id:_tplEditing.id,name:_tplEditing.name,items:_tplEditing.items});
-  tplBackToList();
-  showToast('템플릿을 저장했습니다.');
-}
-function tplDeleteTemplate(id){
-  if(!confirm('이 템플릿을 삭제할까요?'))return;
-  taskTemplates=taskTemplates.filter(t=>t.id!==id);
-  saveTaskTemplates();
-  sbDelete('wf_templates',id);
-  renderTemplateList();
-  showToast('템플릿을 삭제했습니다.');
-}
-function tplApply(id){
-  const t=taskTemplates.find(x=>x.id===id);if(!t)return;
-  _tplApplyId=id;
-  document.getElementById('tpl-apply-desc').textContent=`"${t.name}" — ${t.items.length}개 단계의 업무를 생성합니다.`;
-  document.getElementById('tpl-apply-base').value=TODAY();
-  renderTplApplyPreview();
-  closeModal('template-modal');
-  openModal('template-apply-modal');
-}
-function renderTplApplyPreview(){
-  const t=taskTemplates.find(x=>x.id===_tplApplyId);if(!t)return;
-  const base=document.getElementById('tpl-apply-base').value||TODAY();
-  const wrap=document.getElementById('tpl-apply-preview');
-  const dowNames=['일','월','화','수','목','금','토'];
-  wrap.innerHTML=t.items.map(it=>{
-    const d=parseLocalDate(base);d.setDate(d.getDate()+(it.dayOffset||0));
-    const [,m,dd]=d.toLocaleDateString('sv-SE').split('-');
-    return `<div style="font-size:12px;color:var(--tx2);display:flex;gap:8px"><span style="color:var(--sage-d);font-weight:600;flex-shrink:0">${parseInt(m)}/${parseInt(dd)}(${dowNames[d.getDay()]})</span><span style="color:var(--tx)">${it.name}</span></div>`;
-  }).join('');
-}
-function tplApplyConfirm(){
-  const t=taskTemplates.find(x=>x.id===_tplApplyId);if(!t)return;
-  const base=document.getElementById('tpl-apply-base').value||TODAY();
-  let maxSort=Math.max(0,...wfTasks.map(x=>x.sort_order||0));
-  t.items.forEach(it=>{
-    const d=parseLocalDate(base);d.setDate(d.getDate()+(it.dayOffset||0));
-    const cd=d.toLocaleDateString('sv-SE');
-    const row={id:uid(),name:it.name,repeat:false,days:[],
-      start_time:'',end_time:'',due:'',
-      members:(it.members||'').split(',').map(s=>s.trim()).filter(Boolean),
-      memo:it.memo||'',status:'todo',project_id:null,recipe_id:null,
-      done:false,created_date:cd,sort_order:++maxSort};
-    wfTasks.push(row);sbUpsert('wf_tasks',row);
-  });
-  persistLocal();
-  closeModal('template-apply-modal');
-  renderToday();renderWeekView();
-  showToast(`${t.items.length}개 업무를 생성했습니다.`);
-}
-
-// 구형 wfRoutines → wf_tasks.repeat 자동 마이그레이션
-async function migrateRoutines(){
-  if(!wfRoutines.length)return;
-  const existing=wfTasks.filter(t=>t.repeat);
-  const toMigrate=wfRoutines.filter(r=>!existing.find(t=>t.id===r.id));
-  if(!toMigrate.length){wfRoutines=[];persistLocal();return;}
-  toMigrate.forEach(r=>{
-    const row={id:r.id,name:r.name,repeat:true,days:r.days||[],
-      start_time:r.start_time||'',end_time:r.end_time||'',
-      members:r.members||[],memo:r.memo||'',done:false,
-      created_date:TODAY(),sort_order:9999,done_dates:[]};
-    wfTasks.push(row);
-    sbUpsert('wf_tasks',row);
-  });
-  wfRoutines=[];
-  persistLocal();
-  renderToday();renderWeekView();
-}
-
-// localStorage 전용이던 템플릿 → Supabase 1회 이전 (기존 데이터 보존)
-async function migrateTemplates(){
-  if(localStorage.getItem('hub_tpl_migrated')==='1')return;
-  const local=JSON.parse(localStorage.getItem('hub_task_templates')||'[]');
-  const toMigrate=local.filter(l=>!taskTemplates.find(t=>t.id===l.id));
-  toMigrate.forEach(t=>{
-    const row={id:t.id,name:t.name,items:t.items||[]};
-    taskTemplates.push(row);
-    sbUpsert('wf_templates',row);
-  });
-  localStorage.setItem('hub_tpl_migrated','1');
-  if(toMigrate.length){
-    persistLocal();
-    if(document.getElementById('template-modal').classList.contains('open'))renderTemplateList();
-  }
-}
-
-function toggleRoutineDoneDate(id,dateStr){
-  const task=wfTasks.find(x=>x.id===id);
-  if(!task)return;
-  const doneDates=task.done_dates||[];
-  if(doneDates.includes(dateStr)){
-    task.done_dates=doneDates.filter(d=>d!==dateStr);
-  } else {
-    task.done_dates=[...doneDates,dateStr];
-  }
-  persistLocal();sbUpsert('wf_tasks',task);
-  renderWeekView();
-  if(dateStr===TODAY())renderToday();
-}
-
 function getTaskDate(){
   const sel=document.getElementById('tm-task-date').value;
   if(sel==='today')return TODAY();
@@ -1827,31 +1508,15 @@ function onTaskDateChange(){
     custom.style.display='none';
   }
 }
-async function clearDoneTasks(){
-  if(!confirm('완료된 업무를 모두 삭제할까요?'))return;
-  const td=TODAY();
-  const toDelete=wfTasks.filter(t=>!t.repeat&&t.done&&(t.created_date===td||(!t.created_date)));
-  // 루틴 당일 완료도 초기화
-  const prevRoutineDone=[...routineDoneToday];
-  routineDoneToday=[];
-  localStorage.setItem('hub_rdt_'+td,JSON.stringify([]));
-  if(!toDelete.length&&!prevRoutineDone.length){showToast('삭제할 완료 업무가 없습니다.');return;}
-  const prev=[...wfTasks];
-  wfTasks=wfTasks.filter(t=>!toDelete.find(d=>d.id===t.id));
-  renderToday();persistLocal();
-  toDelete.forEach(t=>sbDelete('wf_tasks',t.id));
-  showToast(`완료 업무 ${toDelete.length}건 삭제됐습니다.`,
-    ()=>{wfTasks=prev;routineDoneToday=prevRoutineDone;localStorage.setItem('hub_rdt_'+td,JSON.stringify(prevRoutineDone));renderToday();persistLocal();toDelete.forEach(t=>sbUpsert('wf_tasks',t));});
-}
 function autoCleanDone(){
   // 자정 기준: 전날 완료된 일회성 업무 자동 삭제
   const td=TODAY();
-  const toDelete=wfTasks.filter(t=>!t.repeat&&t.done&&t.created_date&&t.created_date<td);
+  const toDelete=wfTasks.filter(t=>t.done&&t.created_date&&t.created_date<td);
   if(!toDelete.length)return;
   wfTasks=wfTasks.filter(t=>!toDelete.find(d=>d.id===t.id));
   persistLocal();
   toDelete.forEach(t=>sbDelete('wf_tasks',t.id));
-  renderToday();
+  renderWeekView();
 }
 function saveSettings(){
   const val=document.getElementById('settings-members').value;
@@ -1884,27 +1549,7 @@ function toggleMemberChip(name,inputId,wrapId){
   renderMemberChips(wrapId,inputId);
 }
 
-// ── 메모 펼치기
-function toggleTaskMemo(el){
-  const memo=el.nextElementSibling;
-  if(!memo)return;
-  memo.classList.toggle('open');
-  el.textContent=memo.classList.contains('open')?'▾ 메모':'▸ 메모';
-}
-
-let _dragId=null;
-let _touchDragId=null,_touchClone=null,_touchOffY=0,_touchOffX=0;
-let _touchStartY=0,_touchStartX=0,_touchConfirmed=false;
-const DRAG_THRESHOLD=8;
-
 function goSection(s){
-  try{
-    if(_touchClone){_touchClone.remove();_touchClone=null;}
-    _touchDragId=null;_dragId=null;
-    document.querySelectorAll('.task-item').forEach(el=>{
-      el.style.opacity='';el.classList.remove('drag-over','dragging');
-    });
-  }catch(e){}
   sessionStorage.setItem('hub_section',s);
   document.querySelectorAll('.nav-tab').forEach((b,i)=>b.classList.toggle('active',['workflow','order','recipe'][i]===s));
   setBottomNav(s);
@@ -1912,23 +1557,13 @@ function goSection(s){
   document.getElementById('sec-'+s).classList.add('active');
 }
 function goWfTab(t){
-  try{
-    if(_touchClone){_touchClone.remove();_touchClone=null;}
-    _touchDragId=null;_dragId=null;
-    document.querySelectorAll('.task-item').forEach(el=>{
-      el.style.opacity='';el.classList.remove('drag-over','dragging');
-    });
-  }catch(e){}
   if(!['today','notes'].includes(t))t='today';
   sessionStorage.setItem('hub_wf_tab',t);
   document.querySelectorAll('.wf-tab').forEach((b,i)=>b.classList.toggle('active',['today','notes'][i]===t));
   document.querySelectorAll('.wf-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById('wfp-'+t);
   if(panel)panel.classList.add('active');
-  if(t==='today'){
-    const curView=document.getElementById('work-week-view').style.display==='none'?'today':'week';
-    setWorkView(curView);
-  }
+  if(t==='today'){renderWeekView();}
 }
 function goOrderTab(t){
   sessionStorage.setItem('hub_order_tab',t);
@@ -1970,17 +1605,6 @@ function destChipStyle(d){
   const m=DEST_COLOR_MAP[c];
   return m?`background:${c};color:${m.text};border:1.5px solid ${m.border}`:`background:${c};color:var(--tx)`;
 }
-function switchChartTab(tab){
-  const map={forecast:'chart-forecast',weekday:'chart-weekday',prod:'chart-by-prod'};
-  Object.entries(map).forEach(([t,id])=>{
-    const el=document.getElementById(id);
-    if(el)el.style.display=t===tab?'':'none';
-    const btn=document.getElementById('ctab-'+t);
-    if(btn)btn.classList.toggle('active',t===tab);
-  });
-  if(tab==='weekday')renderWeekdayPattern();
-}
-
 function setBottomNav(s){
   document.querySelectorAll('.bottom-nav-btn').forEach(b=>{
     b.classList.toggle('active', b.id==='bnav-'+s);
@@ -1994,9 +1618,6 @@ function applyMobileLayout(){
 applyMobileLayout();
 window.addEventListener('resize', applyMobileLayout);
 
-// ── 반복 업무 토글
-let _taskRepeat=false;
-let _taskDays=[];
 let _taskStatus='todo'; // 모달에서 선택 중인 진행 상태
 
 // 모달 진행 상태 버튼 선택 (①)
@@ -2006,400 +1627,12 @@ function selectTaskStatus(s){
     b.classList.toggle('selected',b.dataset.status===s);
   });
 }
-// 모달의 프로젝트/레시피 연결 드롭다운 채우기 (②)
-function populateTaskLinks(projId,recId){
-  const recSel=document.getElementById('tm-recipe');
-  if(recSel){
-    recSel.innerHTML='<option value="">레시피 없음</option>'+
-      recipes.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
-    recSel.value=recId||'';
-  }
-}
-
-function toggleTaskRepeat(){
-  _taskRepeat=!_taskRepeat;
-  const track=document.getElementById('tm-repeat-track');
-  const thumb=document.getElementById('tm-repeat-thumb');
-  const label=document.getElementById('tm-repeat-label');
-  const daysWrap=document.getElementById('tm-repeat-days-wrap');
-  const dueRow=document.getElementById('tm-due-row');
-  if(_taskRepeat){
-    track.style.background='var(--sage)';
-    thumb.style.left='18px';
-    label.textContent='ON — 반복';
-    daysWrap.style.display='';
-    dueRow.style.display='none';
-  } else {
-    track.style.background='var(--bd)';
-    thumb.style.left='2px';
-    label.textContent='OFF — 일회성 업무';
-    daysWrap.style.display='none';
-    dueRow.style.display='';
-    _taskDays=[];
-    document.querySelectorAll('.day-toggle-btn').forEach(b=>b.classList.remove('selected'));
-  }
-}
-
-function toggleDay(btn){
-  const day=parseInt(btn.dataset.day);
-  btn.classList.toggle('selected');
-  if(btn.classList.contains('selected')){
-    if(!_taskDays.includes(day))_taskDays.push(day);
-  } else {
-    _taskDays=_taskDays.filter(d=>d!==day);
-  }
-}
-
-function initRepeatState(repeat,days){
-  _taskRepeat=false;_taskDays=[];
-  // 초기화
-  const track=document.getElementById('tm-repeat-track');
-  const thumb=document.getElementById('tm-repeat-thumb');
-  const label=document.getElementById('tm-repeat-label');
-  const daysWrap=document.getElementById('tm-repeat-days-wrap');
-  const dueRow=document.getElementById('tm-due-row');
-  const statusRow=document.getElementById('tm-status-row');
-  document.querySelectorAll('.day-toggle-btn').forEach(b=>b.classList.remove('selected'));
-  if(repeat){
-    _taskRepeat=true;_taskDays=days||[];
-    track.style.background='var(--sage)';thumb.style.left='18px';
-    label.textContent='ON — 반복';
-    daysWrap.style.display='';dueRow.style.display='none';
-    if(statusRow)statusRow.style.display='none';
-    _taskDays.forEach(d=>{
-      const btn=document.querySelector(`.day-toggle-btn[data-day="${d}"]`);
-      if(btn)btn.classList.add('selected');
-    });
-  } else {
-    track.style.background='var(--bd)';thumb.style.left='2px';
-    label.textContent='OFF — 일회성 업무';
-    daysWrap.style.display='none';dueRow.style.display='';
-    if(statusRow)statusRow.style.display='';
-  }
-}
 function parseLocalDate(s){if(!s)return null;const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt;}
 
-function renderAll(){renderToday();renderWeekView();renderNotes();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
+function renderAll(){renderWeekView();renderNotes();renderOrderProducts();renderOrderDests();renderOrderHistory();populateOrderSelects();renderCosts();renderRecipeDev();renderRecipeDone();}
 
-
-function timeOptions(){
-  const opts=[];
-  for(let h=TT_START;h<=TT_END;h++){
-    opts.push(`${String(h).padStart(2,'0')}:00`);
-    if(h<TT_END)opts.push(`${String(h).padStart(2,'0')}:30`);
-  }
-  return opts;
-}
-function fillTimeSelects(){
-  const opts=timeOptions();
-  ['tm-start-time','tm-end-time','rm-start-time','rm-end-time'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    const cur=el.value;
-    el.innerHTML='<option value="">-</option>'+opts.map(t=>`<option value="${t}">${t}</option>`).join('');
-    if(cur)el.value=cur;
-  });
-}
-function timeToSlot(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return(h-TT_START)*2+(m===30?1:0);}
-function ddayBadge(due){
-  if(!due)return null;
-  const [dy,dm,dd2]=due.split('-').map(Number);
-  const dueDate=new Date(dy,dm-1,dd2);
-  const todayDate=new Date();todayDate.setHours(0,0,0,0);
-  const diff=Math.ceil((dueDate-todayDate)/(1000*60*60*24));
-  if(diff<0)return{label:`D+${Math.abs(diff)}`,cls:'dday-over'};
-  if(diff===0)return{label:'D-day',cls:'dday-today'};
-  if(diff<=3)return{label:`D-${diff}`,cls:'dday-soon'};
-  return{label:`D-${diff}`,cls:'dday-ok'};
-}
-
-function getTodayDOW(){return new Date().getDay();}
-
-function renderToday(){
-  const td=TODAY();
-  const dow=getTodayDOW();
-
-  // 날짜 레이블
-  const dowNames=['일','월','화','수','목','금','토'];
-  const dateLabel=document.getElementById('today-date-label');
-  if(dateLabel){
-    const [y,m,d]=td.split('-');
-    dateLabel.textContent=`${parseInt(m)}월 ${parseInt(d)}일 (${dowNames[dow]})`;
-  }
-
-  // 일회성 업무가 "오늘 화면에 뜨는 날" = 예정일(created_date) 기준으로 통일
-  // 이월: 예정일이 지났는데 아직 미완료 (마감일 유무·과거 여부와 무관하게 절대 누락되지 않음)
-  const carryTasks=wfTasks.filter(t=>
-    !t.repeat&&!t.done&&
-    t.created_date&&t.created_date<td
-  );
-  const carryIds=new Set(carryTasks.map(t=>t.id));
-  const todayTasks=[
-    // 오늘 업무: 예정일이 오늘이거나(구형은 예정일 없음=오늘 취급), 예정일은 달라도 마감이 오늘인 것
-    // 단, 이미 이월에 잡힌 업무는 제외해 중복 표시·중복 집계를 막는다
-    ...wfTasks.filter(t=>!t.repeat&&!carryIds.has(t.id)&&(
-      t.created_date===td ||
-      (!t.created_date) || // created_date 없는 구형 데이터 호환
-      t.due===td
-    )),
-    ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dow))),
-    ...wfRoutines.filter(r=>!r.days||r.days.length===0||r.days.includes(dow))
-  ];
-
-  const td2=td;
-  const isDone=t=>{
-    if(t.repeat){
-      // done_dates 배열로 공유되는 새 방식
-      if(t.done_dates&&t.done_dates.includes(td2))return true;
-      // 구형 localStorage 방식 호환
-      return routineDoneToday.includes(t.id);
-    }
-    if(t._isRoutine)return routineDoneToday.includes(t.id);
-    return t.done;
-  };
-
-  // 통계 (이월 포함)
-  const allForStat=[...carryTasks,...todayTasks];
-  const doneCount=allForStat.filter(t=>isDone(t)).length;
-  document.getElementById('ts-total').textContent=allForStat.length;
-  document.getElementById('ts-done').textContent=doneCount;
-  document.getElementById('ts-prog').textContent=allForStat.length-doneCount;
-  document.getElementById('ts-due').textContent=wfTasks.filter(t=>!t.repeat&&t.due===td&&!t.done).length;
-  document.getElementById('today-empty').style.display=(allForStat.length)?'none':'';
-
-  // 완료 정리 버튼 표시
-  const clearBtn=document.getElementById('clear-done-btn');
-  if(clearBtn)clearBtn.style.display=todayTasks.some(t=>isDone(t))||routineDoneToday.length?'':'none';
-
-
-
-  // ── 이월 업무 렌더
-  const carryWrap=document.getElementById('today-carry-wrap');
-  const carryList=document.getElementById('today-carry-list');
-  const carryCount=document.getElementById('today-carry-count');
-  if(carryTasks.length){
-    carryWrap.style.display='';
-    carryCount.textContent=carryTasks.length+'건';
-    carryList.innerHTML=carryTasks.map(t=>{
-      const sortedMembers=sortMembers(t.members||[]);
-      const daysAgo=Math.floor((new Date(td)-new Date(t.created_date))/(1000*60*60*24));
-      const done=t.done;
-      return`<div class="task-item carry-over${done?' done-item':''}">
-        <div class="priority-dot"></div>
-        <div class="task-check${done?' checked':''}" onclick="toggleTask('${t.id}')">${done?ICO_CHK:''}</div>
-        <div style="flex:1;min-width:0">
-          <div class="task-title${done?' done-txt':''}">${t.name}<span class="carry-badge">${daysAgo}일 전</span></div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
-            ${statusBadgeHtml(t)}
-            ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
-            ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
-            ${linkBadgeHtml(t)}
-          </div>
-          ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
-        </div>
-        ${done?`<button class="btn-undo" onclick="toggleTask('${t.id}')">취소</button>`:''}
-        ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="editTask('${t.id}')">${ICO_EDIT}</button>`:''}
-        ${appRole==='admin'?`<button class="btn-icon" onclick="deleteTask('${t.id}')">${ICO_DEL}</button>`:''}
-      </div>`;
-    }).join('');
-  } else {
-    carryWrap.style.display='none';
-  }
-
-  function taskCard(t,isRoutineObj){
-    const isRepeat=t.repeat||isRoutineObj;
-    const done=isRepeat?(
-      t.done_dates&&t.done_dates.includes(td)||routineDoneToday.includes(t.id)
-    ):t.done;
-    const pri=t.priority||'mid';
-    const dd=(!isRepeat&&t.due&&!done)?ddayBadge(t.due):null;
-    const toggleFn=isRepeat?`toggleRoutineDone('${t.id}')`:`toggleTask('${t.id}')`;
-    const editFn=`editTask('${t.id}')`;
-    const delFn=`deleteTask('${t.id}')`;
-    const repeatDays=isRepeat&&t.days&&t.days.length?
-      `<span class="task-meta">${['일','월','화','수','목','금','토'].filter((_,i)=>t.days.includes(i)).join('·')}</span>`:'';
-    const sortedMembers=sortMembers(t.members||[]);
-    const draggable=!isRepeat&&appRole==='admin';
-    return`<div class="task-item${done?' done-item':''}${getTaskStatus(t)==='blocked'?' blocked-item':''}" ${draggable?`draggable="true" data-id="${t.id}" ondragstart="onDragStart(event,'${t.id}')" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'${t.id}')" ondragend="onDragEnd(event)"`:''}> 
-      ${draggable?`<div class="drag-handle" title="드래그하여 순서 변경">${ICO_DRAG}</div>`:''}
-      <div class="priority-dot"></div>
-      <div class="task-check${done?' checked':''}" onclick="${toggleFn}">${done?ICO_CHK:''}</div>
-      <div style="flex:1;min-width:0">
-        <div class="task-title${done?' done-txt':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:8px;padding:1px 6px;margin-left:5px;font-weight:600">반복</span>':''}</div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
-          ${statusBadgeHtml(t)}
-          ${t.start_time?`<span class="task-meta">${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}
-          ${sortedMembers.length?sortedMembers.map(m=>memberTag(m)).join(''):''}
-          ${repeatDays}
-          ${dd?`<span class="dday ${dd.cls}">${dd.label}</span>`:''}
-          ${linkBadgeHtml(t)}
-        </div>
-        ${t.memo?`<div class="task-memo-toggle" onclick="toggleTaskMemo(this)">▸ 메모</div><div class="task-memo">${t.memo.replace(/\n/g,'<br>')}</div>`:''}
-      </div>
-      ${done&&!isRepeat?`<button class="btn-undo" onclick="${toggleFn}">취소</button>`:''}
-      ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="${editFn}">${ICO_EDIT}</button>`:''}
-      ${appRole==='admin'?`<button class="btn-icon" onclick="${delFn}">${ICO_DEL}</button>`:''}
-    </div>`;
-  }
-
-  // 시간 있는 업무: 시간순 정렬
-  const timed=todayTasks.filter(t=>t.start_time).sort((a,b)=>a.start_time>b.start_time?1:-1);
-  // 시간 없는 업무: sort_order 기준, 완료된 것 뒤로
-  const untimed=todayTasks.filter(t=>!t.start_time).sort((a,b)=>{
-    const da=isDone(a),db=isDone(b);
-    if(da&&!db)return 1;if(!da&&db)return -1;
-    const ao=a.sort_order??9999,bo=b.sort_order??9999;
-    return ao-bo;
-  });
-
-  const timedWrap=document.getElementById('today-timed-wrap');
-  const timedList=document.getElementById('today-timed-list');
-  const untimedList=document.getElementById('today-untimed-list');
-  const untimedLabel=document.getElementById('today-untimed-label');
-
-  if(timed.length){
-    timedWrap.style.display='';
-    timedList.innerHTML=timed.map(t=>{
-      const isRoutineObj=wfRoutines.some(r=>r.id===t.id);
-      return taskCard(t,isRoutineObj);
-    }).join('');
-  } else {
-    timedWrap.style.display='none';
-  }
-
-  untimedLabel.style.display=(timed.length&&untimed.length)?'':'none';
-  untimedList.innerHTML=untimed.map(t=>{
-    const isRoutineObj=wfRoutines.some(r=>r.id===t.id);
-    return taskCard(t,isRoutineObj);
-  }).join('');
-
-  setTimeout(initTouchDrag,0);
-}
-
-function onDragStart(e,id){
-  _dragId=id;
-  e.dataTransfer.effectAllowed='move';
-  e.currentTarget.classList.add('dragging');
-}
-function onDragOver(e){
-  e.preventDefault();
-  e.dataTransfer.dropEffect='move';
-  e.currentTarget.classList.add('drag-over');
-}
-function onDragLeave(e){e.currentTarget.classList.remove('drag-over');}
-function onDrop(e,targetId,dragId){
-  e.preventDefault();
-  const fromId=dragId||_dragId;
-  document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('drag-over','dragging'));
-  if(!fromId||fromId===targetId){_dragId=null;return;}
-
-  const td=TODAY();
-  const todayTasks=wfTasks.filter(t=>
-    !t.repeat&&!t.start_time&&(t.due===td||((!t.due)&&(t.created_date===td||!t.created_date)))
-  ).sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
-
-  const fromIdx=todayTasks.findIndex(t=>t.id===fromId);
-  const toIdx=todayTasks.findIndex(t=>t.id===targetId);
-  if(fromIdx===-1||toIdx===-1){_dragId=null;return;}
-
-  // 순서 재배치
-  const reordered=[...todayTasks];
-  const [moved]=reordered.splice(fromIdx,1);
-  reordered.splice(toIdx,0,moved);
-
-  // sort_order 재부여 및 Supabase 동기화
-  reordered.forEach((t,i)=>{
-    const task=wfTasks.find(x=>x.id===t.id);
-    if(task)task.sort_order=i+1;
-  });
-  persistLocal();
-  reordered.forEach((t,i)=>sbUpsert('wf_tasks',wfTasks.find(x=>x.id===t.id)));
-
-  _dragId=null;
-  renderToday();
-}
-function onDragEnd(e){
-  _dragId=null;
-  document.querySelectorAll('.task-item').forEach(el=>el.classList.remove('dragging','drag-over'));
-}
-
-function _cleanTouchDrag(){
-  if(_touchClone){_touchClone.remove();_touchClone=null;}
-  document.querySelectorAll('#today-untimed-list .task-item').forEach(el=>{
-    el.style.opacity='';el.classList.remove('drag-over','dragging');
-  });
-  _touchDragId=null;_touchConfirmed=false;
-}
-
-function initTouchDrag(){
-  const list=document.getElementById('today-untimed-list');
-  if(!list)return;
-
-  list.addEventListener('touchstart',e=>{
-    const handle=e.target.closest('.drag-handle');
-    if(!handle)return;
-    const item=handle.closest('.task-item');
-    if(!item||!item.dataset.id)return;
-    // 드래그 후보 등록 (클론은 아직 안 만듦)
-    _touchDragId=item.dataset.id;
-    _touchConfirmed=false;
-    _touchClone=null;
-    _touchStartY=e.touches[0].clientY;
-    _touchStartX=e.touches[0].clientX;
-    const rect=item.getBoundingClientRect();
-    _touchOffY=e.touches[0].clientY-rect.top;
-    _touchOffX=e.touches[0].clientX-rect.left;
-  },{passive:true});
-
-  list.addEventListener('touchmove',e=>{
-    if(!_touchDragId)return;
-    const touch=e.touches[0];
-    const dy=Math.abs(touch.clientY-_touchStartY);
-    const dx=Math.abs(touch.clientX-_touchStartX);
-
-    // 임계값 이상 수직 이동 시 드래그 확정
-    if(!_touchConfirmed){
-      if(dy<DRAG_THRESHOLD)return; // 아직 드래그 아님 — 스크롤 허용
-      if(dx>dy){_cleanTouchDrag();return;} // 수평 스크롤이면 드래그 취소
-      // 드래그 확정
-      _touchConfirmed=true;
-      const item=list.querySelector(`.task-item[data-id="${_touchDragId}"]`);
-      if(!item){_cleanTouchDrag();return;}
-      const rect=item.getBoundingClientRect();
-      _touchClone=item.cloneNode(true);
-      _touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;opacity:.85;pointer-events:none;z-index:9999;border-radius:var(--r);background:var(--sf);box-shadow:0 8px 24px rgba(0,0,0,.25);transition:none`;
-      document.body.appendChild(_touchClone);
-      item.style.opacity='0.2';
-    }
-
-    e.preventDefault(); // 드래그 확정 후에만 스크롤 차단
-    _touchClone.style.top=(touch.clientY-_touchOffY)+'px';
-    _touchClone.style.left=(touch.clientX-_touchOffX)+'px';
-    document.querySelectorAll('#today-untimed-list .task-item').forEach(el=>el.classList.remove('drag-over'));
-    const el=document.elementFromPoint(touch.clientX,touch.clientY);
-    const target=el?.closest('#today-untimed-list .task-item[data-id]');
-    if(target&&target.dataset.id!==_touchDragId)target.classList.add('drag-over');
-  },{passive:false});
-
-  const endHandler=e=>{
-    if(!_touchDragId){_cleanTouchDrag();return;}
-    if(!_touchConfirmed){_cleanTouchDrag();return;} // 드래그 확정 전 손 뗌 = 스크롤이었음
-    const touch=(e.changedTouches||e.touches)[0];
-    const el=touch?document.elementFromPoint(touch.clientX,touch.clientY):null;
-    const target=el?.closest('#today-untimed-list .task-item[data-id]');
-    const prevId=_touchDragId;
-    _cleanTouchDrag();
-    if(target&&target.dataset.id&&target.dataset.id!==prevId){
-      onDrop({preventDefault:()=>{}},target.dataset.id,prevId);
-    }
-  };
-  list.addEventListener('touchend',endHandler,{passive:true});
-  list.addEventListener('touchcancel',()=>_cleanTouchDrag(),{passive:true});
-}
-
-// 상태 뱃지 HTML — 탭하면 다음 상태로 순환 (①). 루틴/완료는 표시 안 함
+// 상태 뱃지 HTML — 탭하면 다음 상태로 순환 (①). 완료는 표시 안 함
 function statusBadgeHtml(t,small){
-  if(t.repeat||t._isRoutine)return '';
   const st=getTaskStatus(t);
   if(st==='done')return '';
   const m=TASK_STATUS[st];
@@ -2408,23 +1641,11 @@ function statusBadgeHtml(t,small){
   const pad=small?'0 4px':'1px 7px';
   return `<span ${editable?`onclick="cycleTaskStatus('${t.id}',event)"`:''} title="${editable?'탭하여 상태 변경':''}" style="display:inline-block;font-size:${fs};font-weight:600;color:${m.color};background:${m.bg};border:1px solid ${m.bd};border-radius:6px;padding:${pad};line-height:1.4;${editable?'cursor:pointer':''}">${m.label}</span>`;
 }
-// 연결(프로젝트/레시피) 뱃지 HTML (②)
-function linkBadgeHtml(t,small){
-  let out='';
-  const fs=small?'8px':'10px';
-  const pad=small?'0 4px':'1px 6px';
-  if(t.recipe_id){
-    const r=recipes.find(x=>x.id===t.recipe_id);
-    if(r)out+=`<span style="font-size:${fs};color:var(--accent);background:var(--accent-l);border-radius:6px;padding:${pad};line-height:1.4;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle">🧪 ${r.name}</span>`;
-  }
-  return out;
-}
 async function toggleTask(id){
   const t=wfTasks.find(x=>x.id===id);if(!t)return;
   t.done=!t.done;
   t.status=t.done?'done':'todo'; // 완료/해제 시 상태 동기화
-  renderToday();
-  if(workView==='week')renderWeekView();
+  renderWeekView();
   persistLocal();sbUpsert('wf_tasks',t);
 }
 // 카드의 상태 뱃지 탭 → 다음 진행 상태로 순환 (①)
@@ -2436,50 +1657,22 @@ async function cycleTaskStatus(id,ev){
   const idx=STATUS_CYCLE.indexOf(cur);
   t.status=STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
   t.done=false;
-  renderToday();
-  if(workView==='week')renderWeekView();
+  renderWeekView();
   persistLocal();sbUpsert('wf_tasks',t);
-}
-function toggleRoutineDone(id){
-  const td=TODAY();
-  // 루틴 task인 경우 done_dates 배열로 Supabase 공유
-  const task=wfTasks.find(x=>x.id===id);
-  if(task&&task.repeat){
-    const doneDates=task.done_dates||[];
-    if(doneDates.includes(td)){
-      task.done_dates=doneDates.filter(d=>d!==td);
-    } else {
-      task.done_dates=[...doneDates,td];
-    }
-    persistLocal();sbUpsert('wf_tasks',task);
-    renderToday();
-    if(workView==='week')renderWeekView();
-    return;
-  }
-  // 구형 wfRoutines 호환
-  if(routineDoneToday.includes(id))routineDoneToday=routineDoneToday.filter(x=>x!==id);
-  else routineDoneToday.push(id);
-  localStorage.setItem('hub_rdt_'+td,JSON.stringify(routineDoneToday));
-  renderToday();
-  if(workView==='week')renderWeekView();
 }
 async function deleteTask(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...wfTasks];
   wfTasks=wfTasks.filter(x=>x.id!==id);
-  renderToday();renderWeekView();
+  renderWeekView();
   persistLocal();sbDelete('wf_tasks',id);
-  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderToday();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
+  showToast('업무를 삭제했습니다.',()=>{wfTasks=prev;renderWeekView();persistLocal();sbUpsert('wf_tasks',prev.find(x=>x.id===id));});
 }
 function openTaskModal(id,presetDate){
   editIds.task=id||null;
-  fillTimeSelects();
   const t=id?wfTasks.find(x=>x.id===id):null;
   document.getElementById('task-modal-title').textContent=t?'업무 수정':'업무 추가';
   document.getElementById('tm-name').value=t?.name||'';
-  document.getElementById('tm-start-time').value=t?.start_time||'';
-  document.getElementById('tm-end-time').value=t?.end_time||'';
-  document.getElementById('tm-due').value=t?.due||'';
   document.getElementById('tm-members').value=(t?.members||[]).join(', ');
   renderMemberChips('tm-member-chips','tm-members');
   // 날짜 초기화 (수정=기존 예정일 / 신규=눌린 날짜(presetDate) / 그 외=오늘)
@@ -2499,9 +1692,6 @@ function openTaskModal(id,presetDate){
   // 진행 상태(①): 완료 업무는 todo로 표시하되 done 플래그는 저장 시 보존
   const curStatus=getTaskStatus(t||{});
   selectTaskStatus(curStatus==='done'?'todo':curStatus);
-  // 프로젝트/레시피 연결(②)
-  populateTaskLinks(t?.project_id||'',t?.recipe_id||'');
-  initRepeatState(t?.repeat||false,t?.days||[]);
   openModal('task-modal');
 }
 function editTask(id){openTaskModal(id);}
@@ -2509,21 +1699,19 @@ function closeTaskModal(){closeModal('task-modal');}
 async function saveTask(){
   const name=document.getElementById('tm-name').value.trim();
   if(!name){showToast('업무명을 입력해주세요.');return;}
-  const _st=document.getElementById('tm-start-time').value,_et=document.getElementById('tm-end-time').value;
-  if(_st&&_et&&_et<=_st){showToast('종료 시간은 시작 시간보다 늦어야 합니다.');return;}
   const prevTask=editIds.task?wfTasks.find(x=>x.id===editIds.task):null;
   const done=prevTask?(prevTask.done||false):false;
   const row={id:editIds.task||uid(),name,
-    repeat:_taskRepeat,
-    days:_taskRepeat?[..._taskDays]:[],
-    start_time:document.getElementById('tm-start-time').value,
-    end_time:document.getElementById('tm-end-time').value,
-    due:_taskRepeat?'':document.getElementById('tm-due').value,
+    repeat:false,
+    days:[],
+    start_time:'',
+    end_time:'',
+    due:'',
     members:document.getElementById('tm-members').value.split(',').map(s=>s.trim()).filter(Boolean),
     memo:document.getElementById('tm-memo').value.trim(),
-    status:_taskRepeat?'':(done?'done':_taskStatus),
+    status:done?'done':_taskStatus,
     project_id:null,
-    recipe_id:document.getElementById('tm-recipe').value||null,
+    recipe_id:null,
     done:done,
     created_date:editIds.task?(prevTask?.created_date||TODAY()):getTaskDate(),
     sort_order:editIds.task?(prevTask?.sort_order??9999):(Math.max(0,...wfTasks.map(t=>t.sort_order||0))+1)};
@@ -2531,7 +1719,6 @@ async function saveTask(){
   else{wfTasks.push(row);}
   persistLocal();sbUpsert('wf_tasks',row);
   closeTaskModal();
-  renderToday();
   renderWeekView();
   showToast('저장됐습니다.');
 }
@@ -2590,22 +1777,7 @@ async function deleteNote(id){
   showToast('기록을 삭제했습니다.',()=>{wfProjects=prev;renderNotes();persistLocal();sbUpsert('wf_projects',prev.find(x=>x.id===id));});
 }
 
-let workView='today'; // 'today' | 'week'
 let weekStart=null;
-
-function setWorkView(v){
-  workView=v;
-  sessionStorage.setItem('hub_work_view',v);
-  document.getElementById('sub-tab-today').classList.toggle('active',v==='today');
-  document.getElementById('sub-tab-week').classList.toggle('active',v==='week');
-  document.getElementById('work-today-view').style.display=v==='today'?'':'none';
-  document.getElementById('work-week-view').style.display=v==='week'?'':'none';
-  // today-add-btn 위치 조정
-  const addBtn=document.getElementById('today-add-btn');
-  if(addBtn)addBtn.style.display=appRole==='admin'?'':'none';
-  if(v==='week'){renderWeekView();}
-  else{renderToday();}
-}
 
 function weekMove(d){
   if(!weekStart)weekStart=getWeekStart(new Date());
@@ -2617,23 +1789,19 @@ function weekMove(d){
 function renderWeekView(){
   if(!weekStart)weekStart=getWeekStart(new Date());
   const td=TODAY();
-  const dow=['월','화','수','목','금'];
+  const dow=['일','월','화','수','목','금','토'];
 
-  // 월~금 5일
-  const days=Array.from({length:5},(_,i)=>{
+  // 일~토 7일
+  const days=Array.from({length:7},(_,i)=>{
     const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);
     return d;
   });
-  // 이번 주 화면에 칸으로 보이는 날짜(월~금) 집합 — 이월 중복 방지에 사용
-  const weekDateSet=new Set(days.map(d=>d.toLocaleDateString('sv-SE')));
 
   const [,m0,d0]=days[0].toLocaleDateString('sv-SE').split('-');
-  const [,m1,d1]=days[4].toLocaleDateString('sv-SE').split('-');
+  const [,m1,d1]=days[6].toLocaleDateString('sv-SE').split('-');
   const titleEl=document.getElementById('week-title');
   if(titleEl)titleEl.textContent=`${parseInt(m0)}/${parseInt(d0)} — ${parseInt(m1)}/${parseInt(d1)}`;
 
-
-  // 헤더 행과 바디 행 분리
   // 공휴일 데이터 (주간 뷰용)
   const wFixedH={'01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'크리스마스'};
   const wSpecialH={
@@ -2664,24 +1832,16 @@ function renderWeekView(){
     const dateStr=date.toLocaleDateString('sv-SE');
     const isToday=dateStr===td;
     const dayNum=date.getDate();
-    const dowIdx=date.getDay();
     const holidayName=getHolidayName(dateStr);
     const isHoliday=!!holidayName;
-    const isRed=isHoliday;
-    const allTasks=[
-      ...wfTasks.filter(t=>!t.repeat&&(t.created_date===dateStr||(!t.created_date&&isToday))),
-      ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
-      ...wfRoutines.filter(r=>(!r.days||r.days.length===0||r.days.includes(dowIdx))),
-    ];
-    const carry=isToday?wfTasks.filter(t=>!t.repeat&&!t.done&&t.created_date&&t.created_date<td&&!weekDateSet.has(t.created_date)):[];
-    const total=[...carry,...allTasks].length;
-    const doneCount=[...carry,...allTasks].filter(t=>{
-      if(t.repeat||t._isRoutine)return t.done_dates?.includes(dateStr)||routineDoneToday.includes(t.id);
-      return t.done;
-    }).length;
-    return`<div class="week-col-header${isToday?' today-col':''}${isRed?' holiday-col':''}">
-      <div class="week-dow${isRed?' red':''}">${dow[i]}</div>
-      <div class="week-date-num${isToday?' today-num':isRed?' red-num':''}">${dayNum}</div>
+    const isWeekend=date.getDay()===0||date.getDay()===6;
+    const isRedText=isHoliday||isWeekend;
+    const dayTasks=wfTasks.filter(t=>t.created_date===dateStr||(!t.created_date&&isToday));
+    const total=dayTasks.length;
+    const doneCount=dayTasks.filter(t=>t.done).length;
+    return`<div class="week-col-header${isToday?' today-col':''}${isHoliday?' holiday-col':''}">
+      <div class="week-dow${isRedText?' red':''}">${dow[i]}</div>
+      <div class="week-date-num${isToday?' today-num':isRedText?' red-num':''}">${dayNum}</div>
       ${isHoliday?`<div style="font-size:8px;color:var(--danger);font-weight:600;line-height:1.1;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${holidayName}</div>`:`<div class="week-cnt">${total?`${doneCount}/${total}`:''}</div>`}
     </div>`;
   }).join('');
@@ -2689,37 +1849,24 @@ function renderWeekView(){
   const bodies=days.map((date,i)=>{
     const dateStr=date.toLocaleDateString('sv-SE');
     const isToday=dateStr===td;
-    const dowIdx=date.getDay();
 
-    const dayTasks=[
-      ...wfTasks.filter(t=>!t.repeat&&(t.created_date===dateStr||(!t.created_date&&isToday))),
-      ...wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(dowIdx))),
-      ...wfRoutines.filter(r=>(!r.days||r.days.length===0||r.days.includes(dowIdx))).map(r=>({...r,_isRoutine:true})),
-    ].sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
+    const dayTasks=wfTasks.filter(t=>t.created_date===dateStr||(!t.created_date&&isToday))
+      .sort((a,b)=>(a.sort_order??9999)-(b.sort_order??9999));
 
-    const carry=isToday?wfTasks.filter(t=>
-      !t.repeat&&!t.done&&t.created_date&&t.created_date<td&&!weekDateSet.has(t.created_date)
-    ):[];
-    const allTasks=[...carry,...dayTasks];
-
-    const cards=allTasks.map(t=>{
-      const isRepeat=t.repeat||t._isRoutine;
-      const isCarry=carry.includes(t);
-      const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)||routineDoneToday.includes(t.id)):t.done;
-      const toggleFn=t._isRoutine?`toggleRoutineDone('${t.id}')`:(isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}')`:`toggleTask('${t.id}')`);
+    const cards=dayTasks.map(t=>{
+      const done=t.done;
       const members=sortMembers(t.members||[]);
-      const draggableWeek=!isRepeat&&!isCarry&&appRole==='admin';
-      return`<div class="week-task${done?' done-task':''}${isCarry?' carry-task':''}"
+      const draggableWeek=appRole==='admin';
+      return`<div class="week-task${done?' done-task':''}"
         ${draggableWeek?`draggable="true" data-taskid="${t.id}" ondragstart="onWeekDragStart(event,'${t.id}')"`:''}
         onclick="showWeekTaskDetail('${t.id}','${dateStr}')" title="${t.name}">
         <div style="display:flex;align-items:flex-start;gap:4px">
           <div style="width:12px;height:12px;min-width:12px;border-radius:50%;border:1.5px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;margin-top:1px;flex-shrink:0">${done?ICO_CHK:''}</div>
           <div style="flex:1;min-width:0">
-            <div class="week-task-name${done?' done-txt':''}">${t.name}${isRepeat&&!t._isRoutine?'':isRepeat?'<span style="font-size:8px;background:var(--sage-l);color:var(--sage-d);border-radius:3px;padding:0 2px;margin-left:2px">루틴</span>':''}</div>
-            ${(!isRepeat&&!done&&getTaskStatus(t)!=='todo')?`<div style="margin-top:2px">${statusBadgeHtml(t,true)}</div>`:''}
+            <div class="week-task-name${done?' done-txt':''}">${t.name}</div>
+            ${(!done&&getTaskStatus(t)!=='todo')?`<div style="margin-top:2px">${statusBadgeHtml(t,true)}</div>`:''}
             ${t.start_time?`<div class="week-task-meta">${t.start_time}</div>`:''}
             ${members.length?`<div class="week-task-meta">${members.map(m=>m).join(', ')}</div>`:''}
-            ${(!isRepeat&&(t.project_id||t.recipe_id))?`<div style="margin-top:2px;display:flex;gap:2px;flex-wrap:wrap">${linkBadgeHtml(t,true)}</div>`:''}
           </div>
         </div>
       </div>`;
@@ -2736,77 +1883,60 @@ function renderWeekView(){
 
   document.getElementById('week-grid-wrap').innerHTML=
     `<div class="week-wrap">
-      <div class="week-scroll">
+      <div class="week-scroll" id="week-scroll-el">
         <div class="week-header-row">${headers}</div>
         <div class="week-body-row">${bodies}</div>
       </div>
     </div>`;
+
+  // 모바일에서도 오늘 칸이 바로 보이도록 자동 스크롤
+  const todayCol=document.getElementById('week-col-'+td);
+  if(todayCol)todayCol.scrollIntoView({inline:'center',block:'nearest'});
+
+  renderTodayList();
 }
 
-let calWeekStart=null; // 주간 뷰 시작일 (월요일)
+// 오늘 업무 전체 목록 (제목이 잘리지 않는 카드형) — 주간 뷰 위에 항상 표시
+function renderTodayList(){
+  const wrap=document.getElementById('today-list');
+  const empty=document.getElementById('today-list-empty');
+  if(!wrap)return;
+  const td=TODAY();
+  const todayTasks=wfTasks.filter(t=>t.created_date===td||!t.created_date)
+    .sort((a,b)=>{
+      const da=a.done,db=b.done;
+      if(da&&!db)return 1;if(!da&&db)return -1;
+      return (a.sort_order??9999)-(b.sort_order??9999);
+    });
+  empty.style.display=todayTasks.length?'none':'';
+  wrap.innerHTML=todayTasks.map(t=>{
+    const done=t.done;
+    const members=sortMembers(t.members||[]);
+    return`<div class="task-item${done?' done-item':''}${getTaskStatus(t)==='blocked'?' blocked-item':''}">
+      <div class="priority-dot"></div>
+      <div class="task-check${done?' checked':''}" onclick="toggleTask('${t.id}')">${done?ICO_CHK:''}</div>
+      <div style="flex:1;min-width:0">
+        <div class="task-title${done?' done-txt':''}">${t.name}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px">
+          ${statusBadgeHtml(t)}
+          ${members.length?members.map(m=>memberTag(m)).join(''):''}
+        </div>
+        ${t.memo?`<div style="font-size:12px;color:var(--tx2);margin-top:4px;white-space:pre-wrap">${t.memo}</div>`:''}
+      </div>
+      ${done?`<button class="btn-undo" onclick="toggleTask('${t.id}')">취소</button>`:''}
+      ${appRole==='admin'&&!done?`<button class="btn-icon" onclick="editTask('${t.id}')">${ICO_EDIT}</button>`:''}
+      ${appRole==='admin'?`<button class="btn-icon" onclick="deleteTask('${t.id}')">${ICO_DEL}</button>`:''}
+    </div>`;
+  }).join('');
+}
 
 function getWeekStart(date){
   const d=new Date(date);
-  const day=d.getDay();
-  const diff=day===0?-6:1-day; // 월요일 기준
-  d.setDate(d.getDate()+diff);
+  const day=d.getDay(); // 0=일요일
+  d.setDate(d.getDate()-day);
   d.setHours(0,0,0,0);
   return d;
 }
-
-
-
-function getProjColor(idx){return PROJ_COLORS[idx%PROJ_COLORS.length];}
-
-function showCalPopup(dateStr,e){
-  if(!dateStr)return;
-  e&&e.stopPropagation();
-  const existing=document.getElementById('cal-popup');
-  if(existing&&existing.dataset.date===dateStr){existing.remove();return;}
-  if(existing)existing.remove();
-
-  const tasks=wfTasks.filter(t=>!t.repeat&&(t.due===dateStr||t.created_date===dateStr));
-  const routines=wfTasks.filter(t=>t.repeat&&(!t.days||t.days.length===0||t.days.includes(new Date(dateStr+'T00:00:00').getDay())));
-
-  if(!tasks.length&&!routines.length)return;
-
-  const [y,m,d]=dateStr.split('-');
-  const popup=document.createElement('div');
-  popup.id='cal-popup';
-  popup.dataset.date=dateStr;
-  popup.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--sf);border-top:2px solid var(--bd);border-radius:16px 16px 0 0;padding:16px;z-index:500;box-shadow:0 -4px 20px rgba(0,0,0,.15);max-height:60vh;overflow-y:auto';
-
-
-  const taskList=[...tasks,...routines].map(t=>{
-    const isRepeat=t.repeat;
-    const done=isRepeat?(t.done_dates&&t.done_dates.includes(dateStr)):t.done;
-    const toggleFn=isRepeat?`toggleRoutineDoneDate('${t.id}','${dateStr}');document.getElementById('cal-popup').remove();`:`toggleTask('${t.id}');document.getElementById('cal-popup').remove();`;
-    const members=sortMembers(t.members||[]);
-    return`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cream);margin-bottom:6px;cursor:pointer" onclick="${toggleFn}">
-      <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${done?'var(--sage)':'var(--bd)'};background:${done?'var(--sage)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${done?ICO_CHK:''}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:500;font-size:13px;${done?'text-decoration:line-through;opacity:.5':''}">${t.name}${isRepeat?'<span style="font-size:10px;background:var(--sage-l);color:var(--sage-d);border-radius:6px;padding:0 5px;margin-left:4px">루틴</span>':''}</div>
-        ${t.start_time||members.length?`<div style="font-size:11px;color:var(--tx2);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap">${t.start_time?`<span>${t.start_time}${t.end_time?' ~ '+t.end_time:''}</span>`:''}${members.map(m=>memberTag(m)).join('')}</div>`:''}
-      </div>
-    </div>`;
-  }).join('');
-
-  popup.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <span style="font-weight:600;font-size:14px">${parseInt(m)}월 ${parseInt(d)}일</span>
-      <button onclick="document.getElementById('cal-popup').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2);line-height:1">×</button>
-    </div>
-    ${taskList}
-    ${appRole==='admin'?`<button onclick="openTaskModalForDate('${dateStr}');document.getElementById('cal-popup').remove()" style="width:100%;padding:10px;border:1.5px dashed var(--bd);background:none;border-radius:8px;color:var(--tx2);font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">+ 업무 추가</button>`:''}
-  `;
-  document.body.appendChild(popup);
-  setTimeout(()=>{
-    document.addEventListener('click',function handler(ev){
-      if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',handler);}
-    });
-  },100);
-}
-
 
 function applyOrderRole(){
   const isAdmin=orderRole==='admin';
@@ -3015,6 +2145,7 @@ function renderForecast(){
   const fd=document.getElementById('order-filter-dest')?.value||'';
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
   const today=new Date(); today.setHours(0,0,0,0);
+  const todayKey=today.toLocaleDateString('sv-SE');
 
   let rows=orderValidData().filter(o=>o.order_date);
   if(fp)rows=rows.filter(o=>o.product_id===fp);
@@ -3044,93 +2175,142 @@ function renderForecast(){
     if(cycle!=null){const nd=parseLocalDate(lastDate);nd.setDate(nd.getDate()+cycle);nextDate=nd;daysUntil=Math.round((nd-today)/86400000);}
     return{pid,did,n,lastDate,lastQty,avgQty,cycle,daysUntil,nextDate};
   });
-  items.sort((a,b)=>{const av=a.cycle==null?1e9:a.daysUntil,bv=b.cycle==null?1e9:b.daysUntil;return av-bv;});
 
-  const soonCount=items.filter(it=>it.cycle!=null&&it.daysUntil<=2).length;
-  function badge(it){
-    if(it.cycle==null)return{cls:'',dd:`${it.n}회`,st:'주기 미정',c:'var(--tx2)'};
-    const du=it.daysUntil;
-    if(du<0)return{cls:'urgent',dd:`+${-du}일`,st:'지났어요',c:'var(--danger)'};
-    if(du===0)return{cls:'urgent',dd:'D-0',st:'오늘',c:'var(--danger)'};
-    if(du<=2)return{cls:'soon',dd:`D-${du}`,st:'임박',c:'var(--accent)'};
-    if(du<=Math.max(3,Math.round(it.cycle*0.4)))return{cls:'',dd:`D-${du}`,st:'곧',c:'var(--sage-d)'};
-    return{cls:'',dd:`D-${du}`,st:'여유',c:'var(--tx2)'};
-  }
+  const withCycle=items.filter(it=>it.cycle!=null);
+  const noCycle=items.filter(it=>it.cycle==null);
+  const overdue=withCycle.filter(it=>it.daysUntil<0).sort((a,b)=>a.daysUntil-b.daysUntil);
+  const upcoming=withCycle.filter(it=>it.daysUntil>=0);
+  const soonCount=withCycle.filter(it=>it.daysUntil<=2).length;
+
+  // 예상일별로 묶기 (타임라인 노드)
+  const byDateKey={};
+  upcoming.forEach(it=>{
+    const key=it.nextDate.toLocaleDateString('sv-SE');
+    (byDateKey[key]=byDateKey[key]||[]).push(it);
+  });
+  const dateKeys=Object.keys(byDateKey).sort();
+
   const md=dt=>`${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`;
-  const rowHtml=it=>{
+  const WKN=['일','월','화','수','목','금','토'];
+
+  function chipHtml(it,metaLabel){
     const p=orderProducts.find(x=>x.id===it.pid),d=orderDests.find(x=>x.id===it.did);
-    const b=badge(it), unit=p?.unit||'개';
-    const cyc=it.cycle!=null?`${it.cycle}일 주기`:`${it.n}회 납품`;
-    const nextStr=it.nextDate?` · 예상 <b style="color:${b.c}">${md(it.nextDate)}</b>`:'';
-    return`<div class="fc-row ${b.cls}">
-      <div class="fc-main">
-        <div class="fc-title">${p?.name||'삭제된 상품'} <span class="dest-chip" style="${destChipStyle(d)}">${d?.name||'?'}</span></div>
-        <div class="fc-meta">${cyc} · 평균 ${fmt(it.avgQty)}${unit} · 마지막 ${it.lastDate.slice(5).replace('-','/')}${nextStr}</div>
-      </div>
-      <div class="fc-badge">
-        <div class="fc-dday" style="color:${b.c}">${b.dd}</div>
-        <div class="fc-status" style="color:${b.c}">${b.st}</div>
+    return`<div class="tl-chip">
+      <span class="tl-chip-name">${p?.name||'삭제된 상품'}</span>
+      <span class="dest-chip" style="${destChipStyle(d)}">${d?.name||'?'}</span>
+      <span class="tl-chip-meta">${metaLabel(it,p)}</span>
+    </div>`;
+  }
+
+  const note=`<div class="fc-note">과거 납품 간격으로 추정한 <b>다음 발주 예상일</b>이에요. 실제와 다를 수 있어요.${soonCount?`<br><span style="color:var(--accent);font-weight:700">⚡ 지금 챙길 발주 ${soonCount}건</span>`:''}</div>`;
+
+  let overdueHtml='';
+  if(overdue.length){
+    overdueHtml=`<div class="tl-node overdue">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-date">지났어요</div>
+        <div class="tl-chips">${overdue.map(it=>chipHtml(it,(it,p)=>`${-it.daysUntil}일 지남 · 평균 ${fmt(it.avgQty)}${p?.unit||'개'}`)).join('')}</div>
       </div>
     </div>`;
-  };
-  // 임박(주기 추정 가능 + D-2 이하)만 기본 노출, 나머지는 접어둠
-  const nowItems=items.filter(it=>it.cycle!=null&&it.daysUntil<=2);
-  const restItems=items.filter(it=>!(it.cycle!=null&&it.daysUntil<=2));
-  const note=`<div class="fc-note">과거 납품 간격으로 추정한 <b>다음 발주 예상일</b>이에요. 실제와 다를 수 있어요.${soonCount?`<br><span style="color:var(--accent);font-weight:700">⚡ 지금 챙길 발주 ${soonCount}건</span>`:''}</div>`;
-  const nowHtml=nowItems.length?nowItems.map(rowHtml).join(''):'<div style="padding:14px;text-align:center;font-size:13px;color:var(--tx2)">임박한 발주가 없어요. 여유 있습니다 👍</div>';
-  let restHtml='';
-  if(restItems.length){
-    restHtml=`<div id="fc-rest" style="display:none">${restItems.map(rowHtml).join('')}</div>
-      <button class="fc-more" id="fc-more-btn" data-n="${restItems.length}" onclick="toggleForecastRest()">나머지 ${restItems.length}건 보기 ▾</button>`;
   }
-  el.innerHTML=note+nowHtml+restHtml;
+
+  let upcomingHtml='';
+  if(dateKeys.length){
+    upcomingHtml=dateKeys.map(key=>{
+      const dt=parseLocalDate(key);
+      const isToday=key===todayKey;
+      const du=Math.round((dt-today)/86400000);
+      const soonCls=du<=2?' soon':'';
+      const ddLabel=du===0?'오늘':`D-${du}`;
+      return`<div class="tl-node${soonCls}${isToday?' today':''}">
+        <div class="tl-dot"></div>
+        <div class="tl-content">
+          <div class="tl-date">${md(dt)} (${WKN[dt.getDay()]})<span class="tl-dday">${ddLabel}</span></div>
+          <div class="tl-chips">${byDateKey[key].map(it=>chipHtml(it,(it,p)=>`평균 ${fmt(it.avgQty)}${p?.unit||'개'}`)).join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  let noCycleHtml='';
+  if(noCycle.length){
+    noCycleHtml=`<div class="tl-node nocycle">
+      <div class="tl-dot"></div>
+      <div class="tl-content">
+        <div class="tl-date">주기 판단 불가 (납품 1회뿐)</div>
+        <div class="tl-chips">${noCycle.map(it=>chipHtml(it,(it,p)=>`최근 ${fmt(it.lastQty)}${p?.unit||'개'}`)).join('')}</div>
+      </div>
+    </div>`;
+  }
+
+  const restCount=upcoming.length+noCycle.length;
+  let restHtml='';
+  if(restCount){
+    restHtml=`<div id="fc-rest" style="display:none">${upcomingHtml}${noCycleHtml}</div>
+      <button class="fc-more" id="fc-more-btn" data-n="${restCount}" onclick="toggleForecastRest()">예정 발주 ${restCount}건 보기 ▾</button>`;
+  } else if(!overdue.length){
+    restHtml='<div style="padding:14px;text-align:center;font-size:13px;color:var(--tx2)">임박한 발주가 없어요. 여유 있습니다 👍</div>';
+  }
+  el.innerHTML=note+overdueHtml+restHtml;
 }
 function toggleForecastRest(){
   const el=document.getElementById('fc-rest'),btn=document.getElementById('fc-more-btn');
   if(!el||!btn)return;
   const open=el.style.display!=='none';
   el.style.display=open?'none':'';
-  btn.innerHTML=open?`나머지 ${btn.dataset.n}건 보기 ▾`:`접기 ▴`;
+  btn.innerHTML=open?`예정 발주 ${btn.dataset.n}건 보기 ▾`:`접기 ▴`;
 }
 
-// 요일 패턴: 선택한 지점이 요일마다 어떤 상품을 얼마나 받는지
-function renderWeekdayPattern(){
-  const el=document.getElementById('chart-weekday'); if(!el)return;
+// 상품 × 지점 매트릭스: 기간 필터만 반영해 전체 상품/지점을 한눈에
+function renderOrderMatrix(){
+  const el=document.getElementById('chart-matrix'); if(!el)return;
+  const period=parseInt(document.getElementById('order-filter-period')?.value||'0');
+  const today=new Date(); today.setHours(0,0,0,0);
+  const validProdIds=new Set(orderProducts.map(p=>p.id));
+  const validDestIds=new Set(orderDests.map(d=>d.id));
+  let rows=orderList.filter(o=>validProdIds.has(o.product_id)&&validDestIds.has(o.dest_id));
+  if(period>0)rows=rows.filter(o=>o.order_date&&(today-parseLocalDate(o.order_date))/86400000<=period);
+
   const dests=sortKo(orderDests);
-  if(!dests.length){el.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">등록된 지점이 없습니다</div>';return;}
-  const fd=document.getElementById('order-filter-dest')?.value||'';
-  let sel=wkDestSel||fd||dests[0].id;
-  if(!dests.some(d=>d.id===sel))sel=dests[0].id;
-  wkDestSel=sel;
+  if(!orderProducts.length||!dests.length||!rows.length){
+    el.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">데이터가 없습니다</div>';
+    return;
+  }
 
-  const chips=dests.map(d=>`<button class="dest-toggle-btn ${d.id===sel?'selected':''}" onclick="selectWeekdayDest('${d.id}')">${d.name}</button>`).join('');
-  const all=orderValidData().filter(o=>o.dest_id===sel&&o.order_date);
-  const WK=['월','화','수','목','금','토','일'], WKIDX=[1,2,3,4,5,6,0];
-  const todayDow=new Date().getDay();
-
-  const byDow={};
-  all.forEach(o=>{
-    const dow=parseLocalDate(o.order_date).getDay();
-    const m=(byDow[dow]=byDow[dow]||{});
-    const e=(m[o.product_id]=m[o.product_id]||{count:0,qty:0});
-    e.count++; e.qty+=o.qty;
+  const map={}; // pid -> did -> qty
+  rows.forEach(o=>{
+    const m=map[o.product_id]=map[o.product_id]||{};
+    m[o.dest_id]=(m[o.dest_id]||0)+o.qty;
   });
-  const rows=WKIDX.map((dow,i)=>{
-    const m=byDow[dow]||{};
-    const items=Object.entries(m).map(([pid,v])=>{
-      const p=orderProducts.find(x=>x.id===pid);
-      return{name:p?.name||'?',unit:p?.unit||'개',avg:Math.round(v.qty/v.count),count:v.count};
-    }).sort((a,b)=>b.count-a.count||b.avg-a.avg);
-    const isToday=dow===todayDow;
-    const pills=items.length?items.map(it=>`<span class="wk-pill">${it.name} ~${fmt(it.avg)}${it.unit}</span>`).join(''):'<span class="wk-empty">—</span>';
-    return`<div class="wk-row ${isToday?'today':''}"><div class="wk-day">${WK[i]}</div><div class="wk-items">${pills}</div></div>`;
+
+  const prodTotals=sortKo(orderProducts).map(p=>({p,total:dests.reduce((s,d)=>s+(map[p.id]?.[d.id]||0),0)}))
+    .filter(x=>x.total>0).sort((a,b)=>b.total-a.total);
+  if(!prodTotals.length){el.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">데이터가 없습니다</div>';return;}
+
+  const maxVal=Math.max(1,...prodTotals.flatMap(({p})=>dests.map(d=>map[p.id]?.[d.id]||0)));
+
+  const header=`<th class="mx-corner">상품</th><th class="mx-total-col">합계</th>`+dests.map(d=>{
+    const cm=DEST_COLOR_MAP[d.color||'#D6EAD8'];
+    return `<th class="mx-dest" style="color:${cm?cm.text:'var(--tx2)'}">${d.name}</th>`;
   }).join('');
 
-  el.innerHTML=`<div class="wk-chips">${chips}</div>
-    <div class="fc-note">선택한 지점이 <b>요일마다</b> 보통 어떤 상품을 얼마나 받는지 보여줘요. (과거 납품 평균)</div>
-    ${all.length?rows:'<div style="padding:16px;text-align:center;font-size:13px;color:var(--tx2)">이 지점의 납품 기록이 없습니다</div>'}`;
+  const bodyRows=prodTotals.map(({p,total})=>{
+    const cells=dests.map(d=>{
+      const v=map[p.id]?.[d.id]||0;
+      const intensity=v/maxVal;
+      const bg=v>0?`rgba(74,140,92,${(0.12+intensity*0.55).toFixed(2)})`:'transparent';
+      return `<td class="mx-cell" style="background:${bg}">${v>0?fmt(v):''}</td>`;
+    }).join('');
+    return `<tr><td class="mx-prod">${p.name}</td><td class="mx-total-col">${fmt(total)}</td>${cells}</tr>`;
+  }).join('');
+
+  el.innerHTML=`<div class="mx-scroll"><table class="mx-table">
+    <thead><tr>${header}</tr></thead>
+    <tbody>${bodyRows}</tbody>
+  </table></div>`;
 }
-function selectWeekdayDest(id){wkDestSel=id;renderWeekdayPattern();}
+
 
 function renderOrderHistory(){
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
@@ -3156,7 +2336,6 @@ function renderOrderHistory(){
     return(p?.name||'').toLowerCase().includes(q)||(d?.name||'').toLowerCase().includes(q);
   });}
 
-  const EMPTY='<div style="font-size:13px;color:var(--tx2);padding:8px 0">데이터가 없습니다</div>';
 
   const destCardsEl=document.getElementById('dest-cards-row');
   if(destCardsEl){
@@ -3233,138 +2412,15 @@ function renderOrderHistory(){
       <div style="font-size:11px;color:var(--tx2);margin-top:2px">조회 기간 기준</div>
     </div>`;
 
-  // 발주 예측·요일 패턴은 기간 필터와 무관하게 전체 이력 기준으로 항상 갱신
+  // 발주 예측은 기간 필터와 무관하게 전체 이력 기준으로 항상 갱신
   renderForecast();
-  renderWeekdayPattern();
+  renderOrderMatrix();
 
   if(!data.length){
-    ['chart-by-prod','chart-monthly','chart-dest-pie'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=EMPTY;});
     document.getElementById('order-empty').style.display='';
     document.getElementById('order-tbody').innerHTML='';
     const mw=document.getElementById('order-more-wrap');if(mw)mw.innerHTML='';
     return;
-  }
-
-  const prodEntries=Object.entries(prodMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
-
-  const COLORS=['#2E4D3E','#3A5A4A','#4A7060','#5B7E6E','#6E9080','#82A393','#96B5A6','#AAC7B9','#BED9CB','#D2EBDE'];
-  const ROWS=5;
-
-  function hBar(entries,colorFn){
-    if(!entries.length)return `<div style="padding:20px;text-align:center;font-size:13px;color:var(--tx2)">데이터가 없습니다</div>`;
-    const top10=entries.slice(0,10);
-    const max=Math.max(...top10.map(e=>e[1]));
-    const col1=top10.slice(0,ROWS);
-    const col2=top10.slice(ROWS);
-
-    function renderCol(items,startIdx){
-      return items.map(([label,val],i)=>{
-        const pct=max>0?Math.round(val/max*100):0;
-        const color=colorFn(startIdx+i);
-        return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-          <div style="width:72px;font-size:12px;color:var(--tx2);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0">${label.length>8?label.slice(0,8)+'…':label}</div>
-          <div style="flex:1;background:var(--bd);border-radius:3px;height:14px;overflow:hidden">
-            <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
-          </div>
-          <div style="font-size:12px;font-weight:600;color:var(--tx);width:28px;text-align:right;flex-shrink:0">${fmt(val)}</div>
-        </div>`;
-      }).join('');
-    }
-
-    return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">
-      <div>${renderCol(col1,0)}</div>
-      <div>${renderCol(col2,ROWS)}</div>
-    </div>`;
-  }
-  const prodEl=document.getElementById('chart-by-prod');
-  if(prodEl)prodEl.innerHTML=hBar(prodEntries,i=>COLORS[i%COLORS.length]);
-
-  // ── 꺾은선 그래프: 월별 총 납품량
-  const monthlyEl=document.getElementById('chart-monthly');
-  if(monthlyEl){
-    const mMonths=[...new Set(data.map(o=>o.order_date?.slice(0,7)).filter(Boolean))].sort().slice(-8);
-    if(!mMonths.length){monthlyEl.innerHTML=EMPTY;}
-    else{
-      const mTotals=mMonths.map(m=>data.filter(o=>o.order_date?.startsWith(m)).reduce((s,o)=>s+o.qty,0));
-      const maxM=Math.max(...mTotals,1);
-      const W=200,H=90,PAD=20;
-      // 단일 데이터거나 모두 같은 값이면 중간 높이에 표시
-      const ptX=(i)=>PAD+i*(W-PAD*2)/(Math.max(mMonths.length-1,1));
-      const ptY=(v)=>{
-        if(maxM===0)return H/2;
-        const ratio=v/maxM;
-        return 16+Math.round(ratio*(H-32)); // 위 16px, 아래 16px 여백
-      };
-      // y축 반전 (크면 위, 작으면 아래)
-      const ptYInv=(v)=>H-ptY(v);
-      const points=mTotals.map((v,i)=>`${ptX(i)},${ptYInv(v)}`).join(' ');
-      const areaPoints=`${ptX(0)},${H} ${points} ${ptX(mMonths.length-1)},${H}`;
-      let dots='';
-      mTotals.forEach((v,i)=>{
-        const cx=ptX(i),cy=ptYInv(v);
-        const isThis=mMonths[i]===thisMonth;
-        const isLast=i===mTotals.length-1;
-        dots+=`<circle cx="${cx}" cy="${cy}" r="${isThis?4:3}" fill="${isThis?'var(--sage-d)':'var(--sage)'}"/>`;
-        if(isThis||isLast){
-          // 너무 위에 있으면(cy<16) 점 아래에 표시
-          const labelY=cy<16?cy+14:cy-7;
-          dots+=`<text x="${cx}" y="${labelY}" text-anchor="middle" font-size="9" fill="var(--sage-d)" font-family="inherit" font-weight="700">${fmt(v)}</text>`;
-        }
-      });
-      const xLabels=mMonths.map((m,i)=>`<text x="${ptX(i)}" y="${H+12}" text-anchor="middle" font-size="8" fill="${mMonths[i]===thisMonth?'var(--sage-d)':'var(--tx2)'}" font-family="inherit" font-weight="${mMonths[i]===thisMonth?'700':'400'}">${m.slice(5)}</text>`).join('');
-      monthlyEl.innerHTML=`<svg viewBox="0 0 ${W} ${H+16}" style="width:100%;overflow:visible">
-        <defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--sage)" stop-opacity=".25"/><stop offset="100%" stop-color="var(--sage)" stop-opacity="0"/></linearGradient></defs>
-        <polygon points="${areaPoints}" fill="url(#lineGrad)"/>
-        <polyline points="${points}" fill="none" stroke="var(--sage)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-        ${dots}${xLabels}
-      </svg>`;
-    }
-  }
-
-  // ── 도넛 그래프: 이번 달 지점 비중
-  const pieEl=document.getElementById('chart-dest-pie');
-  if(pieEl){
-    const thisMonthOrders=data.filter(o=>o.order_date?.startsWith(thisMonth));
-    const destTotals=sortKo(orderDests).map(d=>({
-      d, total:thisMonthOrders.filter(o=>o.dest_id===d.id).reduce((s,o)=>s+o.qty,0)
-    })).filter(x=>x.total>0);
-
-    if(!destTotals.length){pieEl.innerHTML=`<div style="font-size:12px;color:var(--tx2);text-align:center;padding:20px 0">이번 달 납품 없음</div>`;}
-    else{
-      const total=destTotals.reduce((s,x)=>s+x.total,0);
-      const R=42,CX=60,CY=52,IR=26;
-      let slices='', startAngle=-Math.PI/2;
-      destTotals.forEach(({d,total:v})=>{
-        const angle=v/total*Math.PI*2;
-        const x1=CX+R*Math.cos(startAngle), y1=CY+R*Math.sin(startAngle);
-        const x2=CX+R*Math.cos(startAngle+angle), y2=CY+R*Math.sin(startAngle+angle);
-        const ix1=CX+IR*Math.cos(startAngle), iy1=CY+IR*Math.sin(startAngle);
-        const ix2=CX+IR*Math.cos(startAngle+angle), iy2=CY+IR*Math.sin(startAngle+angle);
-        const large=angle>Math.PI?1:0;
-        const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];
-        const fill=c?c.border:(d.color||'var(--sage)');
-        slices+=`<path d="M${ix1},${iy1} L${x1},${y1} A${R},${R} 0 ${large},1 ${x2},${y2} L${ix2},${iy2} A${IR},${IR} 0 ${large},0 ${ix1},${iy1} Z" fill="${fill}" opacity=".9"/>`;
-        startAngle+=angle;
-      });
-      // 중앙 텍스트
-      slices+=`<text x="${CX}" y="${CY-4}" text-anchor="middle" font-size="10" fill="var(--tx2)" font-family="inherit">합계</text>`;
-      slices+=`<text x="${CX}" y="${CY+9}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--tx)" font-family="inherit">${fmt(total)}</text>`;
-      // 범례
-      const legend=destTotals.map(({d,total:v})=>{
-        const c=DEST_COLOR_MAP[d.color||'#D6EAD8'];
-        const fill=c?c.border:(d.color||'var(--sage)');
-        const pct=Math.round(v/total*100);
-        return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px">
-          <div style="width:8px;height:8px;border-radius:2px;background:${fill};flex-shrink:0"></div>
-          <span style="font-size:10px;color:var(--tx2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</span>
-          <span style="font-size:10px;font-weight:600;color:var(--tx)">${pct}%</span>
-        </div>`;
-      }).join('');
-      pieEl.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
-        <svg viewBox="0 0 120 104" style="width:100px;flex-shrink:0">${slices}</svg>
-        <div style="flex:1;min-width:0">${legend}</div>
-      </div>`;
-    }
   }
 
   document.getElementById('order-empty').style.display=data.length?'none':'';
@@ -3399,14 +2455,12 @@ function toggleDestFilter(id){
   if(!sel)return;
   const on=sel.value!==id;
   sel.value=on?id:'';
-  wkDestSel=on?id:'';   // 요일 패턴 탭도 같은 지점으로 동기화
   orderHistLimit=30;
   renderOrderHistory();
 }
 function clearDestFilter(){
   const sel=document.getElementById('order-filter-dest');
   if(sel)sel.value='';
-  wkDestSel='';
   orderHistLimit=30;
   renderOrderHistory();
 }
