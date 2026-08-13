@@ -923,6 +923,24 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeProductModal()">취소</button><button class="btn btn-primary" onclick="saveProduct()">저장</button></div>
 </div></div>
 
+<div class="overlay" id="link-package-modal"><div class="modal">
+  <div class="modal-header"><span class="modal-title" id="lp-modal-title">상품 연동 · 납품 규격 설정</span><button class="btn-icon" onclick="closeLinkPackageModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="modal-body">
+    <div style="background:var(--sf);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px">
+      🔗 레시피 <strong id="lp-recipe-name"></strong> · <span id="lp-batch-info" style="color:var(--tx2)"></span>
+    </div>
+    <div class="form-group"><label class="form-label">상품명 *</label><input class="form-input" id="lp-prod-name" placeholder="상품명"></div>
+    <div class="form-group"><label class="form-label">납품 규격 (상품 1개당 양) *</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input class="form-input" id="lp-package-size" type="number" min="0" step="any" placeholder="예: 100" oninput="updateLinkPackagePreview()" style="flex:1">
+        <span id="lp-unit-suffix" style="color:var(--tx2);font-size:13px;min-width:20px"></span>
+      </div>
+    </div>
+    <div id="lp-preview" style="font-size:13px;line-height:1.6;background:var(--cream);border-radius:8px;padding:10px 12px;color:var(--tx2)"></div>
+  </div>
+  <div class="modal-footer"><button class="btn btn-ghost" onclick="closeLinkPackageModal()">취소</button><button class="btn btn-primary" id="lp-save-btn" onclick="saveLinkPackage()">연동하기</button></div>
+</div></div>
+
 <div class="overlay" id="dest-modal"><div class="modal">
   <div class="modal-header"><span class="modal-title" id="dest-modal-title">지점 추가</span><button class="btn-icon" onclick="closeDestModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
   <div class="modal-body">
@@ -2547,33 +2565,82 @@ function renderOrderProducts(){document.getElementById('products-tbody').innerHT
   return`<tr><td style="font-weight:500">${p.name}${p.unit?` <span style="color:var(--tx2);font-size:12px">(${p.unit})</span>`:''}${linkedRecipe?` <span title="연동된 레시피: ${linkedRecipe.name}" style="font-size:11px;color:var(--sage-d)">🔗</span>`:''}</td><td style="display:flex;gap:4px;justify-content:flex-end"><button class="btn-icon" title="수정" onclick="editProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" title="삭제" onclick="deleteProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></td></tr>`;
 }).join('');}
 // ── 레시피 ↔ 상품 연동
-function findLinkedProduct(recipeId){return orderProducts.find(p=>p.recipe_id===recipeId);}
-async function linkRecipeToProduct(recipeId){
+// 레시피 = 1회 생산 배치(예: 300g), 상품 = 실제 납품 규격(예: 100g).
+// 한 레시피에 서로 다른 납품 규격의 상품을 여러 개 연동할 수 있다 (findLinkedProducts).
+function findLinkedProducts(recipeId){return orderProducts.filter(p=>p.recipe_id===recipeId);}
+function findLinkedProduct(recipeId){return findLinkedProducts(recipeId)[0]||null;}
+let linkPackageCtx=null;
+function openLinkPackageModal(recipeId,productId){
   const r=recipes.find(x=>x.id===recipeId); if(!r)return;
-  if(findLinkedProduct(recipeId)){showToast('이미 상품과 연동되어 있어요.');return;}
-  const existing=orderProducts.find(p=>p.name.trim()===r.name.trim());
-  if(existing){
-    if(existing.recipe_id&&existing.recipe_id!==recipeId){
-      const other=recipes.find(x=>x.id===existing.recipe_id);
-      if(!confirm(`"${existing.name}" 상품은 이미 다른 레시피("${other?.name||'삭제된 레시피'}")와 연동되어 있어요.\n이 레시피로 연동을 바꿀까요?`))return;
-    }
-    existing.recipe_id=recipeId;
-    persistLocal();sbUpsert('order_products',existing);
-    renderOrderProducts();renderRecipeDev();renderRecipeDone();
-    showToast(`기존 상품 "${existing.name}"에 연동했습니다.`);
-  } else {
-    const row={id:uid(),name:r.name,unit:r.yield_unit||'',recipe_id:recipeId};
-    orderProducts.push(row);
-    persistLocal();sbUpsert('order_products',row);
-    populateOrderSelects();
-    renderOrderProducts();renderRecipeDev();renderRecipeDone();
-    showToast(`상품 "${r.name}"을 새로 만들고 연동했습니다.`);
-  }
+  const p=productId?orderProducts.find(x=>x.id===productId):null;
+  linkPackageCtx={recipeId,productId:productId||null};
+  document.getElementById('lp-modal-title').textContent=p?'납품 규격 수정':'상품 연동 · 납품 규격 설정';
+  document.getElementById('lp-recipe-name').textContent=r.name;
+  document.getElementById('lp-batch-info').textContent=`배치 1회 생산량 ${fmt(r.yield_qty||1)}${r.yield_unit||''}`;
+  document.getElementById('lp-prod-name').value=p?.name||r.name;
+  document.getElementById('lp-package-size').value=p?.package_size||'';
+  document.getElementById('lp-unit-suffix').textContent=r.yield_unit||'';
+  document.getElementById('lp-save-btn').textContent=p?'수정하기':'연동하기';
+  updateLinkPackagePreview();
+  openModal('link-package-modal');
 }
-async function unlinkRecipeProduct(recipeId){
-  const p=findLinkedProduct(recipeId); if(!p)return;
+function updateLinkPackagePreview(){
+  const r=recipes.find(x=>x.id===linkPackageCtx?.recipeId); const el=document.getElementById('lp-preview');
+  if(!r||!el)return;
+  const yieldQty=r.yield_qty||1, yieldUnit=r.yield_unit||'';
+  const pkg=parseFloat(document.getElementById('lp-package-size').value)||0;
+  if(!pkg||pkg<=0){el.textContent='납품 규격을 입력하면 배치당 생산 가능 개수와 개당 원가를 미리 볼 수 있어요.';return;}
+  const total=calcCost(r.ingredients);
+  const perBase=yieldQty?total/yieldQty:0;
+  const countPerBatch=Math.floor(yieldQty/pkg);
+  const remainder=+(yieldQty-countPerBatch*pkg).toFixed(2);
+  const perPackageCost=perBase*pkg;
+  el.innerHTML=`배치 1회(<strong>${fmt(yieldQty)}${yieldUnit}</strong>) → <strong>${countPerBatch}개</strong> 생산 (개당 ${fmt(pkg)}${yieldUnit})`
+    +(remainder>0?` · 잔여 ${fmt(remainder)}${yieldUnit}`:'')
+    +`<br>상품 1개(${fmt(pkg)}${yieldUnit}) 원가 ≈ <strong>${fmt(perPackageCost)}원</strong>`;
+}
+function closeLinkPackageModal(){closeModal('link-package-modal');linkPackageCtx=null;}
+async function saveLinkPackage(){
+  const ctx=linkPackageCtx; if(!ctx)return;
+  const r=recipes.find(x=>x.id===ctx.recipeId); if(!r)return;
+  const name=document.getElementById('lp-prod-name').value.trim();
+  if(!name){showToast('상품명을 입력해주세요.');return;}
+  const pkg=parseFloat(document.getElementById('lp-package-size').value)||0;
+  if(!pkg||pkg<=0){showToast('납품 규격을 입력해주세요.');return;}
+  if(pkg>(r.yield_qty||1)&&!confirm(`납품 규격(${fmt(pkg)}${r.yield_unit||''})이 배치 생산량(${fmt(r.yield_qty||1)}${r.yield_unit||''})보다 많아요. 계속할까요?`))return;
+  const unit=`${fmt(pkg)}${r.yield_unit||''}`;
+  if(ctx.productId){
+    const p=orderProducts.find(x=>x.id===ctx.productId);
+    if(!p){closeLinkPackageModal();return;}
+    const dup=orderProducts.find(x=>x.id!==p.id&&x.name.trim()===name);
+    if(dup){showToast('이미 같은 이름의 상품이 있어요. 다른 이름을 사용해주세요.');return;}
+    p.name=name;p.unit=unit;p.package_size=pkg;p.recipe_id=r.id;
+    persistLocal();sbUpsert('order_products',p);
+  } else {
+    const dup=orderProducts.find(p=>p.name.trim()===name);
+    if(dup){
+      if(dup.recipe_id&&dup.recipe_id!==r.id){
+        const other=recipes.find(x=>x.id===dup.recipe_id);
+        if(!confirm(`"${dup.name}" 상품은 이미 다른 레시피("${other?.name||'삭제된 레시피'}")와 연동되어 있어요.\n이 레시피로 연동을 바꿀까요?`))return;
+      }
+      dup.name=name;dup.unit=unit;dup.package_size=pkg;dup.recipe_id=r.id;
+      persistLocal();sbUpsert('order_products',dup);
+    } else {
+      const row={id:uid(),name,unit,recipe_id:r.id,package_size:pkg};
+      orderProducts.push(row);
+      persistLocal();sbUpsert('order_products',row);
+      populateOrderSelects();
+    }
+  }
+  closeLinkPackageModal();
+  renderOrderProducts();renderRecipeDev();renderRecipeDone();
+  showToast(ctx.productId?'수정했습니다.':'연동했습니다.');
+}
+async function unlinkRecipeProduct(recipeId,productId){
+  const p=productId?orderProducts.find(x=>x.id===productId):findLinkedProduct(recipeId);
+  if(!p)return;
   if(!confirm(`"${p.name}" 상품과의 연동을 해제할까요? (상품 자체는 삭제되지 않습니다)`))return;
-  p.recipe_id=null;
+  p.recipe_id=null;p.package_size=null;
   persistLocal();sbUpsert('order_products',p);
   renderOrderProducts();renderRecipeDev();renderRecipeDone();
   showToast('연동을 해제했습니다.');
@@ -2587,7 +2654,11 @@ function openProductModal(id){
   document.getElementById('prod-unit').value=p?.unit||'';
   openModal('product-modal');
 }
-function editProduct(id){openProductModal(id);}
+function editProduct(id){
+  const p=orderProducts.find(x=>x.id===id);
+  if(p?.recipe_id){openLinkPackageModal(p.recipe_id,p.id);return;} // 레시피 연동 상품은 규격 모달에서 수정
+  openProductModal(id);
+}
 function closeProductModal(){closeModal('product-modal');}
 async function saveProduct(){
   const name=document.getElementById('prod-name').value.trim();if(!name){showToast('상품명을 입력해주세요.');return;}
@@ -2788,7 +2859,7 @@ function buildRecipeCard(r,isDone){
   const perUnit=total/yieldQty;
   const costRate=salePrice>0?Math.round(total/salePrice/yieldQty*100):null;
   const rateColor=costRate>40?'var(--danger)':costRate>30?'var(--accent)':'var(--sage-d)';
-  const linkedProduct=isDone?findLinkedProduct(r.id):null;
+  const linkedProducts=isDone?findLinkedProducts(r.id):[];
 
   const ings=(r.ingredients||[]).map(ing=>{
     const m=costs.find(c=>String(c.id)===String(ing.costId));
@@ -2819,12 +2890,12 @@ function buildRecipeCard(r,isDone){
 
   let linkActs='';
   if(isDone){
-    if(linkedProduct){
-      linkActs+=`<span class="badge" style="background:var(--sage-l);color:var(--sage-d)">🔗 연동됨 · ${linkedProduct.name}</span>`;
-      if(appRole==='admin')linkActs+=`<button class="btn btn-ghost btn-sm" onclick="unlinkRecipeProduct('${r.id}')">연동 해제</button>`;
-    } else if(appRole==='admin'){
-      linkActs+=`<button class="btn btn-accent btn-sm" onclick="linkRecipeToProduct('${r.id}')">📦 상품 연동</button>`;
-    }
+    linkedProducts.forEach(lp=>{
+      linkActs+=`<span class="badge" style="background:var(--sage-l);color:var(--sage-d);display:inline-flex;align-items:center;gap:5px">🔗 ${lp.name}${lp.package_size?` <span style="opacity:.75">(${fmt(lp.package_size)}${yieldUnit})</span>`:''}`
+        +(appRole==='admin'?`<button class="btn-icon" style="width:16px;height:16px;padding:0" title="규격 수정" onclick="openLinkPackageModal('${r.id}','${lp.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" style="width:16px;height:16px;padding:0" title="연동 해제" onclick="unlinkRecipeProduct('${r.id}','${lp.id}')">✕</button>`:'')
+        +`</span>`;
+    });
+    if(appRole==='admin')linkActs+=`<button class="btn btn-accent btn-sm" onclick="openLinkPackageModal('${r.id}')">📦 ${linkedProducts.length?'규격 추가':'상품 연동'}</button>`;
   }
 
   const costSummary=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px">
@@ -2841,7 +2912,7 @@ function buildRecipeCard(r,isDone){
       <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</span>
       ${r.category?`<span class="tag" style="flex-shrink:0;font-size:11px;background:var(--sage-l);color:var(--sage-d);border-radius:10px;padding:1px 7px">${r.category}</span>`:''}
       ${isDone?'<span class="tag tag-done" style="flex-shrink:0">완료</span>':''}
-      ${linkedProduct?'<span title="상품 연동됨" style="flex-shrink:0">🔗</span>':''}
+      ${linkedProducts.length?'<span title="상품 연동됨" style="flex-shrink:0">🔗</span>':''}
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
       <span class="badge">개당 ${fmt(perUnit)}원</span>
@@ -2899,11 +2970,15 @@ async function saveRecipe(){
   const row={id:editIds.recipe||uid(),...data,done:existing?.done||false};
   if(editIds.recipe){
     Object.assign(recipes.find(x=>x.id===editIds.recipe)||{},data);
-    // 연동된 상품이 있으면 이름·단위 동기화
-    const linked=findLinkedProduct(editIds.recipe);
-    if(linked){
-      linked.name=name;linked.unit=yield_unit;
-      sbUpsert('order_products',linked);
+    // 연동된 상품이 있으면 단위 표시를 새 배치 단위 기준으로 재계산
+    // (상품명은 연동이 1개뿐일 때만 레시피명과 동기화 — 여러 규격이 있으면 상품명이 서로 달라야 함)
+    const linked=findLinkedProducts(editIds.recipe);
+    if(linked.length){
+      linked.forEach(p=>{
+        if(linked.length===1)p.name=name;
+        if(p.package_size)p.unit=`${fmt(p.package_size)}${yield_unit}`;
+        sbUpsert('order_products',p);
+      });
       populateOrderSelects();renderOrderProducts();
     }
   }
@@ -2914,12 +2989,12 @@ async function saveRecipe(){
 async function deleteRecipe(id){
   if(!confirm('삭제할까요?'))return;
   const prev=[...recipes];
-  const linked=findLinkedProduct(id);
+  const linked=findLinkedProducts(id);
   recipes=recipes.filter(r=>r.id!==id);renderRecipeDev();renderRecipeDone();
   persistLocal();sbDelete('recipes',id);
-  if(linked){
-    linked.recipe_id=null; // 상품 자체는 유지, 연동만 해제
-    persistLocal();sbUpsert('order_products',linked);renderOrderProducts();
+  if(linked.length){
+    linked.forEach(p=>{p.recipe_id=null;p.package_size=null;sbUpsert('order_products',p);}); // 상품 자체는 유지, 연동만 해제
+    persistLocal();renderOrderProducts();
   }
   showToast('레시피를 삭제했습니다.',()=>{recipes=prev;renderRecipeDev();renderRecipeDone();persistLocal();sbUpsert('recipes',prev.find(x=>x.id===id));});
 }
