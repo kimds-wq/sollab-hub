@@ -2160,8 +2160,14 @@ function orderValidData(){
 }
 
 // 발주 예측: (상품×지점)별 납품 주기·평균 수량 → 다음 발주 예상일
+function medianOf(nums){
+  const s=[...nums].sort((a,b)=>a-b);
+  const mid=Math.floor(s.length/2);
+  return s.length%2?s[mid]:(s[mid-1]+s[mid])/2;
+}
 function renderForecast(){
   const el=document.getElementById('chart-forecast'); if(!el)return;
+  const FORECAST_RECENT_N=8; // 예상 수량은 최근 N회만 보고 계산 (오래된 대량 주문 1건이 계속 평균을 끌어올리는 것을 방지)
   const fp=document.getElementById('order-filter-prod')?.value||'';
   const fd=document.getElementById('order-filter-dest')?.value||'';
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
@@ -2184,17 +2190,16 @@ function renderForecast(){
     const qtys=dates.map(d=>byDate[d]);
     const n=dates.length;
     const lastDate=dates[n-1], lastQty=qtys[n-1];
-    const avgQty=Math.round(qtys.reduce((s,v)=>s+v,0)/n);
+    // 예상 수량: 최근 N회의 중앙값. 평균(합÷건수)과 달리 한두 번의 대량 주문에 크게 흔들리지 않는다.
+    const typicalQty=Math.round(medianOf(qtys.slice(-FORECAST_RECENT_N)));
     let cycle=null;
     if(n>=2){
       const iv=[]; for(let i=1;i<n;i++)iv.push(Math.round((parseLocalDate(dates[i])-parseLocalDate(dates[i-1]))/86400000));
-      iv.sort((a,b)=>a-b);
-      const mid=Math.floor(iv.length/2);
-      cycle=iv.length%2?iv[mid]:Math.round((iv[mid-1]+iv[mid])/2); // 중앙값(간격이 들쭉날쭉해도 안정적)
+      cycle=Math.round(medianOf(iv)); // 중앙값(간격이 들쭉날쭉해도 안정적)
     }
     let daysUntil=null,nextDate=null;
     if(cycle!=null){const nd=parseLocalDate(lastDate);nd.setDate(nd.getDate()+cycle);nextDate=nd;daysUntil=Math.round((nd-today)/86400000);}
-    return{pid,did,n,lastDate,lastQty,avgQty,cycle,daysUntil,nextDate};
+    return{pid,did,n,lastDate,lastQty,typicalQty,cycle,daysUntil,nextDate};
   });
 
   const withCycle=items.filter(it=>it.cycle!=null);
@@ -2231,7 +2236,7 @@ function renderForecast(){
       <div class="tl-dot"></div>
       <div class="tl-content">
         <div class="tl-date">지났어요</div>
-        <div class="tl-chips">${overdue.map(it=>chipHtml(it,(it,p)=>`${-it.daysUntil}일 지남 · 평균 ${fmt(it.avgQty)}${p?.unit||'개'}`)).join('')}</div>
+        <div class="tl-chips">${overdue.map(it=>chipHtml(it,(it,p)=>`${-it.daysUntil}일 지남 · 평소 ${fmt(it.typicalQty)}${p?.unit||'개'}`)).join('')}</div>
       </div>
     </div>`;
   }
@@ -2248,7 +2253,7 @@ function renderForecast(){
         <div class="tl-dot"></div>
         <div class="tl-content">
           <div class="tl-date">${md(dt)} (${WKN[dt.getDay()]})<span class="tl-dday">${ddLabel}</span></div>
-          <div class="tl-chips">${byDateKey[key].map(it=>chipHtml(it,(it,p)=>`평균 ${fmt(it.avgQty)}${p?.unit||'개'}`)).join('')}</div>
+          <div class="tl-chips">${byDateKey[key].map(it=>chipHtml(it,(it,p)=>`평소 ${fmt(it.typicalQty)}${p?.unit||'개'}`)).join('')}</div>
         </div>
       </div>`;
     }).join('');
