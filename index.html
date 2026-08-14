@@ -2026,9 +2026,11 @@ function renderProductCards(){
     const cards=sortKo(orderProducts).map(p=>{
       const qty=map[p.id]||'';
       const hasQty=qty&&parseFloat(qty)>0;
+      const batchLabel=batchInfoLabel(p);
       return`<div class="prod-order-card${hasQty?' has-qty':''}" id="pcard-${d.id}-${p.id}">
         <div class="prod-order-card-name" title="${p.name}">${p.name}</div>
         <div class="prod-order-card-unit">${p.unit||''}</div>
+        ${batchLabel?`<div style="font-size:10px;color:var(--sage-d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-6px;margin-bottom:6px" title="${batchLabel}">${batchLabel}</div>`:''}
         <div class="prod-qty-wrap">
           <button class="prod-qty-btn minus" onclick="stepProdQty('${d.id}','${p.id}',-1)">−</button>
           <input class="prod-order-qty" type="number" min="0" placeholder="0"
@@ -2602,7 +2604,12 @@ function exportRecipes(){
 
 function renderOrderProducts(){document.getElementById('products-tbody').innerHTML=sortKo(orderProducts).map(p=>{
   const linkedRecipe=p.recipe_id?recipes.find(r=>r.id===p.recipe_id):null;
-  return`<tr><td style="font-weight:500">${p.name}${p.unit?` <span style="color:var(--tx2);font-size:12px">(${p.unit})</span>`:''}${linkedRecipe?` <span title="연동된 레시피: ${linkedRecipe.name}" style="font-size:11px;color:var(--sage-d)">🔗</span>`:''}</td><td style="display:flex;gap:4px;justify-content:flex-end"><button class="btn-icon" title="수정" onclick="editProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" title="삭제" onclick="deleteProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></td></tr>`;
+  const unitCost=getProductUnitCost(p);
+  const batchLabel=batchInfoLabel(p);
+  return`<tr><td style="font-weight:500">
+    ${p.name}${p.unit?` <span style="color:var(--tx2);font-size:12px">(${p.unit})</span>`:''}${linkedRecipe?` <span title="연동된 레시피: ${linkedRecipe.name}" style="font-size:11px;color:var(--sage-d)">🔗</span>`:''}${unitCost>0?` <span style="font-size:12px;color:var(--tx2)">· 원가 ${fmt(unitCost)}원</span>`:''}
+    ${batchLabel?`<div style="font-size:11px;color:var(--sage-d);margin-top:2px">${batchLabel}</div>`:''}
+  </td><td style="display:flex;gap:4px;justify-content:flex-end"><button class="btn-icon" title="수정" onclick="editProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" title="삭제" onclick="deleteProduct('${p.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></td></tr>`;
 }).join('');}
 // ── 레시피 ↔ 상품 연동
 // 레시피 = 1회 생산 배치(예: 300g), 상품 = 실제 납품 규격(예: 100g).
@@ -2730,6 +2737,16 @@ function getProductUnitCost(p){
     }
   }
   return p.cost||0;
+}
+// 레시피(배치 생산량)와 상품(납품 규격)의 관계를 한 줄로 설명 — 상품·지점 목록, 납품 입력 카드에서 재사용
+function batchInfoLabel(p){
+  if(!p?.recipe_id||!p?.package_size)return '';
+  const r=recipes.find(x=>x.id===p.recipe_id);
+  if(!r)return '';
+  const yieldQty=r.yield_qty||1, yieldUnit=r.yield_unit||'';
+  const count=Math.floor(yieldQty/p.package_size);
+  if(!count)return `⚠ 배치(${fmt(yieldQty)}${yieldUnit})보다 큰 규격`;
+  return `배치 ${fmt(yieldQty)}${yieldUnit} → ${count}세트(${fmt(p.package_size)}${yieldUnit}씩)`;
 }
 async function deleteProduct(id){
   const p=orderProducts.find(x=>x.id===id);if(!p)return;
@@ -2945,12 +2962,20 @@ function buildRecipeCard(r,isDone){
 
   let linkActs='';
   if(isDone){
+    if(!linkedProducts.length&&appRole==='admin'){
+      const exampleUnit=Math.max(1,Math.round((yieldQty/2)||1));
+      linkActs+=`<div style="width:100%;font-size:12px;color:var(--tx2);background:var(--cream);border-radius:8px;padding:8px 10px">💡 이 레시피는 아직 Order Flow의 어떤 상품과도 연결되지 않았어요. 한 번에 <strong>${fmt(yieldQty)}${yieldUnit}</strong>가 나오지만 실제 납품은 다른 단위(예: ${exampleUnit}${yieldUnit}씩)로 나갈 수 있으니, "상품 연동"을 눌러 실제 납품 단위를 정해주세요.</div>`;
+    }
     linkedProducts.forEach(lp=>{
-      linkActs+=`<span class="badge" style="background:var(--sage-l);color:var(--sage-d);display:inline-flex;align-items:center;gap:5px">🔗 ${lp.name}${lp.package_size?` <span style="opacity:.75">(${fmt(lp.package_size)}${yieldUnit})</span>`:''}`
-        +(appRole==='admin'?`<button class="btn-icon" style="width:16px;height:16px;padding:0" title="규격 수정" onclick="openLinkPackageModal('${r.id}','${lp.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" style="width:16px;height:16px;padding:0" title="연동 해제" onclick="unlinkRecipeProduct('${r.id}','${lp.id}')">✕</button>`:'')
-        +`</span>`;
+      const batchLabel=batchInfoLabel(lp);
+      linkActs+=`<div style="display:flex;flex-direction:column;gap:2px">
+        <span class="badge" style="background:var(--sage-l);color:var(--sage-d);display:inline-flex;align-items:center;gap:5px;width:fit-content">🔗 ${lp.name}${lp.package_size?` <span style="opacity:.75">(${fmt(lp.package_size)}${yieldUnit})</span>`:''}`
+        +(appRole==='admin'?`<button class="btn-icon" style="width:16px;height:16px;padding:0" title="이 상품의 납품 규격 수정" onclick="openLinkPackageModal('${r.id}','${lp.id}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn-icon" style="width:16px;height:16px;padding:0" title="이 상품과의 연동만 해제 (상품 자체는 유지)" onclick="unlinkRecipeProduct('${r.id}','${lp.id}')">✕</button>`:'')
+        +`</span>
+        ${batchLabel?`<span style="font-size:11px;color:var(--tx2);padding-left:2px">${batchLabel}</span>`:''}
+      </div>`;
     });
-    if(appRole==='admin')linkActs+=`<button class="btn btn-accent btn-sm" onclick="openLinkPackageModal('${r.id}')">📦 ${linkedProducts.length?'규격 추가':'상품 연동'}</button>`;
+    if(appRole==='admin')linkActs+=`<button class="btn btn-accent btn-sm" title="${linkedProducts.length?'같은 레시피로, 다른 포장 단위의 상품을 하나 더 연동합니다 (예: 12개씩 외에 6개씩 상품도 추가)':'이 레시피로 실제 납품할 상품을 만들고 포장 단위(배치와 다를 수 있음)를 정합니다'}" onclick="openLinkPackageModal('${r.id}')">📦 ${linkedProducts.length?'다른 규격 추가':'상품 연동'}</button>`;
   }
 
   const costSummary=`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px">
