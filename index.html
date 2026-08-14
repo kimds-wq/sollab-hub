@@ -919,6 +919,7 @@ body.viewer-mode .task-memo-toggle{pointer-events:auto;cursor:pointer}
   <div class="modal-body">
     <div class="form-group"><label class="form-label">상품명 *</label><input class="form-input" id="prod-name" placeholder="상품명"></div>
     <div class="form-group"><label class="form-label">단위</label><input class="form-input" id="prod-unit" placeholder="예: 개, 박스, kg"></div>
+    <div class="form-group"><label class="form-label">원가 (선택)</label><input class="form-input" id="prod-cost" type="number" min="0" placeholder="예: 1200"><div style="font-size:11px;color:var(--tx2);margin-top:4px">상품·지점 목록에는 표시되지 않고, 납품 내역 내보내기(CSV)에만 포함돼요.</div></div>
   </div>
   <div class="modal-footer"><button class="btn btn-ghost" onclick="closeProductModal()">취소</button><button class="btn btn-primary" onclick="saveProduct()">저장</button></div>
 </div></div>
@@ -2330,22 +2331,38 @@ function renderOrderMatrix(){
 }
 
 
-function renderOrderHistory(){
+// 기간 필터 옵션(최근 N일 + 데이터가 있는 특정 월들)을 다시 그린다. 선택값은 유지.
+function populateOrderPeriodOptions(){
+  const sel=document.getElementById('order-filter-period');if(!sel)return;
+  const prevVal=sel.value;
+  const today=new Date();
+  const curMonth=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  const months=new Set(orderList.map(o=>(o.order_date||'').slice(0,7)).filter(m=>/^\d{4}-\d{2}$/.test(m)));
+  months.add(curMonth);
+  const monthOpts=[...months].sort().reverse().map(m=>{
+    const[y,mm]=m.split('-');
+    return`<option value="${m}">${y}년 ${parseInt(mm)}월</option>`;
+  }).join('');
+  sel.innerHTML=`<option value="">전체 기간</option><option value="7">최근 7일</option><option value="30">최근 30일</option><option value="90">최근 90일</option><optgroup label="특정 월">${monthOpts}</optgroup>`;
+  if([...sel.options].some(o=>o.value===prevVal))sel.value=prevVal;
+}
+// 상품/지점/기간(또는 특정 월)/검색어 필터를 모두 적용한 납품 내역 (화면 표시·내보내기 공용)
+function getFilteredOrderList(){
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
   const fp=document.getElementById('order-filter-prod')?.value||'';
   const fd=document.getElementById('order-filter-dest')?.value||'';
-  const period=parseInt(document.getElementById('order-filter-period')?.value||'0');
+  const periodRaw=document.getElementById('order-filter-period')?.value||'';
+  const isMonthFilter=/^\d{4}-\d{2}$/.test(periodRaw);
+  const period=isMonthFilter?0:(parseInt(periodRaw)||0);
   const today=new Date(); today.setHours(0,0,0,0);
   const validProdIds=new Set(orderProducts.map(p=>p.id));
   const validDestIds=new Set(orderDests.map(d=>d.id));
-  const thisMonth=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-
   const allValid=orderList.filter(o=>validProdIds.has(o.product_id)&&validDestIds.has(o.dest_id));
-
   let data=allValid.filter(o=>{
     if(fp&&o.product_id!==fp)return false;
     if(fd&&o.dest_id!==fd)return false;
-    if(period>0&&o.order_date&&(today-parseLocalDate(o.order_date))/86400000>period)return false;
+    if(isMonthFilter){ if(!o.order_date||!o.order_date.startsWith(periodRaw))return false; }
+    else if(period>0&&o.order_date&&(today-parseLocalDate(o.order_date))/86400000>period)return false;
     return true;
   });
   if(q){data=data.filter(o=>{
@@ -2353,6 +2370,19 @@ function renderOrderHistory(){
     const d=orderDests.find(x=>x.id===o.dest_id);
     return(p?.name||'').toLowerCase().includes(q)||(d?.name||'').toLowerCase().includes(q);
   });}
+  return data;
+}
+function renderOrderHistory(){
+  populateOrderPeriodOptions();
+  const fd=document.getElementById('order-filter-dest')?.value||'';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const validProdIds=new Set(orderProducts.map(p=>p.id));
+  const validDestIds=new Set(orderDests.map(d=>d.id));
+  const thisMonth=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+
+  const allValid=orderList.filter(o=>validProdIds.has(o.product_id)&&validDestIds.has(o.dest_id));
+
+  const data=getFilteredOrderList();
 
 
   const destCardsEl=document.getElementById('dest-cards-row');
@@ -2534,8 +2564,18 @@ async function deleteOrder(id){
   persistLocal();sbDelete('orders',id);
 }
 function exportOrders(){
-  const csv=['날짜,상품,지점,수량,메모',...orderList.map(o=>{const p=orderProducts.find(x=>x.id===o.product_id),d=orderDests.find(x=>x.id===o.dest_id);return`${o.order_date||''},${p?.name||''},${d?.name||''},${o.qty},${o.memo||''}`})].join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='납품내역.csv';a.click();
+  // 화면에 걸려있는 상품/지점/기간(또는 특정 월)/검색 필터를 그대로 반영해서 내보낸다
+  const rows=[...getFilteredOrderList()].sort((a,b)=>(a.order_date||'').localeCompare(b.order_date||''));
+  if(!rows.length){showToast('내보낼 내역이 없어요. 필터를 확인해주세요.');return;}
+  const csv=['날짜,상품,지점,수량,개당원가,총원가,메모',...rows.map(o=>{
+    const p=orderProducts.find(x=>x.id===o.product_id),d=orderDests.find(x=>x.id===o.dest_id);
+    const unitCost=Math.round(getProductUnitCost(p));
+    const totalCost=Math.round(unitCost*(o.qty||0));
+    return`${o.order_date||''},${p?.name||''},${d?.name||''},${o.qty},${unitCost},${totalCost},${o.memo||''}`;
+  })].join('\n');
+  const periodRaw=document.getElementById('order-filter-period')?.value||'';
+  const suffix=/^\d{4}-\d{2}$/.test(periodRaw)?`_${periodRaw}`:'';
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download=`납품내역${suffix}.csv`;a.click();
 }
 function exportCosts(){
   const rows=['재료명,카테고리,용량,단위,가격(원),단위당단가,비고,링크'];
@@ -2652,6 +2692,7 @@ function openProductModal(id){
   document.getElementById('prod-modal-title').textContent=p?'상품 수정':'상품 추가';
   document.getElementById('prod-name').value=p?.name||'';
   document.getElementById('prod-unit').value=p?.unit||'';
+  document.getElementById('prod-cost').value=p?.cost||'';
   openModal('product-modal');
 }
 function editProduct(id){
@@ -2663,18 +2704,32 @@ function closeProductModal(){closeModal('product-modal');}
 async function saveProduct(){
   const name=document.getElementById('prod-name').value.trim();if(!name){showToast('상품명을 입력해주세요.');return;}
   const unit=document.getElementById('prod-unit').value.trim();
-  
+  const cost=parseFloat(document.getElementById('prod-cost').value)||0;
+
   if(editIds.prod){
     const prev=orderProducts.find(x=>x.id===editIds.prod);
-    if(prev){prev.name=name;prev.unit=unit;}
+    if(prev){prev.name=name;prev.unit=unit;prev.cost=cost;}
     persistLocal();sbUpsert('order_products',{...orderProducts.find(x=>x.id===editIds.prod)});
     closeProductModal();renderOrderProducts();populateOrderSelects();renderProductCards();showToast('수정됐습니다.');
   } else {
-    const row={id:uid(),name,unit};
+    const row={id:uid(),name,unit,cost};
     orderProducts.push(row);
     persistLocal();sbUpsert('order_products',row);
     closeProductModal();renderOrderProducts();populateOrderSelects();showToast('추가됐습니다.');
   }
+}
+// 상품 1개당 원가: 레시피 연동 상품은 레시피 원가에서 자동 계산(항상 최신값), 그 외에는 직접 입력한 원가 사용
+function getProductUnitCost(p){
+  if(!p)return 0;
+  if(p.recipe_id){
+    const r=recipes.find(x=>x.id===p.recipe_id);
+    if(r){
+      const yieldQty=r.yield_qty||1;
+      const perBase=yieldQty?calcCost(r.ingredients)/yieldQty:0;
+      return perBase*(p.package_size||1);
+    }
+  }
+  return p.cost||0;
 }
 async function deleteProduct(id){
   const p=orderProducts.find(x=>x.id===id);if(!p)return;
